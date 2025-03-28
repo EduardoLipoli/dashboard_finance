@@ -1,0 +1,86 @@
+/* Garantir transições suaves */
+#formSidebar {
+  transition: width 0.3s ease-in-out, visibility 0.3s ease-in-out;
+  z-index: 20;
+}
+
+#overlay {
+    backdrop-filter: blur(5px);
+    z-index: 10;
+}
+
+#deleteModal {
+  backdrop-filter: blur(5px);
+}
+
+.form-open {
+  width: 400px;
+  visibility: visible;
+  transition: width 0.3s ease, visibility 0.3s ease;
+}
+
+.form-closed {
+  width: 0px;
+  visibility: hidden;
+  transition: width 0.3s ease, visibility 0.3s ease;
+}
+
+/* Cursor pointer e impedir seleção */
+table td {
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Efeito ao passar o mouse */
+table tr:hover {
+  background-color: rgba(0, 0, 0, 0.1); /* Cor leve ao passar o mouse */
+}
+
+.is-Paid{
+  background-color: rgba(0, 0, 0, 0.1);
+  color: #474747;
+}
+
+.is-Paid:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Estilo da tela de carregamento */
+.loading-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8); /* Cor de fundo escura com opacidade de 80% */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  backdrop-filter: blur(5px); /* Borrado do fundo */
+}
+
+/* Animação do loader (circulando em preto e verde) */
+.loader {
+  border: 8px solid #18181B; /* Cor preta */
+  border-top: 8px solid #00C950; /* Cor verde */
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Estilo da página principal */
+#content {
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
+
+
+

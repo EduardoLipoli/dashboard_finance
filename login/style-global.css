@@ -1,0 +1,56 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap');
+/* Garantir transições suaves */
+#formSidebar {
+  transition: width 0.3s ease-in-out, visibility 0.3s ease-in-out;
+  z-index: 20;
+}
+
+#overlay {
+  backdrop-filter: blur(5px);
+  z-index: 10;
+}
+
+.noise-layer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-image: url("/assets/img/noise.avif");
+  background-size:auto;
+  background-repeat: repeat;
+  opacity: 0.5;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+.loading {
+  background-color: rgba(0, 0, 0, 0.5);
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.loader-circle {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: 10px solid #27272A;
+  border-top-color: #22c55e ;
+  animation: loader-circle 1s linear infinite;
+}
+
+@keyframes loader-circle {
+  0% {
+      transform: rotate(0);
+  }
+  100% {
+      transform: rotate(360deg);
+  }
+}
