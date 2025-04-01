@@ -478,19 +478,13 @@ document.getElementById("addCategoryForm").addEventListener("submit", (e) => {
 });
 
 const defaultCategories = [
-  "Residência",
-  "Serviços",
-  "Cartão de Crédito",
-  "Compras",
-  "Alimentação",
-  "Transporte",
-  "Saúde",
-  "Educação",
-  "Lazer e Entretenimento",
-  "Vestuário",
-  "Presentes",
-  "Reparos",
-  "Outros Gastos",
+  "🚗 Transporte",
+  "📞 Comunicação",
+  "📚 Educação",
+  "🏠 Moradia",
+  "🛍️ Compras e Parcelamentos",
+  "👨‍👩‍👧‍👦 Gastos Pessoais",
+  "💳 Bancos e Créditos",
 ];
 
 firebase.auth().onAuthStateChanged((user) => {

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-br" >
 
 <head>
   <meta charset="UTF-8" />
@@ -11,10 +11,9 @@
   <title>Tela de Login</title>
 </head>
 
-<body>
-  <div class="noise-layer"></div>
-  <main class="min-h-screen flex items-center justify-center bg-zinc-900">
-    <div class="w-full max-w-md bg-zinc-800 text-zinc-200 rounded-lg shadow-lg p-8 space-y-6">
+<body class="bg-[url('images/background.svg')] bg-cover bg-center bg-no-repeat min-h-screen grid place-items-center px-20">
+  <main class="min-h-screen flex items-center justify-center">
+    <div class="w-[500px] bg-zinc-800 text-zinc-200 rounded-lg shadow-lg p-8 space-y-6 backdrop-filter backdrop-blur-md bg-opacity-10 border border-zinc-800">
       <h1 class="text-2xl font-bold text-center">Bem Vindo Ao Finance💲</h1>
 
       <!-- Separador -->
@@ -34,7 +33,7 @@
         <div>
           <label for="email" class="block text-sm font-medium">Email</label>
           <input type="email" id="email"
-            class="w-full mt-1 px-3 py-2 bg-zinc-700 border border-zinc-600 rounded-md focus:ring-green-500 focus:border-green-500 text-zinc-200 placeholder-zinc-500 transition"
+            class="w-full px-3 py-2 bg-zinc-900 border border-zinc-700 rounded focus:outline-none focus:ring-2 focus:ring-green-500 transition"
             placeholder="Digite seu email" onchange="onChangeEmail()" />
           <div class="error text-sm text-red-500 mb-2 hidden" id="email-required-error">
             Email é obrigatório
@@ -49,7 +48,7 @@
           <label for="password" class="block text-sm font-medium">Senha</label>
           <div class="relative mt-1">
             <input type="password" id="password" name="password"
-              class="w-full px-3 py-2 bg-zinc-700 border border-zinc-600 rounded-md focus:ring-green-500 focus:border-green-500 text-zinc-200 placeholder-zinc-500 transition"
+              class="w-full px-3 py-2 bg-zinc-900 border border-zinc-700 rounded focus:outline-none focus:ring-2 focus:ring-green-500 transition"
               placeholder="Digite sua senha" onchange="onChangePassword()" />
           </div>
           <div class="error text-sm text-red-500 hidden" id="password-required-error">
@@ -58,8 +57,10 @@
         </div>
 
         <div class="div-checkbox-login">
-          <input type="checkbox" class="checkbox-login" name="remember" />
-          <span>Lembrar-me</span>
+          <label class="flex items-center space-x-2 cursor-pointer">
+          <input type="checkbox" class="checkbox-login accent-green-500 " name="remember" />
+          <span class="select-none">Lembrar-me</span>
+        </label>
         </div>
 
         <!-- Botão Login -->
