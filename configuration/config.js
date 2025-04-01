@@ -648,98 +648,32 @@ function checkIfCategoriesAreEmpty(userId) {
     });
 }
 
-function showSection(sectionId) {
+function showSection(sectionId, e = null) {
+  // Esconde todas as seções
   document.querySelectorAll("section").forEach((section) => {
     section.classList.add("hidden");
   });
 
+  // Exibe a seção desejada
   document.getElementById(sectionId).classList.remove("hidden");
 
+  // Remove a classe de destaque de todos os botões
   document.querySelectorAll("aside button").forEach((button) => {
     button.classList.remove("bg-zinc-700");
   });
 
-  event?.currentTarget.classList.add("bg-zinc-700");
-}
-
-// Ativar a seção inicial ao carregar a página
-document.addEventListener("DOMContentLoaded", function () {
-  document.getElementById("defaultActiveButton").classList.add("bg-zinc-700");
-  showSection("userSettings");
-});
-const emojiButton = document.getElementById("emojiButton");
-const emojiPicker = document.getElementById("emojiPicker");
-const categoryInput = document.getElementById("categoryInput");
-const emojiCategories = document.querySelectorAll("#emojiCategories i");
-const emojiContainers = document.querySelectorAll(".emoji-category");
-
-// Função para exibir a primeira categoria ao abrir
-function showFirstCategory() {
-  emojiContainers.forEach((container, index) => {
-    container.classList.toggle("hidden", index !== 0);
-  });
-}
-
-// Alternar visibilidade do Picker
-emojiButton.addEventListener("click", (event) => {
-  event.stopPropagation();
-  emojiPicker.classList.toggle("hidden");
-
-  if (!emojiPicker.classList.contains("hidden")) {
-    showFirstCategory(); // Mostrar primeira categoria ao abrir
+  // Se um evento foi passado, usa o botão clicado; caso contrário, usa o botão padrão
+  if (e && e.currentTarget) {
+    e.currentTarget.classList.add("bg-zinc-700");
+  } else {
+    const defaultButton = document.getElementById("defaultActiveButton");
+    if (defaultButton) {
+      defaultButton.classList.add("bg-zinc-700");
+    }
   }
-});
-
-// Mostrar emojis de uma categoria ao clicar nela
-emojiCategories.forEach((icon) => {
-  icon.addEventListener("click", function () {
-    const category = this.getAttribute("data-category");
-
-    emojiContainers.forEach((container) => {
-      container.classList.toggle("hidden", container.getAttribute("data-category") !== category);
-    });
-  });
-});
-
-// Selecionar um emoji e adicionar ao input
-document.querySelectorAll(".emoji").forEach((emoji) => {
-  emoji.addEventListener("click", function () {
-    const selectedEmoji = this.textContent;
-    emojiButton.innerHTML = selectedEmoji; // Atualiza o botão
-    categoryInput.value = `${selectedEmoji} ${categoryInput.value}`.trim();
-    emojiPicker.classList.add("hidden");
-  });
-});
-
-// Fechar o picker ao clicar fora
-document.addEventListener("click", (event) => {
-  if (!emojiButton.contains(event.target) && !emojiPicker.contains(event.target)) {
-    emojiPicker.classList.add("hidden");
-  }
-});
-
-emojiCategories.forEach((icon) => {
-  icon.addEventListener("click", function () {
-    const category = this.getAttribute("data-category");
-
-    // Remove a classe 'bg-green-500' de todas as categorias
-    emojiCategories.forEach((el) => el.classList.remove("text-white", "bg-green-500"));
-
-    // Adiciona a classe 'bg-green-500' na categoria clicada
-    this.classList.add("text-white", "bg-green-500");
-
-    // Atualiza os emojis da categoria
-    document.querySelectorAll(".emoji-category").forEach((container) => {
-      container.classList.toggle("hidden", container.getAttribute("data-category") !== category);
-    });
-  });
-});
-
-// Exibir a primeira categoria como ativa ao abrir
-function showFirstCategory() {
-  emojiCategories[0].classList.add("text-white", "bg-green-500");
-  document.querySelectorAll(".emoji-category")[0].classList.remove("hidden");
 }
 
-showFirstCategory();
-
+// Quando a página carregar, exibe a seção padrão e destaca o botão correspondente
+document.addEventListener("DOMContentLoaded", () => {
+  showSection('userSettings');
+});

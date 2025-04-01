@@ -1,149 +1,101 @@
 <!DOCTYPE html>
 <html lang="pt-br">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Registro Controle de finanças</title>
-    <link rel="stylesheet" href="/style-login.css" />
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
-      rel="stylesheet"
-    />
-  </head>
 
-  <body>
-    <div class="noise-layer"></div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Registro Controle de finanças</title>
+  <link rel="stylesheet" href="/style-login.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet" />
+</head>
 
-    <main class="min-h-screen flex items-center justify-center bg-zinc-900">
-      <div
-        class="w-full max-w-md bg-zinc-800 text-zinc-200 rounded-lg shadow-lg p-8 space-y-6"
-      >
-        <!-- Cabeçalho -->
-        <h1 class="text-2xl font-bold text-center">Cadastre-se</h1>
-        <p class="text-sm text-center text-zinc-400">
-          Já possui uma conta?
-          <a href="#" class="text-green-500 hover:underline" onclick="login()"
-            >Login</a
-          >
-        </p>
+<body>
+  <div class="noise-layer"></div>
 
-        <!-- Formulário -->
-        <form class="space-y-4">
-          <!-- Campo de E-mail -->
-          <div>
-            <label for="email" class="block text-sm font-medium">E-mail</label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              class="w-full mt-1 px-3 py-2 bg-zinc-700 border border-zinc-600 rounded-md focus:ring-green-500 focus:border-green-500 text-zinc-200 placeholder-zinc-500 transition"
-              placeholder="Digite seu e-mail"
-              onchange="onChangeEmail()"
-            />
-            <div
-              class="error text-sm text-red-500 hidden"
-              id="email-required-error"
-            >
-              Email é obrigatório
-            </div>
-            <div
-              class="error text-sm text-red-500 hidden"
-              id="email-invalid-error"
-            >
-              Email inválido
-            </div>
+  <main class="min-h-screen flex items-center justify-center bg-zinc-900">
+    <div class="w-full max-w-md bg-zinc-800 text-zinc-200 rounded-lg shadow-lg p-8 space-y-6">
+      <!-- Cabeçalho -->
+      <h1 class="text-2xl font-bold text-center">Cadastre-se</h1>
+      <p class="text-sm text-center text-zinc-400">
+        Já possui uma conta?
+        <a href="#" class="text-green-500 hover:underline" onclick="login()">Login</a>
+      </p>
+
+      <!-- Formulário -->
+      <form class="space-y-4">
+        <!-- Campo de E-mail -->
+        <div>
+          <label for="email" class="block text-sm font-medium">E-mail</label>
+          <input type="email" id="email" name="email"
+            class="w-full mt-1 px-3 py-2 bg-zinc-700 border border-zinc-600 rounded-md focus:ring-green-500 focus:border-green-500 text-zinc-200 placeholder-zinc-500 transition"
+            placeholder="Digite seu e-mail" onchange="onChangeEmail()" />
+          <div class="error text-sm text-red-500 hidden" id="email-required-error">
+            Email é obrigatório
           </div>
-
-          <!-- Campo de Senha -->
-          <div>
-            <label for="password" class="block text-sm font-medium"
-              >Senha</label
-            >
-            <input
-              type="password"
-              id="password"
-              name="password"
-              class="w-full mt-1 px-3 py-2 bg-zinc-700 border border-zinc-600 rounded-md focus:ring-green-500 focus:border-green-500 text-zinc-200 placeholder-zinc-500 transition"
-              placeholder="Digite sua senha"
-              onchange="onChangePassword()"
-            />
-            <div
-              class="error text-sm text-red-500 hidden"
-              id="password-required-error"
-            >
-              Senha é obrigatória
-            </div>
-            <div
-              class="error text-sm text-red-500 hidden"
-              id="password-min-length-error"
-            >
-              Senha deve ter pelo menos 6 caracteres
-            </div>
+          <div class="error text-sm text-red-500 hidden" id="email-invalid-error">
+            Email inválido
           </div>
-
-          <!-- Campo de Confirmar Senha -->
-          <div>
-            <label for="confirmPassword" class="block text-sm font-medium"
-              >Confirmar Senha</label
-            >
-            <input
-              type="password"
-              id="confirmPassword"
-              name="confirmPassword"
-              class="w-full mt-1 px-3 py-2 bg-zinc-700 border border-zinc-600 rounded-md focus:ring-green-500 focus:border-green-500 text-zinc-200 placeholder-zinc-500 transition"
-              placeholder="Confirme sua senha"
-              onchange="onChangeConfirmPassword()"
-            />
-            <div
-              class="error text-sm text-red-500 hidden"
-              id="password-dowsnt-match-error"
-            >
-              Senhas e Confirmar Senha devem ser iguais
-            </div>
-          </div>
-
-          <!-- Botão Registrar -->
-          <button
-            type="button"
-            class="w-full bg-green-500 text-zinc-900 font-medium py-2 rounded-md hover:bg-green-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
-            id="register-button"
-            disabled="true"
-            onclick="register()"
-          >
-            Registrar
-          </button>
-        </form>
-
-        <!-- Separador -->
-        <div class="flex items-center space-x-2">
-          <hr class="flex-grow border-zinc-600" />
-          <span class="text-sm text-zinc-400">Or</span>
-          <hr class="flex-grow border-zinc-600" />
         </div>
 
-        <!-- Botões de Login Social -->
-        <div class="flex justify-center space-x-4">
-          <button
-            class="flex items-center space-x-2 bg-zinc-700 text-zinc-200 px-4 py-2 rounded-md hover:bg-zinc-600 transition"
-          >
-            <img
-              src="https://www.svgrepo.com/show/355037/google.svg"
-              alt="Google"
-              class="h-5 w-5"
-            />
-            <span>Google</span>
-          </button>
+        <!-- Campo de Senha -->
+        <div>
+          <label for="password" class="block text-sm font-medium">Senha</label>
+          <input type="password" id="password" name="password"
+            class="w-full mt-1 px-3 py-2 bg-zinc-700 border border-zinc-600 rounded-md focus:ring-green-500 focus:border-green-500 text-zinc-200 placeholder-zinc-500 transition"
+            placeholder="Digite sua senha" onchange="onChangePassword()" />
+          <div class="error text-sm text-red-500 hidden" id="password-required-error">
+            Senha é obrigatória
+          </div>
+          <div class="error text-sm text-red-500 hidden" id="password-min-length-error">
+            Senha deve ter pelo menos 6 caracteres
+          </div>
         </div>
+
+        <!-- Campo de Confirmar Senha -->
+        <div>
+          <label for="confirmPassword" class="block text-sm font-medium">Confirmar Senha</label>
+          <input type="password" id="confirmPassword" name="confirmPassword"
+            class="w-full mt-1 px-3 py-2 bg-zinc-700 border border-zinc-600 rounded-md focus:ring-green-500 focus:border-green-500 text-zinc-200 placeholder-zinc-500 transition"
+            placeholder="Confirme sua senha" onchange="onChangeConfirmPassword()" />
+          <div class="error text-sm text-red-500 hidden" id="password-dowsnt-match-error">
+            Senhas e Confirmar Senha devem ser iguais
+          </div>
+        </div>
+
+        <!-- Botão Registrar -->
+        <button type="button"
+          class="w-full bg-green-500 text-zinc-900 font-medium py-2 rounded-md hover:bg-green-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          id="register-button" disabled="true" onclick="register()">
+          Registrar
+        </button>
+      </form>
+
+      <!-- Separador -->
+      <div class="flex items-center space-x-2">
+        <hr class="flex-grow border-zinc-600" />
+        <span class="text-sm text-zinc-400">Or</span>
+        <hr class="flex-grow border-zinc-600" />
       </div>
-    </main>
 
-    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js"></script>
-    <script src="/firebase-init.js"></script>
+      <!-- Botões de Login Social -->
+      <div class="flex justify-center space-x-4">
+        <button
+          class="flex items-center space-x-2 bg-zinc-700 text-zinc-200 px-4 py-2 rounded-md hover:bg-zinc-600 transition">
+          <img src="https://www.svgrepo.com/show/355037/google.svg" alt="Google" class="h-5 w-5" />
+          <span>Google</span>
+        </button>
+      </div>
+    </div>
+  </main>
 
-    <script src="/register/register.js"></script>
-    <script src="/validations.js"></script>
-    <script src="/loading.js"></script>
-  </body>
+  <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js"></script>
+  <script src="/firebase-init.js"></script>
+
+  <script src="/register/register.js"></script>
+  <script src="/validations.js"></script>
+  <script src="/loading.js"></script>
+</body>
+
 </html>

@@ -1,239 +1,223 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Finance Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
-    <link
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
-      rel="stylesheet"
-    />
-    <link rel="icon" type="image/x-icon" href="/images/money.ico" />
-    <link rel="stylesheet" href="/style-global.css" />
-  </head>
-  <body class="bg-zinc-900 text-zinc-200 h-screen grid grid-cols-[auto,1fr]">
-    <div
-      id="overlay"
-      class="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 hidden"
-    ></div>
 
-    <!-- SIDEBAR -->
-    <div
-      id="sidebar"
-      class="flex flex-col items-center bg-zinc-800 h-full w-16 group hover:w-48 transition-all duration-300"
-    >
-      <!-- LOGO -->
-      <div class="p-4">
-        <i class="fas fa-coins text-green-500 text-2xl"></i>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Finance Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet" />
+  <link rel="icon" type="image/x-icon" href="/images/money.ico" />
+  <link rel="stylesheet" href="/style-global.css" />
+</head>
+
+<body class="bg-zinc-900 text-zinc-200 h-screen grid grid-cols-[auto,1fr]">
+  <div id="overlay" class="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 hidden"></div>
+
+  <!-- SIDEBAR -->
+  <div id="sidebar"
+    class="flex flex-col items-center bg-zinc-800 h-full w-16 group hover:w-48 transition-all duration-300">
+    <!-- LOGO -->
+    <div class="p-4">
+      <i class="fas fa-coins text-green-500 text-2xl"></i>
+    </div>
+
+    <ul class="mt-4 w-full">
+      <a href="/dashboard/index.html">
+        <li class="flex items-center gap-4 p-4 hover:bg-zinc-700 w-full text-green-500 text-sm">
+          <i class="fas fa-chart-line text-lg"></i>
+          <span class="hidden group-hover:block">Dashboard</span>
+        </li>
+      </a>
+
+      <a href="/receitas/transaction.html">
+        <li class="flex items-center gap-4 p-4 hover:bg-zinc-700 w-full text-zinc-400 text-sm">
+          <i class="fas fa-wallet text-lg"></i>
+          <span class="hidden group-hover:block">Carteira</span>
+        </li>
+      </a>
+
+      <a href="/despesas/transaction.html">
+        <li class="flex items-center gap-4 p-4 hover:bg-zinc-700 w-full text-zinc-400 text-sm">
+          <i class="fas fa-money-check-alt text-lg"></i>
+          <span class="hidden group-hover:block">Despesas</span>
+        </li>
+      </a>
+
+      <a href="/configuration/config.html">
+        <li class="flex items-center gap-4 p-4 hover:bg-zinc-700 w-full text-zinc-400 text-sm">
+          <i class="fas fa-cog text-lg"></i>
+          <span class="hidden group-hover:block">Configuração</span>
+        </li>
+      </a>
+    </ul>
+  </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="flex-1 flex flex-col">
+    <!-- Header -->
+    <header class="bg-zinc-800 flex items-center justify-between px-6 py-4">
+      <h1 class="text-lg font-bold text-green-500 flex-grow">
+        <a href="/dashboard/index.html"> Dashboard Financeiro </a>
+      </h1>
+
+      <select id="monthFilter"
+        class="flex space-x-4 mr-2 mt-1 p-2 bg-zinc-900 border border-zinc-700 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+        onchange="filterByMonth()">
+        <option value="all">Todos os meses</option>
+        <option value="0">Janeiro</option>
+        <option value="1">Fevereiro</option>
+        <option value="2">Março</option>
+        <option value="3">Abril</option>
+        <option value="4">Maio</option>
+        <option value="5">Junho</option>
+        <option value="6">Julho</option>
+        <option value="7">Agosto</option>
+        <option value="8">Setembro</option>
+        <option value="9">Outubro</option>
+        <option value="10">Novembro</option>
+        <option value="11">Dezembro</option>
+      </select>
+
+      <!-- Botão do Dropdown -->
+      <div>
+        <button id="dropdownButton"
+          class="bg-green-500 text-white font-medium py-2 px-4 rounded focus:outline-none focus:ring-2 focus:ring-blue-300">
+          <span id="user-name">Carregando...</span> ▼
+        </button>
+
+        <!-- Menu do Dropdown -->
+        <div id="dropdownMenu" class="hidden absolute mt-2 w-48 bg-white border border-gray-300 rounded-md shadow-lg">
+          <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100" onclick="logout()">Sair</a>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main section -->
+    <main class="flex-1">
+      <div class="grid grid-cols-3 gap-4 p-6">
+        <!-- Card 1 -->
+        <!-- Card 1 - Receitas -->
+        <a href="/receitas/transaction.html"
+          class="bg-zinc-800 text-white rounded-lg p-6 shadow-lg flex flex-col justify-between hover:bg-zinc-700/50 transition-colors">
+          <div class="flex items-center">
+            <div class="bg-green-900 bg-opacity-25 text-green-500 py-2 px-3 rounded-lg mr-4">
+              <i class="fa-regular fa-circle-up text-green-500"></i>
+            </div>
+            <div>
+              <h3 class="text-sm text-zinc-400">Receitas</h3>
+              <p id="totalReceitas" class="text-2xl font-bold"></p>
+            </div>
+          </div>
+
+          <!-- Parte inferior com ganhos -->
+          <div class="mt-4 border-t border-zinc-700 pt-2">
+            <p class="text-sm text-zinc-400">Ganho Dia 01: <span id="totalGanhoDia01" class="text-white font-medium">R$
+                0,00</span></p>
+            <p class="text-sm text-zinc-400">Ganho Dia 15: <span id="totalGanhoDia15" class="text-white font-medium">R$
+                0,00</span></p>
+          </div>
+        </a>
+
+        <!-- Card 2 - Despesas -->
+        <a href="/despesas/transaction.html"
+          class="bg-zinc-800 text-white rounded-lg p-6 shadow-lg flex flex-col justify-between hover:bg-zinc-700/50 transition-colors">
+          <div class="flex items-center">
+            <div class="bg-red-900 bg-opacity-25 text-red-500 py-2 px-3 rounded-lg mr-4">
+              <i class="fa-regular fa-circle-down text-red-500"></i>
+            </div>
+            <div>
+              <h3 class="text-sm text-zinc-400">Despesas</h3>
+              <p id="totalDespesas" class="text-2xl font-bold"></p>
+            </div>
+          </div>
+
+          <!-- Parte inferior com gastos -->
+          <div class="mt-4 border-t border-zinc-700 pt-2">
+            <p class="text-sm text-zinc-400">Gasto Dia 01: <span id="totalGastoDia01" class="text-white font-medium">R$
+                0,00</span></p>
+            <p class="text-sm text-zinc-400">Gasto Dia 15: <span id="totalGastoDia15" class="text-white font-medium">R$
+                0,00</span></p>
+          </div>
+        </a>
+
+        <!-- Card 3 - Sobra -->
+        <div class="bg-zinc-800 text-white rounded-lg p-6 shadow-lg flex flex-col justify-between">
+          <div class="flex items-center">
+            <div class="bg-zinc-700 bg-opacity-75 py-2 px-3 rounded-lg mr-4">
+              <i class="fas fa-piggy-bank text-white text-500"></i>
+            </div>
+            <div>
+              <h3 class="text-sm text-zinc-400">Sobra</h3>
+              <p id="totalSobra" class="text-2xl font-bold"></p>
+            </div>
+          </div>
+
+          <!-- Parte inferior com sobra -->
+          <div class="mt-4 border-t border-zinc-700 pt-2">
+            <p class="text-sm text-zinc-400">Sobra Dia 01: <span id="sobraDia01" class="text-white font-medium">R$
+                0,00</span></p>
+            <p class="text-sm text-zinc-400">Sobra Dia 15: <span id="sobraDia15" class="text-white font-medium">R$
+                0,00</span></p>
+          </div>
+        </div>
+
       </div>
 
-      <!-- Menu -->
-      <ul class="mt-4 w-full">
-        <a href="/dashboard/index.html">
-          <li
-            class="flex items-center gap-4 p-4 hover:bg-zinc-700 w-full text-green-500 text-sm"
-          >
-            <i class="fas fa-money-check-alt text-lg"></i>
-            <span class="hidden group-hover:block">Dashboard</span>
-          </li>
-        </a>
-
-        <a href="/receitas/transaction.html">
-          <li
-            class="flex items-center gap-4 p-4 hover:bg-zinc-700 w-full text-zinc-400 text-sm"
-          >
-            <i class="fas fa-wallet text-lg"></i>
-            <span class="hidden group-hover:block">Carteira</span>
-          </li>
-        </a>
-
-        <a href="/despesas/transaction.html">
-          <li
-            class="flex items-center gap-4 p-4 hover:bg-zinc-700 w-full text-zinc-400 text-sm"
-          >
-            <i class="fas fa-money-check-alt text-lg"></i>
-            <span class="hidden group-hover:block">Despesas</span>
-          </li>
-        </a>
-      </ul>
-    </div>
-
-    <!-- Main Content -->
-    <div class="flex-1 flex flex-col">
-      <!-- Header -->
-      <header class="bg-zinc-800 flex items-center justify-between px-6 py-4">
-        <h1 class="text-lg font-bold text-green-500 flex-grow">
-          <a href="/dashboard/index.html"> Dashboard Financeiro </a>
-        </h1>
-
-        <select
-          id="monthFilter"
-          class="flex space-x-4 mr-2 mt-1 p-2 bg-zinc-900 border border-zinc-700 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-          onchange="filterByMonth()"
-        >
-          <option value="all">Todos os meses</option>
-          <option value="0">Janeiro</option>
-          <option value="1">Fevereiro</option>
-          <option value="2">Março</option>
-          <option value="3">Abril</option>
-          <option value="4">Maio</option>
-          <option value="5">Junho</option>
-          <option value="6">Julho</option>
-          <option value="7">Agosto</option>
-          <option value="8">Setembro</option>
-          <option value="9">Outubro</option>
-          <option value="10">Novembro</option>
-          <option value="11">Dezembro</option>
-        </select>
-
-        <!-- Botão do Dropdown -->
-        <div>
-          <button
-            id="dropdownButton"
-            class="bg-green-500 text-white font-medium py-2 px-4 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
-          >
-            <span id="user-name">Carregando...</span> ▼
-          </button>
-
-          <!-- Menu do Dropdown -->
-          <div
-            id="dropdownMenu"
-            class="hidden absolute mt-2 w-48 bg-white border border-gray-300 rounded-md shadow-lg"
-          >
-            <a
-              href="#"
-              class="block px-4 py-2 text-gray-700 hover:bg-gray-100"
-              onclick="logout()"
-              >Sair</a
-            >
-          </div>
+      <div class="grid grid-cols-2 gap-4 p-6 text-zinc-200 -mt-6">
+        <div class="bg-zinc-800 rounded-lg p-4 shadow-lg">
+          <h2 class="text-xl font-semibold text-zinc-300 mb-4">
+            Receitas por Mês
+          </h2>
+          <canvas id="monthlyIncomeChart"></canvas>
         </div>
-      </header>
+        <div class="bg-zinc-800 rounded-lg p-4 shadow-lg">
+          <h2 class="text-xl font-semibold text-zinc-300 mb-4">
+            Despesas por Mês
+          </h2>
+          <canvas id="monthlyExpensesChart"></canvas>
+        </div>
+      </div>
 
-      <!-- Main section -->
-      <main class="flex-1">
-        <div class="grid grid-cols-3 gap-4 p-6">
-          <!-- Card 1 -->
-          <!-- Card 1 - Receitas -->
-<a
-href="/receitas/transaction.html"
-class="bg-zinc-800 text-white rounded-lg p-6 shadow-lg flex flex-col justify-between hover:bg-zinc-700/50 transition-colors"
->
-<div class="flex items-center">
-  <div class="bg-green-900 bg-opacity-25 text-green-500 py-2 px-3 rounded-lg mr-4">
-    <i class="fa-regular fa-circle-up text-green-500"></i>
-  </div>
-  <div>
-    <h3 class="text-sm text-zinc-400">Receitas</h3>
-    <p id="totalReceitas" class="text-2xl font-bold"></p>
-  </div>
-</div>
-
-<!-- Parte inferior com ganhos -->
-<div class="mt-4 border-t border-zinc-700 pt-2">
-  <p class="text-sm text-zinc-400">Ganho Dia 01: <span id="totalGanhoDia01" class="text-white font-medium">R$ 0,00</span></p>
-  <p class="text-sm text-zinc-400">Ganho Dia 15: <span id="totalGanhoDia15" class="text-white font-medium">R$ 0,00</span></p>
-</div>
-</a>
-
-<!-- Card 2 - Despesas -->
-<a
-href="/despesas/transaction.html"
-class="bg-zinc-800 text-white rounded-lg p-6 shadow-lg flex flex-col justify-between hover:bg-zinc-700/50 transition-colors"
->
-<div class="flex items-center">
-  <div class="bg-red-900 bg-opacity-25 text-red-500 py-2 px-3 rounded-lg mr-4">
-    <i class="fa-regular fa-circle-down text-red-500"></i>
-  </div>
-  <div>
-    <h3 class="text-sm text-zinc-400">Despesas</h3>
-    <p id="totalDespesas" class="text-2xl font-bold"></p>
-  </div>
-</div>
-
-<!-- Parte inferior com gastos -->
-<div class="mt-4 border-t border-zinc-700 pt-2">
-  <p class="text-sm text-zinc-400">Gasto Dia 01: <span id="totalGastoDia01" class="text-white font-medium">R$ 0,00</span></p>
-  <p class="text-sm text-zinc-400">Gasto Dia 15: <span id="totalGastoDia15" class="text-white font-medium">R$ 0,00</span></p>
-</div>
-</a>
-
-<!-- Card 3 - Sobra -->
-<div
-class="bg-zinc-800 text-white rounded-lg p-6 shadow-lg flex flex-col justify-between"
->
-<div class="flex items-center">
-  <div class="bg-zinc-700 bg-opacity-75 py-2 px-3 rounded-lg mr-4">
-    <i class="fas fa-piggy-bank text-white text-500"></i>
-  </div>
-  <div>
-    <h3 class="text-sm text-zinc-400">Sobra</h3>
-    <p id="totalSobra" class="text-2xl font-bold"></p>
-  </div>
-</div>
-
-<!-- Parte inferior com sobra -->
-<div class="mt-4 border-t border-zinc-700 pt-2">
-  <p class="text-sm text-zinc-400">Sobra Dia 01: <span id="sobraDia01" class="text-white font-medium">R$ 0,00</span></p>
-  <p class="text-sm text-zinc-400">Sobra Dia 15: <span id="sobraDia15" class="text-white font-medium">R$ 0,00</span></p>
-</div>
-</div>
-
+      <div class="grid grid-cols-4 gap-4 p-6 text-zinc-200 -mt-6">
+        <!-- Dívidas por Categoria -->
+        <div class="bg-zinc-800 rounded-lg p-4 shadow-lg col-span-2">
+          <h2 class="text-xl font-semibold text-zinc-300 mb-4">
+            Dívidas por Categoria
+          </h2>
+          <canvas id="categoriesChart"></canvas>
         </div>
 
-        <div class="grid grid-cols-2 gap-4 p-6 text-zinc-200 -mt-6">
-          <div class="bg-zinc-800 rounded-lg p-4 shadow-lg">
-            <h2 class="text-xl font-semibold text-zinc-300 mb-4">
-              Receitas por Mês
-            </h2>
-            <canvas id="monthlyIncomeChart"></canvas>
-          </div>
-          <div class="bg-zinc-800 rounded-lg p-4 shadow-lg">
-            <h2 class="text-xl font-semibold text-zinc-300 mb-4">
-              Despesas por Mês
-            </h2>
-            <canvas id="monthlyExpensesChart"></canvas>
-          </div>
+        <!-- Pagas vs Pendentes -->
+        <div class="bg-zinc-800 rounded-lg p-4 shadow-lg">
+          <h2 class="text-xl font-semibold text-zinc-300 mb-4">
+            Pagas vs Pendentes
+          </h2>
+          <canvas id="paidVsPendingChart"></canvas>
         </div>
 
-        <div class="grid grid-cols-4 gap-4 p-6 text-zinc-200 -mt-6">
-          <!-- Dívidas por Categoria -->
-          <div class="bg-zinc-800 rounded-lg p-4 shadow-lg col-span-2">
-            <h2 class="text-xl font-semibold text-zinc-300 mb-4">
-              Dívidas por Categoria
-            </h2>
-            <canvas id="categoriesChart"></canvas>
-          </div>
-
-          <!-- Pagas vs Pendentes -->
-          <div class="bg-zinc-800 rounded-lg p-4 shadow-lg">
-            <h2 class="text-xl font-semibold text-zinc-300 mb-4">
-              Pagas vs Pendentes
-            </h2>
-            <canvas id="paidVsPendingChart"></canvas>
-          </div>
-
-          <!-- Dívidas Fixas vs Parceladas -->
-          <div class="bg-zinc-800 rounded-lg p-4 shadow-lg">
-            <h2 class="text-xl font-semibold text-zinc-300 mb-4">
-              Dívidas Fixas vs Parceladas
-            </h2>
-            <canvas id="fixedVsInstallmentsChart"></canvas>
-          </div>
+        <!-- Dívidas Fixas vs Parceladas -->
+        <div class="bg-zinc-800 rounded-lg p-4 shadow-lg">
+          <h2 class="text-xl font-semibold text-zinc-300 mb-4">
+            Dívidas Fixas vs Parceladas
+          </h2>
+          <canvas id="fixedVsInstallmentsChart"></canvas>
         </div>
-      </main>
-    </div>
+      </div>
+    </main>
+  </div>
 
-    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
-    <script src="/firebase-init.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
+  <script src="/firebase-init.js"></script>
 
-    <script src="/dashboard/dashboard.js"></script>
-    <script src="/loading.js"></script>
-    <script src="/dashboard/charts.js"></script>
-  </body>
+  <script src="/dashboard/dashboard.js"></script>
+  <script src="/loading.js"></script>
+  <script src="/dashboard/charts.js"></script>
+</body>
+
 </html>
