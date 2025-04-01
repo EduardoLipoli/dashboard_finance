@@ -19,7 +19,6 @@
   <!-- SIDEBAR -->
   <div id="sidebar"
     class="flex flex-col items-center bg-zinc-800 h-full w-16 group hover:w-48 transition-all duration-300">
-    <!-- LOGO -->
     <div class="p-4">
       <i class="fas fa-coins text-green-500 text-2xl"></i>
     </div>
@@ -58,7 +57,6 @@
 
   <!-- Main Content -->
   <div class="flex-1 flex flex-col">
-    <!-- Header -->
     <header class="bg-zinc-800 flex items-center justify-between px-6 py-4">
       <h1 class="text-lg font-bold text-green-500 flex-grow">
         <a href="/dashboard/index.html"> Dashboard Financeiro </a>
@@ -82,14 +80,11 @@
         <option value="11">Dezembro</option>
       </select>
 
-      <!-- Botão do Dropdown -->
       <div>
         <button id="dropdownButton"
           class="bg-green-500 text-white font-medium py-2 px-4 rounded focus:outline-none focus:ring-2 focus:ring-blue-300">
           <span id="user-name">Carregando...</span> ▼
         </button>
-
-        <!-- Menu do Dropdown -->
         <div id="dropdownMenu" class="hidden absolute mt-2 w-48 bg-white border border-gray-300 rounded-md shadow-lg">
           <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100" onclick="logout()">Sair</a>
         </div>
@@ -99,7 +94,6 @@
     <!-- Main section -->
     <main class="flex-1">
       <div class="grid grid-cols-3 gap-4 p-6">
-        <!-- Card 1 -->
         <!-- Card 1 - Receitas -->
         <a href="/receitas/transaction.html"
           class="bg-zinc-800 text-white rounded-lg p-6 shadow-lg flex flex-col justify-between hover:bg-zinc-700/50 transition-colors">
@@ -113,7 +107,6 @@
             </div>
           </div>
 
-          <!-- Parte inferior com ganhos -->
           <div class="mt-4 border-t border-zinc-700 pt-2">
             <p class="text-sm text-zinc-400">Ganho Dia 01: <span id="totalGanhoDia01" class="text-white font-medium">R$
                 0,00</span></p>
@@ -135,7 +128,6 @@
             </div>
           </div>
 
-          <!-- Parte inferior com gastos -->
           <div class="mt-4 border-t border-zinc-700 pt-2">
             <p class="text-sm text-zinc-400">Gasto Dia 01: <span id="totalGastoDia01" class="text-white font-medium">R$
                 0,00</span></p>
@@ -156,7 +148,6 @@
             </div>
           </div>
 
-          <!-- Parte inferior com sobra -->
           <div class="mt-4 border-t border-zinc-700 pt-2">
             <p class="text-sm text-zinc-400">Sobra Dia 01: <span id="sobraDia01" class="text-white font-medium">R$
                 0,00</span></p>
@@ -199,10 +190,10 @@
           <canvas id="paidVsPendingChart"></canvas>
         </div>
 
-        <!-- Dívidas Fixas vs Parceladas -->
+        <!-- Dívidas dia 01 e dia 15 -->
         <div class="bg-zinc-800 rounded-lg p-4 shadow-lg">
           <h2 class="text-xl font-semibold text-zinc-300 mb-4">
-            Dívidas Fixas vs Parceladas
+            Dívidas dia 01 e dia 15
           </h2>
           <canvas id="fixedVsInstallmentsChart"></canvas>
         </div>

@@ -1,6 +1,6 @@
 // Gráfico de Dívidas do dia 01 vs dia 15
 const debtsByDayCtx = document
-  .getElementById("fixedVsInstallmentsChart") // Usando o mesmo canvas
+  .getElementById("fixedVsInstallmentsChart")
   .getContext("2d");
 
 const debtsByDayChart = new Chart(debtsByDayCtx, {

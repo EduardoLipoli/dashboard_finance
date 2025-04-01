@@ -6,15 +6,15 @@ const auth = firebase.auth();
 auth.onAuthStateChanged(async (user) => {
   if (user) {
     try {
-      await user.reload(); // Força a atualização do estado do usuário
-      loadUserName(user); // Atualiza o nome do usuário
-      loadTransactionsFromFirestore(); // Carrega transações do Firestore
+      await user.reload();
+      loadUserName(user);
+      loadTransactionsFromFirestore();
     } catch (error) {
       console.error("Erro ao atualizar dados do usuário:", error);
     }
   } else {
     console.error("Usuário não autenticado.");
-    window.location.href = "/index.html"; // Redireciona para login
+    window.location.href = "/index.html";
   }
 });
 
@@ -31,14 +31,12 @@ async function loadTransactionsFromFirestore() {
   const userRef = db.collection("users").doc(user.uid);
 
   try {
-    // Carregar categorias
     const categoriesSnapshot = await userRef.collection("categories").get();
     const categoriesMap = {};
     categoriesSnapshot.forEach((doc) => {
-      categoriesMap[doc.id] = doc.data().name; // Mapeia ID para nome
+      categoriesMap[doc.id] = doc.data().name;
     });
 
-    // Carregar transações
     const transactionsSnapshot = await userRef.collection("transactions").get();
     hideLoading();
     transactions.length = 0;
@@ -49,7 +47,6 @@ async function loadTransactionsFromFirestore() {
       transaction.dueDate = new Date(transaction.dueDate.seconds * 1000);
       transaction.addedOn = new Date(transaction.addedOn.seconds * 1000);
 
-      // Substituir ID da categoria pelo nome correspondente
       if (transaction.category in categoriesMap) {
         transaction.category = categoriesMap[transaction.category];
       }
@@ -87,7 +84,6 @@ function calculateTotals() {
     if (transaction.type === "Ganho") {
       totalReceitas += transaction.amount;
 
-      // Soma dos ganhos do dia 01 e 15
       if (transaction.datepay === "01") {
         totalGanhoDia01 += transaction.amount;
       } else if (transaction.datepay === "15") {
@@ -96,7 +92,6 @@ function calculateTotals() {
     } else if (transaction.type === "Gasto") {
       totalDespesas += transaction.amount;
 
-      // Soma dos gastos do dia 01 e 15
       if (transaction.datepay === "01") {
         totalGastoDia01 += transaction.amount;
       } else if (transaction.datepay === "15") {
@@ -165,25 +160,25 @@ function updateCharts() {
   debtsByDayChart.update();
 
   const categoriesData = filteredTransactions
-    .filter((t) => t.type === "Gasto") // Filtra somente transações de "Gasto"
+    .filter((t) => t.type === "Gasto")
     .reduce((acc, t) => {
-      acc[t.category] = (acc[t.category] || 0) + t.amount; // Soma o valor total de cada categoria
+      acc[t.category] = (acc[t.category] || 0) + t.amount;
       return acc;
     }, {});
 
   // Atualiza o gráfico de categorias com as transações de "Gasto"
-  categoriesChart.data.labels = Object.keys(categoriesData); // As categorias
-  categoriesChart.data.datasets[0].data = Object.values(categoriesData); // Soma dos valores das transações por categoria
+  categoriesChart.data.labels = Object.keys(categoriesData);
+  categoriesChart.data.datasets[0].data = Object.values(categoriesData);
   categoriesChart.update();
 
   // Atualizar gráfico de Pagas vs Pendentes para transações do tipo "Gasto"
   const paidTransactions = filteredTransactions.filter(
     (t) => t.type === "Gasto" && t.isPaid
-  ).length; // Filtra apenas "Gasto" e se está pago
+  ).length;
 
   const pendingTransactions = filteredTransactions.filter(
     (t) => t.type === "Gasto" && !t.isPaid
-  ).length; // Filtra apenas "Gasto" e se está pendente
+  ).length;
 
   paidVsPendingChart.data.datasets[0].data = [
     paidTransactions,
@@ -212,12 +207,11 @@ function updateCharts() {
 
 // Função para definir o mês atual no filtro
 function setDefaultMonth() {
-  const currentMonth = new Date().getMonth(); // Obtém o mês atual
-  document.getElementById("monthFilter").value = currentMonth; // Define o valor do mês atual no filtro
-  filterByMonth(); // Atualiza as transações com o mês atual
+  const currentMonth = new Date().getMonth();
+  document.getElementById("monthFilter").value = currentMonth;
+  filterByMonth();
 }
 
-// Chame essa função quando a página carregar
 window.onload = setDefaultMonth;
 
 // Função para filtrar as transações por mês
@@ -225,16 +219,13 @@ function filterByMonth() {
   const selectedMonth = document.getElementById("monthFilter").value;
 
   if (selectedMonth === "all") {
-    // Se for "Todos os meses", exibe todas as transações
     filteredTransactions = [...transactions];
   } else {
-    // Caso contrário, filtra pelas transações do mês selecionado
     filteredTransactions = transactions.filter((transaction) => {
       return transaction.dueDate.getMonth() === parseInt(selectedMonth);
     });
   }
 
-  // Atualiza os totais após o filtro
   calculateTotals();
   updateCharts();
 }
@@ -258,7 +249,6 @@ dropdownButton.addEventListener("click", () => {
   dropdownMenu.classList.toggle("hidden");
 });
 
-// Fechar dropdown ao clicar fora
 document.addEventListener("click", (event) => {
   if (!dropdownButton.contains(event.target)) {
     dropdownMenu.classList.add("hidden");
@@ -273,7 +263,6 @@ function checkTransactions() {
     popup.classList.remove("hidden");
     overlay.classList.remove("hidden");
 
-    // Adiciona eventos para os botões, se ainda não foram adicionados
     document.getElementById("add-income-btn").addEventListener("click", () => {
       window.location.href = "/receitas/transaction.html?action=openForm";
       closeModal();
@@ -284,11 +273,9 @@ function checkTransactions() {
       closeModal();
     });
 
-    // Adiciona evento para fechar o popup ao clicar no botão "X"
     const closeButton = document.getElementById("close-modal-btn");
     closeButton.addEventListener("click", () => closeModal());
 
-    // Adiciona evento para fechar o popup ao clicar fora da área do modal
     popup.addEventListener("click", (e) => {
       if (e.target === popup) {
         closeModal();
@@ -309,11 +296,9 @@ function showAlert(message, type = 'success') {
   const alertContainer = document.getElementById('alert-container');
   const alert = document.createElement('div');
 
-  // Classes base
   let baseClasses =
     'flex items-center px-4 py-3 rounded shadow-md transition-opacity duration-300';
     
-  // Classes por tipo
   let typeClasses = "";
   if (type === "success") {
     typeClasses = "bg-green-500 text-white hover:bg-green-600 transition-colors cursor-default select-none";
