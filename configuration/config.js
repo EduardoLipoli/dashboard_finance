@@ -6,7 +6,7 @@ auth.onAuthStateChanged(async (user) => {
     try {
       await user.reload();
       loadUserName(user);
-      loadCategories(); // Carrega as categorias
+      loadCategories();
     } catch (error) {
       console.error("Erro ao atualizar dados do usuário:", error);
     }
@@ -273,7 +273,7 @@ function loadCategories() {
         editButton.classList.add("text-green-500", "hover:text-green-600");
         editButton.innerHTML = `<i class="fa-regular fa-pen-to-square"></i>`;
         editButton.onclick = (event) => {
-          event.stopPropagation(); // Impede que o clique na linha afete o checkbox
+          event.stopPropagation();
           openEditModal(doc.id, category, listItem);
         };
 
@@ -284,9 +284,9 @@ function loadCategories() {
         listItem.appendChild(actionsContainer);
 
         listItem.onclick = (event) => {
-          if (!event.target.closest("button")) { // Impede que botões acionem o checkbox
+          if (!event.target.closest("button")) { 
             checkbox.checked = !checkbox.checked;
-            checkbox.dispatchEvent(new Event("change")); // Garante que o onchange seja acionado
+            checkbox.dispatchEvent(new Event("change"));
           }
         };
 
@@ -297,7 +297,7 @@ function loadCategories() {
         const isChecked = selectAllCheckbox.checked;
         allCheckboxes.forEach(checkbox => {
           checkbox.checked = isChecked;
-          checkbox.dispatchEvent(new Event("change")); // Garante que cada checkbox processe o evento
+          checkbox.dispatchEvent(new Event("change"));
         });
       }
 
@@ -375,7 +375,6 @@ function updateCategoryInFirestore(categoryId, newCategoryName, listItem) {
   categoryRef
     .update({ name: newCategoryName })
     .then(() => {
-      // Atualiza o nome na interface
       listItem.querySelector("span").textContent = newCategoryName;
       closeEditModal();
     })
@@ -528,7 +527,6 @@ function openCustomModal(title, message, onConfirm, onCancel = null) {
     closeCustomModal();
   };
 
-  // Fecha ao clicar fora do modal
   modal.onclick = (e) => {
     if (e.target === modal) closeCustomModal();
   };
@@ -614,7 +612,7 @@ function addDefaultCategories(userId) {
     );
 }
 
-// 2️⃣ MONITORA SE O USUÁRIO APAGOU TODAS AS CATEGORIAS
+// Verifica se o usuario apagou todas as categorias
 function checkIfCategoriesAreEmpty(userId) {
   const db = firebase.firestore();
   const categoriesRef = db
@@ -649,20 +647,16 @@ function checkIfCategoriesAreEmpty(userId) {
 }
 
 function showSection(sectionId, e = null) {
-  // Esconde todas as seções
   document.querySelectorAll("section").forEach((section) => {
     section.classList.add("hidden");
   });
 
-  // Exibe a seção desejada
   document.getElementById(sectionId).classList.remove("hidden");
 
-  // Remove a classe de destaque de todos os botões
   document.querySelectorAll("aside button").forEach((button) => {
     button.classList.remove("bg-zinc-700");
   });
 
-  // Se um evento foi passado, usa o botão clicado; caso contrário, usa o botão padrão
   if (e && e.currentTarget) {
     e.currentTarget.classList.add("bg-zinc-700");
   } else {
@@ -673,7 +667,6 @@ function showSection(sectionId, e = null) {
   }
 }
 
-// Quando a página carregar, exibe a seção padrão e destaca o botão correspondente
 document.addEventListener("DOMContentLoaded", () => {
   showSection('userSettings');
 });
