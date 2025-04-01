@@ -18,10 +18,6 @@
       class="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 hidden"
     ></div>
 
-    <div id="loading" class="loading-screen">
-      <div class="loader"></div>
-    </div>
-
     <!-- Modal -->
     <div
       id="deleteModal"
@@ -55,6 +51,11 @@
         </div>
       </div>
     </div>
+
+    <div
+      id="alert-container"
+      class="fixed bottom-4 right-4 z-50 space-y-4"
+    ></div>
 
     <!-- SIDEBAR -->
     <div
@@ -94,6 +95,15 @@
             <span class="hidden group-hover:block">Despesas</span>
           </li>
         </a>
+
+        <a href="/configuration/config.html">
+          <li
+            class="flex items-center gap-4 p-4 hover:bg-zinc-700 w-full text-zinc-400 text-sm"
+          >
+            <i class="fas fa-cog text-lg"></i>
+            <span class="hidden group-hover:block">Configuração</span>
+          </li>
+        </a>
       </ul>
     </div>
 
@@ -102,7 +112,7 @@
       <!-- Header -->
       <header class="bg-zinc-800 flex items-center justify-between px-6 py-4">
         <h1 class="text-lg font-bold text-green-500 flex-grow">
-          <a href="/dashboard/index.html"> Dashboard Financeiro </a>
+          <a href="/dashboard/index.html"> Dashboard Financeiro - Despesas</a>
         </h1>
         <select
           id="filterDatepay"
@@ -121,10 +131,10 @@
         </button>
 
         <!-- Botão do Dropdown -->
-        <div>
+        <div class="relative inline-block">
           <button
             id="dropdownButton"
-            class="bg-green-500 text-white font-medium py-2 px-4 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
+            class="bg-green-500 text-white font-medium py-2 px-4 rounded-md focus:outline-none hover:bg-green-600 transition duration-200"
           >
             <span id="user-name">Carregando...</span> ▼
           </button>
@@ -132,14 +142,15 @@
           <!-- Menu do Dropdown -->
           <div
             id="dropdownMenu"
-            class="hidden absolute mt-2 w-48 bg-white border border-gray-300 rounded-md shadow-lg"
+            class="hidden absolute right-0 mt-2 w-48 bg-white border border-gray-300 rounded-lg shadow-md z-50"
           >
             <a
               href="#"
-              class="block px-4 py-2 text-gray-700 hover:bg-gray-100"
+              class="block px-4 py-3 text-gray-700 hover:bg-gray-100 font-medium text-sm transition duration-150"
               onclick="logout()"
-              >Sair</a
             >
+              Sair
+            </a>
           </div>
         </div>
       </header>
@@ -157,7 +168,10 @@
           </div>
 
           <!-- Texto central com mês/ano -->
-          <span class="text-white text-lg font-semibold">Setembro/2024</span>
+          <span
+            class="text-white text-lg font-semibold cursor-pointer select-none"
+            >Setembro/2024</span
+          >
 
           <!-- Setas de navegação -->
           <div class="chevron-right">
@@ -203,7 +217,7 @@
           </div>
         </div>
       </main>
-    </div>
+    </div>  
 
     <!-- Form Sidebar -->
     <div
@@ -226,8 +240,9 @@
             <label for="name" class="block mb-1">Nome</label>
             <input
               type="text"
+              autocomplete="off"
               id="name"
-              onchange="onChangeName()"
+              oninput="filterSuggestions()"
               class="w-full px-3 py-1 bg-zinc-900 border border-zinc-700 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
               required
             />
@@ -237,12 +252,16 @@
             >
               Nome é obrigatório
             </div>
+            <!-- Div onde sugestões serão exibidas -->
+            <div id="suggestions" class="bg-zinc-800 border border-zinc-700 rounded mt-1 hidden"></div>
           </div>
+          
 
           <div>
             <label for="amount" class="block mb-1">Valor</label>
             <input
               type="text"
+              autocomplete="off"
               id="amount"
               onchange="onChangeAmount()"
               class="w-full px-3 py-1 bg-zinc-900 border border-zinc-700 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
@@ -267,25 +286,11 @@
               >Categoria</label
             >
             <select
-              id="category"
+              id="categorySelect"
               class="w-full mt-1 p-2 bg-zinc-900 border border-zinc-700 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
               required
             >
-              <option value="Residencia">Residência</option>
-              <option value="Serviços">Serviços</option>
-              <option value="Cartão de Crédito">Cartão de Crédito</option>
-              <option value="Compras">Compras</option>
-              <option value="Alimentacao">Alimentação</option>
-              <option value="Transporte">Transporte</option>
-              <option value="Saude">Saúde</option>
-              <option value="Educacao">Educação</option>
-              <option value="Lazer e Entretenimento">
-                Lazer e Entretenimento
-              </option>
-              <option value="Vestuário">Vestuário</option>
-              <option value="Presentes">Presentes</option>
-              <option value="Reparos">Reparos</option>
-              <option value="Outros Gastos">Outros Gastos</option>
+
             </select>
           </div>
 
@@ -323,50 +328,34 @@
             </select>
           </div>
           <div>
-            <label for="type" class="block text-sm font-medium"
-              >Frequência</label
-            >
-            <div class="grid grid-cols-2 gap-2">
-              <div
-                class="flex items-center ps-4 border border-zinc-700 rounded"
-              >
-                <input
-                  checked
-                  id="fixed"
-                  type="radio"
-                  value="fixed"
-                  name="bordered-radio"
-                  class="w-4 h-4 text-white bg-zinc-700"
-                />
-                <label
-                  for="fixed"
-                  class="w-full py-4 ms-2 text-sm font-medium text-white"
-                  >Fixo</label
-                >
-              </div>
-              <div
-                class="flex items-center ps-4 border border-zinc-700 rounded"
-              >
-                <input
-                  id="parcel"
-                  type="radio"
-                  value="parcel"
-                  name="bordered-radio"
-                  class="w-4 h-4 text-white bg-zinc-700"
-                />
-                <label
-                  for="parcel"
-                  class="w-full py-4 ms-2 text-sm font-medium text-white"
-                  >Parcelado</label
-                >
-              </div>
+            <label for="type" class="block text-sm font-medium mb-2 text-gray-300">Frequência</label>
+            <div class="grid grid-cols-3 gap-2">
+              <input id="single" type="radio" value="single" name="bordered-radio" class="hidden peer/single" checked />
+              <label for="single"
+                class="w-full text-center py-2 px-3 text-sm font-medium text-gray-300 cursor-pointer bg-zinc-800 rounded-lg transition-all peer-checked/single:bg-green-500 peer-checked/single:text-white">
+                Único
+              </label>
+          
+              <input id="fixed" type="radio" value="fixed" name="bordered-radio" class="hidden peer/fixed" />
+              <label for="fixed"
+                class="w-full text-center py-2 px-3 text-sm font-medium text-gray-300 cursor-pointer bg-zinc-800 rounded-lg transition-all peer-checked/fixed:bg-green-500 peer-checked/fixed:text-white">
+                Fixo
+              </label>
+          
+              <input id="parcel" type="radio" value="parcel" name="bordered-radio" class="hidden peer/parcel" />
+              <label for="parcel"
+                class="w-full text-center py-2 px-3 text-sm font-medium text-gray-300 cursor-pointer bg-zinc-800 rounded-lg transition-all peer-checked/parcel:bg-green-500 peer-checked/parcel:text-white">
+                Parcelado
+              </label>
             </div>
           </div>
+          
 
           <div id="installmentsContainer" class="hidden">
             <label for="installments" class="block mb-1">Parcelas</label>
             <input
               type="number"
+              autocomplete="off"
               id="installments"
               class="w-full px-3 py-1 bg-zinc-900 border border-zinc-700 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
               min="1"
@@ -374,6 +363,7 @@
               placeholder="Número de parcelas"
             />
           </div>
+
           <div class="grid grid-cols-2 gap-2">
             <button
               type="button"
@@ -400,8 +390,8 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
     <script src="/firebase-init.js"></script>
 
-    <script src="/bd-firestore.js"></script>
     <script src="/script-global.js"></script>
+    <script src="/loading.js"></script>
     <script src="/despesas/script.js"></script>
     <script src="/validate.js"></script>
   </body>
