@@ -2,7 +2,6 @@ firebase.auth().onAuthStateChanged((user) => {
   if (user) {
     window.location.href = "/dashboard/index.html";
   } else {
-    // Se o usuário não estiver logado, verificar se ele deixou o checkbox de "lembrar-me" marcado
     const rememberMe = localStorage.getItem("rememberMe") === "true";
     document.querySelector(".checkbox-login").checked = rememberMe;
   }
@@ -22,7 +21,6 @@ function login() {
   showLoading();
 
   const rememberMe = document.querySelector(".checkbox-login").checked;
-  // Armazenar a preferência de "lembrar-me" no localStorage
   localStorage.setItem("rememberMe", rememberMe);
 
   const persistence = rememberMe
