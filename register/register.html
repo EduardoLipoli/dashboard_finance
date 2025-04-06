@@ -24,6 +24,18 @@
 
       <!-- Formulário -->
       <form class="space-y-4">
+
+        <!-- Campo de E-mail -->
+        <div>
+          <label for="nome" class="block text-sm font-medium">Nome</label>
+          <input type="text" id="nome" name="nome"
+            class="w-full px-3 py-2 bg-zinc-900 border border-zinc-700 rounded focus:outline-none focus:ring-2 focus:ring-green-500 transition"
+            placeholder="Digite seu Nome" onchange="onChangeNome()" />
+          <div class="error text-sm text-red-500 hidden" id="nome-required-error">
+            Nome é obrigatório
+          </div>
+        </div>
+
         <!-- Campo de E-mail -->
         <div>
           <label for="email" class="block text-sm font-medium">E-mail</label>
@@ -91,6 +103,7 @@
 
   <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
   <script src="/firebase-init.js"></script>
 
   <script src="/register/register.js"></script>

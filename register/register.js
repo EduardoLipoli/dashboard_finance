@@ -14,8 +14,7 @@ function onChangeNome() {
 function onChangeEmail() {
   const email = form.email().value;
   form.emailRequiredError().style.display = !email ? "block" : "none";
-  form.emailInvalidError().style.display =
-    email && !validateEmail(email) ? "block" : "none";
+  form.emailInvalidError().style.display = email && !validateEmail(email) ? "block" : "none";
 
   toggleRegisterButtonDisable();
 }
@@ -38,7 +37,7 @@ function onChangeConfirmPassword() {
 function register() {
   showLoading();
 
-  const nome = document.getElementById("nome").value;
+  const nome = form.nome().value;
   const email = form.email().value;
   const password = form.password().value;
 
@@ -156,13 +155,10 @@ const form = {
   emailInvalidError: () => document.getElementById("email-invalid-error"),
   emailRequiredError: () => document.getElementById("email-required-error"),
   confirmPassword: () => document.getElementById("confirmPassword"),
-  passwordDowsntMatchError: () =>
-    document.getElementById("password-dowsnt-match-error"),
+  passwordDowsntMatchError: () => document.getElementById("password-dowsnt-match-error"),
   password: () => document.getElementById("password"),
-  passwordRequiredError: () =>
-    document.getElementById("password-required-error"),
-  passwordMinLengthError: () =>
-    document.getElementById("password-min-length-error"),
+  passwordRequiredError: () => document.getElementById("password-required-error"),
+  passwordMinLengthError: () => document.getElementById("password-min-length-error"),
   registerButton: () => document.getElementById("register-button"),
 };
  
