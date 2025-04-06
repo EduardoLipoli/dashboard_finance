@@ -334,5 +334,44 @@ document.addEventListener("DOMContentLoaded", loadUserName);
 function loadUserName(user) {
   const displayName = user.displayName || user.email.split("@")[0] || "Usuário";
   document.getElementById("user-name").textContent = displayName; // Mantém no botão do dropdown
-  document.getElementById("user-greeting").textContent = ` ${displayName}!`; // Adiciona a saudação no header
+  document.getElementById("user-greeting").textContent = `Bem-vindo de volta, ${displayName}!👋`; // Adiciona a saudação no header
 }
+
+function animarContador(id, valorFinal, duracao = 1000) {
+  const elemento = document.getElementById(id);
+  if (!elemento) return;
+
+  let inicio = 0;
+  const incremento = valorFinal / (duracao / 10); // incremento proporcional
+  const intervalo = setInterval(() => {
+    inicio += incremento;
+    if (inicio >= valorFinal) {
+      inicio = valorFinal;
+      clearInterval(intervalo);
+    }
+    elemento.textContent = formatarMoeda(inicio);
+  }, 10);
+}
+
+function formatarMoeda(valor) {
+  return valor.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    minimumFractionDigits: 2,
+  });
+}
+
+window.addEventListener("DOMContentLoaded", () => {
+  animarContador("totalReceitas", 5240.75);
+  animarContador("totalDespesas", 3120.45);
+  animarContador("totalSobra", 2120.30);
+
+  animarContador("totalGanhoDia01", 1200.00);
+  animarContador("totalGanhoDia15", 4040.75);
+
+  animarContador("totalGastoDia01", 1120.45);
+  animarContador("totalGastoDia15", 2000.00);
+
+  animarContador("sobraDia01", 800.00);
+  animarContador("sobraDia15", 1320.30);
+});
