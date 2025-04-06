@@ -330,3 +330,9 @@ function showAlert(message, type = 'success') {
 
 // Carregar nome do usuário ao iniciar a página
 document.addEventListener("DOMContentLoaded", loadUserName);
+
+function loadUserName(user) {
+  const displayName = user.displayName || user.email.split("@")[0] || "Usuário";
+  document.getElementById("user-name").textContent = displayName; // Mantém no botão do dropdown
+  document.getElementById("user-greeting").textContent = ` ${displayName}!`; // Adiciona a saudação no header
+}

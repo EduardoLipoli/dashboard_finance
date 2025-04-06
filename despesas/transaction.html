@@ -7,6 +7,7 @@
   <title>Finance Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
   <link rel="icon" type="image/x-icon" href="/images/money.ico" />
   <link rel="stylesheet" href="/style-global.css" />
 </head>
@@ -123,17 +124,17 @@
       <div class="flex items-center justify-between bg-zinc-800 p-3 rounded-lg shadow-lg mb-6 mx-auto">
         <!-- Setas de navegação -->
         <div class="chevron-left">
-          <button class="text-white hover:text-gray-300 px-4 py-1">
+          <button class="text-white hover:text-green-400 transition-colors px-4 py-1">
             <i class="fas fa-chevron-left"></i>
           </button>
         </div>
 
         <!-- Texto central com mês/ano -->
-        <span class="text-white text-lg font-semibold cursor-pointer select-none">Setembro/2024</span>
+        <span class="text-white text-lg font-semibold cursor-pointer hover:text-green-400 transition-colors select-none">Setembro/2024</span>
 
         <!-- Setas de navegação -->
         <div class="chevron-right">
-          <button class="text-white hover:text-gray-300 px-4 py-1">
+          <button class="text-white hover:text-green-400 transition-colors px-4 py-1">
             <i class="fas fa-chevron-right"></i>
           </button>
         </div>
@@ -144,28 +145,28 @@
           <table class="min-w-full table-auto">
             <thead class="bg-zinc-800 rounded-t-xl">
               <tr class="">
-                <th class="py-3 px-6 text-left font-semibold text-sm">
-                  Nome
+                <th class="py-3 px-6 text-left font-semibold text-sm cursor-pointer text-white hover:text-green-400 transition-colors select-none" onclick="ordenarTabela('name')">
+                Nome <i class="bi bi-arrow-down-up"></i>
                 </th>
-                <th class="py-3 px-6 text-left font-semibold text-sm">
+                <th class="py-3 px-6 text-left font-semibold text-sm cursor-default select-none">
                   Tipo
                 </th>
-                <th class="py-3 px-6 text-left font-semibold text-sm">
-                  Categoria
+                <th class="py-3 px-6 text-left font-semibold text-sm cursor-pointer text-white hover:text-green-400 transition-colors select-none" onclick="ordenarTabela('category')">
+                  Categoria <i class="bi bi-arrow-down-up"></i>
                 </th>
-                <th class="py-3 px-6 text-left font-semibold text-sm">
-                  Data de Vencimento
+                <th class="py-3 px-6 text-left font-semibold text-sm cursor-pointer text-white hover:text-green-400 transition-colors select-none" onclick="ordenarTabela('dueDate')">
+                  Data de Vencimento <i class="bi bi-arrow-down-up"></i>
                 </th>
-                <th class="py-3 px-6 text-left font-semibold text-sm">
-                  Data de Pagamento
+                <th class="py-3 px-6 text-left font-semibold text-sm cursor-pointer text-white hover:text-green-400 transition-colors select-none" onclick="ordenarTabela('datepay')">
+                  Data de Pagamento <i class="bi bi-arrow-down-up"></i>
                 </th>
-                <th class="py-3 px-6 text-left font-semibold text-sm">
-                  Valor
+                <th class="py-3 px-6 text-left font-semibold text-sm cursor-pointer text-white hover:text-green-400 transition-colors select-none" onclick="ordenarTabela('amount')">
+                  Valor <i class="bi bi-arrow-down-up"></i>
                 </th>
-                <th class="py-3 px-6 text-left font-semibold text-sm">
+                <th class="py-3 px-6 text-left font-semibold text-sm cursor-default select-none">
                   Parcelas
                 </th>
-                <th class="py-3 px-6 text-left font-semibold text-sm">
+                <th class="py-3 px-6 text-left font-semibold text-sm cursor-default select-none">
                   Ações
                 </th>
               </tr>

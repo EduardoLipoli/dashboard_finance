@@ -491,6 +491,46 @@ function displayTransactionsForCurrentMonth() {
   }
 }
 
+let ordenacaoAtual = { campo: null, asc: true };
+
+function ordenarTabela(campo) {
+  if (ordenacaoAtual.campo === campo) {
+    ordenacaoAtual.asc = !ordenacaoAtual.asc;
+  } else {
+    ordenacaoAtual = { campo, asc: true };
+  }
+
+  transactions.sort((a, b) => {
+    let valA = a[campo];
+    let valB = b[campo];
+
+    // Se for nome ou categoria, compara como texto
+    if (campo === "name" || campo === "category") {
+      valA = (valA || "").toString().toLowerCase();
+      valB = (valB || "").toString().toLowerCase();
+    }
+
+    // Se for amount ou datepay, compara como número
+    if (campo === "amount" || campo === "datepay") {
+      valA = Number(valA);
+      valB = Number(valB);
+    }
+
+    // Se for dueDate (objeto Date), transforma em timestamp
+    if (campo === "dueDate") {
+      valA = new Date(valA).getTime();
+      valB = new Date(valB).getTime();
+    }
+
+    if (valA < valB) return ordenacaoAtual.asc ? -1 : 1;
+    if (valA > valB) return ordenacaoAtual.asc ? 1 : -1;
+    return 0;
+  });
+
+  displayTransactionsForCurrentMonth();
+}
+
+
 function toggleTransactionPaid(index, event) {
   const transaction = transactions[index];
 
