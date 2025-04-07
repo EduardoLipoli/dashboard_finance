@@ -61,12 +61,10 @@ function register() {
   })
   .catch((error) => {
     hideLoading();
-    console.error("Erro ao registrar usuário:", error);
-    showAlert('Erro ao registrar usuário: ' + error.message, 'error');
+    showAlert(getErrorMessage(error), 'error');
   });
 
 }
-
 
 function getErrorMessage(error) {
   if (error.code == "auth/email-already-in-use") {
