@@ -42,27 +42,29 @@ function register() {
   const password = form.password().value;
 
   firebase
-    .auth()
-    .createUserWithEmailAndPassword(email, password)
-    .then((userCredential) => {
-      const user = userCredential.user;
+  .auth()
+  .createUserWithEmailAndPassword(email, password)
+  .then((userCredential) => {
+    const user = userCredential.user;
 
-      // Atualiza o perfil do usuário com o nome
-      return user.updateProfile({
-        displayName: nome,
-      }).then(() => {
-        console.log("Nome salvo no perfil:", user.displayName); // Verifique o nome aqui
-      });
-    })
-    .then(() => {
-      hideLoading();
-      window.location.href = "/dashboard/index.html";
-    })
-    .catch((error) => {
-      hideLoading();
-      console.error("Erro ao registrar usuário:", error);
-      showAlert('Erro ao registrar usuário: ' + error.message, 'error');
+    return user.updateProfile({
+      displayName: nome,
+    }).then(() => {
+      console.log("Nome salvo no perfil.");
+      return firebase.auth().currentUser; // Garantir que o perfil esteja atualizado
     });
+  })
+  .then((updatedUser) => {
+    console.log("Nome atualizado:", updatedUser.displayName);
+    hideLoading();
+    window.location.href = "/dashboard/index.html";
+  })
+  .catch((error) => {
+    hideLoading();
+    console.error("Erro ao registrar usuário:", error);
+    showAlert('Erro ao registrar usuário: ' + error.message, 'error');
+  });
+
 }
 
 
