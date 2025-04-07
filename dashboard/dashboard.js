@@ -58,7 +58,6 @@ async function loadTransactionsFromFirestore() {
     calculateTotals();
     updateCharts();
     setDefaultMonth();
-    checkTransactions();
   } catch (error) {
     hideLoading();
     console.error("Erro ao carregar transações ou categorias:", error);
@@ -255,34 +254,6 @@ document.addEventListener("click", (event) => {
   }
 });
 
-function checkTransactions() {
-  if (transactions.length === 0) {
-    const popup = document.getElementById("no-transactions-popup");
-    const overlay = document.getElementById("overlay");
-
-    popup.classList.remove("hidden");
-    overlay.classList.remove("hidden");
-
-    document.getElementById("add-income-btn").addEventListener("click", () => {
-      window.location.href = "/receitas/transaction.html?action=openForm";
-      closeModal();
-    });
-
-    document.getElementById("add-expense-btn").addEventListener("click", () => {
-      window.location.href = "/despesas/transaction.html?action=openForm";
-      closeModal();
-    });
-
-    const closeButton = document.getElementById("close-modal-btn");
-    closeButton.addEventListener("click", () => closeModal());
-
-    popup.addEventListener("click", (e) => {
-      if (e.target === popup) {
-        closeModal();
-      }
-    });
-  }
-}
 
 function closeModal() {
   const modal = document.getElementById("no-transactions-popup");
@@ -332,7 +303,7 @@ function showAlert(message, type = 'success') {
 document.addEventListener("DOMContentLoaded", loadUserName);
 
 function loadUserName(user) {
-  const displayName = user.displayName || user.email.split("@")[0] || "Usuário";
+  const displayName = user.displayName || "Carregando...";
   document.getElementById("user-name").textContent = displayName; // Mantém no botão do dropdown
   document.getElementById("user-greeting").textContent = `Bem-vindo de volta, ${displayName}!👋`; // Adiciona a saudação no header
 }
@@ -362,16 +333,16 @@ function formatarMoeda(valor) {
 }
 
 window.addEventListener("DOMContentLoaded", () => {
-  animarContador("totalReceitas", 5240.75);
-  animarContador("totalDespesas", 3120.45);
-  animarContador("totalSobra", 2120.30);
+  animarContador("totalReceitas", 0.00);
+  animarContador("totalDespesas", 0.00);
+  animarContador("totalSobra", 0.00);
 
-  animarContador("totalGanhoDia01", 1200.00);
-  animarContador("totalGanhoDia15", 4040.75);
+  animarContador("totalGanhoDia01", 0.00);
+  animarContador("totalGanhoDia15", 0.00);
 
-  animarContador("totalGastoDia01", 1120.45);
-  animarContador("totalGastoDia15", 2000.00);
+  animarContador("totalGastoDia01", 0.00);
+  animarContador("totalGastoDia15", 0.00);
 
-  animarContador("sobraDia01", 800.00);
-  animarContador("sobraDia15", 1320.30);
+  animarContador("sobraDia01", 0.00);
+  animarContador("sobraDia15", 0.00);
 });
