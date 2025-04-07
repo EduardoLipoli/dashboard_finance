@@ -157,6 +157,23 @@ function showAlert(message, type = "success") {
   alertContainer.appendChild(alert);
 }
 
+function togglePasswordVisibility(inputId, button) {
+  const input = document.getElementById(inputId);
+  const icon = button.querySelector('i');
+
+  const isPassword = input.type === 'password';
+  input.type = isPassword ? 'text' : 'password';
+
+  // Alternar entre bi-eye e bi-eye-slash
+  if (isPassword) {
+    icon.classList.remove('bi-eye');
+    icon.classList.add('bi-eye-slash');
+  } else {
+    icon.classList.remove('bi-eye-slash');
+    icon.classList.add('bi-eye');
+  }
+}
+
 const form = {
   email: () => document.getElementById("email"),
   emailInvalidError: () => document.getElementById("email-invalid-error"),

@@ -8,13 +8,17 @@
   <link rel="stylesheet" href="/style-login.css" />
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <link rel="icon" type="image/x-icon" href="/images/money.ico" />
 </head>
 
-<body>
+<body
+  class="bg-[url('/images/background.jpg')] bg-cover bg-center bg-no-repeat min-h-screen grid place-items-center px-20">
   <div id="alert-container" class="fixed top-20 right-4 z-50"></div>
 
-  <main class="min-h-screen flex items-center justify-center bg-zinc-900">
-    <div class="w-full max-w-md bg-zinc-800 text-zinc-200 rounded-lg shadow-lg p-8 space-y-6">
+  <main class="min-h-screen flex items-center justify-center">
+    <div
+      class="w-[420px] bg-zinc-800 text-zinc-200 rounded-lg shadow-lg p-8 space-y-6 backdrop-filter backdrop-blur-md bg-opacity-10 border border-zinc-800">
       <!-- Cabeçalho -->
       <h1 class="text-2xl font-bold text-center">Cadastre-se</h1>
       <p class="text-sm text-center text-zinc-400">
@@ -51,11 +55,17 @@
         </div>
 
         <!-- Campo de Senha -->
-        <div>
+        <div class="relative">
           <label for="password" class="block text-sm font-medium">Senha</label>
           <input type="password" id="password" name="password"
-            class="w-full px-3 py-2 bg-zinc-900 border border-zinc-700 rounded focus:outline-none focus:ring-2 focus:ring-green-500 transition"
+            class="w-full px-3 py-2 pr-10 bg-zinc-900 border border-zinc-700 rounded focus:outline-none focus:ring-2 focus:ring-green-500 transition"
             placeholder="Digite sua senha" onchange="onChangePassword()" />
+
+          <button type="button" onclick="togglePasswordVisibility('password', this)"
+            class="absolute right-3 top-10 -translate-y-1/2 text-zinc-400 hover:text-green-500 transition">
+            <i class="bi bi-eye text-xl"></i>
+          </button>
+
           <div class="error text-sm text-red-500 hidden" id="password-required-error">
             Senha é obrigatória
           </div>
@@ -64,40 +74,32 @@
           </div>
         </div>
 
+
         <!-- Campo de Confirmar Senha -->
-        <div>
+        <div class="relative">
           <label for="confirmPassword" class="block text-sm font-medium">Confirmar Senha</label>
           <input type="password" id="confirmPassword" name="confirmPassword"
             class="w-full px-3 py-2 bg-zinc-900 border border-zinc-700 rounded focus:outline-none focus:ring-2 focus:ring-green-500 transition"
             placeholder="Confirme sua senha" onchange="onChangeConfirmPassword()" />
+
+          <button type="button" onclick="togglePasswordVisibility('confirmPassword', this)"
+            class="absolute right-3 top-10 -translate-y-1/2 text-zinc-400 hover:text-green-500 transition">
+            <i class="bi bi-eye text-xl"></i>
+          </button>
+
           <div class="error text-sm text-red-500 hidden" id="password-dowsnt-match-error">
             Senhas e Confirmar Senha devem ser iguais
           </div>
         </div>
 
-        <!-- Botão Registrar -->
-        <button type="button"
-          class="w-full bg-green-500 text-zinc-900 font-medium py-2 rounded-md hover:bg-green-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
-          id="register-button" disabled="true" onclick="register()">
-          Registrar
-        </button>
       </form>
 
-      <!-- Separador -->
-      <div class="flex items-center space-x-2">
-        <hr class="flex-grow border-zinc-600" />
-        <span class="text-sm text-zinc-400">Or</span>
-        <hr class="flex-grow border-zinc-600" />
-      </div>
-
-      <!-- Botões de Login Social -->
-      <div class="flex justify-center space-x-4">
-        <button
-          class="flex items-center space-x-2 bg-zinc-700 text-zinc-200 px-4 py-2 rounded-md hover:bg-zinc-600 transition">
-          <img src="https://www.svgrepo.com/show/355037/google.svg" alt="Google" class="h-5 w-5" />
-          <span>Google</span>
-        </button>
-      </div>
+      <!-- Botão Registrar -->
+      <button type="button"
+        class="w-full mt-6 bg-green-500 text-zinc-900 font-medium py-2 rounded-md hover:bg-green-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+        id="register-button" disabled="true" onclick="register()">
+        Registrar
+      </button>
     </div>
   </main>
 

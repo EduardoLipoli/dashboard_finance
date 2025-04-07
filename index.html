@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-br" >
+<html lang="pt-br">
 
 <head>
   <meta charset="UTF-8" />
@@ -7,15 +7,18 @@
   <link rel="stylesheet" href="/style-login.css" />
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
   <link rel="icon" type="image/x-icon" href="/images/money.ico" />
   <title>Tela de Login</title>
 </head>
 
-<body class="bg-[url('images/background.jpg')] bg-cover bg-center bg-no-repeat min-h-screen grid place-items-center px-20">
+<body
+  class="bg-[url('images/background.jpg')] bg-cover bg-center bg-no-repeat min-h-screen grid place-items-center px-20">
   <div id="alert-container" class="fixed top-20 right-4 z-50"></div>
-  
+
   <main class="min-h-screen flex items-center justify-center">
-    <div class="w-[420px] bg-zinc-800 text-zinc-200 rounded-lg shadow-lg p-8 space-y-6 backdrop-filter backdrop-blur-md bg-opacity-10 border border-zinc-800">
+    <div
+      class="w-[420px] bg-zinc-800 text-zinc-200 rounded-lg shadow-lg p-8 space-y-6 backdrop-filter backdrop-blur-md bg-opacity-10 border border-zinc-800">
       <h1 class="text-2xl font-bold text-center">Bem Vindo Ao Finance💲</h1>
 
       <!-- Separador -->
@@ -46,13 +49,19 @@
         </div>
 
         <!-- Campo de Senha -->
-        <div>
+        <div class="relative">
           <label for="password" class="block text-sm font-medium">Senha</label>
           <div class="relative mt-1">
             <input type="password" id="password" name="password"
               class="w-full px-3 py-2 bg-zinc-900 border border-zinc-700 rounded focus:outline-none focus:ring-2 focus:ring-green-500 transition"
               placeholder="Digite sua senha" onchange="onChangePassword()" />
           </div>
+
+          <button type="button" onclick="togglePasswordVisibility('password', this)"
+            class="absolute right-3 top-11 -translate-y-1/2 text-zinc-400 hover:text-green-500 transition">
+            <i class="bi bi-eye text-xl"></i>
+          </button>
+
           <div class="error text-sm text-red-500 hidden" id="password-required-error">
             Senha é obrigatória
           </div>
@@ -60,9 +69,9 @@
 
         <div class="div-checkbox-login">
           <label class="flex items-center space-x-2 cursor-pointer">
-          <input type="checkbox" class="checkbox-login accent-green-500 " name="remember" />
-          <span class="select-none">Lembrar-me</span>
-        </label>
+            <input type="checkbox" class="checkbox-login accent-green-500 " name="remember" />
+            <span class="select-none">Lembrar-me</span>
+          </label>
         </div>
 
         <!-- Botão Login -->
