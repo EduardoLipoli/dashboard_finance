@@ -104,6 +104,19 @@ function calculateTotals() {
   const sobraDia01 = totalGanhoDia01 - totalGastoDia01;
   const sobraDia15 = totalGanhoDia15 - totalGastoDia15;
 
+  // --- animação dos valores ---
+  animarContador("totalReceitas",   totalReceitas);
+  animarContador("totalDespesas",   totalDespesas);
+  animarContador("totalSobra",      totalSobra);
+
+  animarContador("totalGanhoDia01", totalGanhoDia01);
+  animarContador("totalGastoDia01", totalGastoDia01);
+  animarContador("sobraDia01",      sobraDia01);
+
+  animarContador("totalGanhoDia15", totalGanhoDia15);
+  animarContador("totalGastoDia15", totalGastoDia15);
+  animarContador("sobraDia15",      sobraDia15);
+
   // Exibir os totais no dashboard
   document.getElementById("totalReceitas").textContent = `${totalReceitas.toLocaleString("pt-BR", {
     style: "currency",
@@ -310,18 +323,23 @@ function loadUserName(user) {
 
 function animarContador(id, valorFinal, duracao = 1000) {
   const elemento = document.getElementById(id);
-  if (!elemento) return;
+  if (!elemento || isNaN(valorFinal)) return;
 
-  let inicio = 0;
-  const incremento = valorFinal / (duracao / 10); // incremento proporcional
-  const intervalo = setInterval(() => {
-    inicio += incremento;
-    if (inicio >= valorFinal) {
-      inicio = valorFinal;
-      clearInterval(intervalo);
+  const startTime = performance.now();
+  const inicio = 0;
+
+  function update(now) {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / duracao, 1);
+    const current = inicio + (valorFinal - inicio) * progress;
+    elemento.textContent = formatarMoeda(current);
+
+    if (progress < 1) {
+      requestAnimationFrame(update);
     }
-    elemento.textContent = formatarMoeda(inicio);
-  }, 10);
+  }
+
+  requestAnimationFrame(update);
 }
 
 function formatarMoeda(valor) {
@@ -332,17 +350,4 @@ function formatarMoeda(valor) {
   });
 }
 
-window.addEventListener("DOMContentLoaded", () => {
-  animarContador("totalReceitas", 0.00);
-  animarContador("totalDespesas", 0.00);
-  animarContador("totalSobra", 0.00);
 
-  animarContador("totalGanhoDia01", 0.00);
-  animarContador("totalGanhoDia15", 0.00);
-
-  animarContador("totalGastoDia01", 0.00);
-  animarContador("totalGastoDia15", 0.00);
-
-  animarContador("sobraDia01", 0.00);
-  animarContador("sobraDia15", 0.00);
-});
