@@ -110,68 +110,108 @@
         <!-- Menu do Dropdown -->
         <div id="dropdownMenu"
           class="hidden absolute right-0 mt-2 w-32 bg-white border border-gray-300 rounded-md shadow-lg z-50">
-          <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100" onclick="logout()"><i class="bi bi-box-arrow-left"> </i> Sair</a>
+          <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100" onclick="logout()"><i
+              class="bi bi-box-arrow-left"> </i> Sair</a>
         </div>
       </div>
     </header>
 
     <!-- Main section -->
     <main class="flex-1 p-6">
-      <div class="flex items-center justify-between bg-zinc-800 p-3 rounded-lg shadow-lg mb-6 mx-auto">
-        <!-- Setas de navegação -->
-        <div class="chevron-left">
-          <button class="text-white hover:text-green-400 transition-colors px-4 py-1">
-            <i class="fas fa-chevron-left"></i>
-          </button>
-        </div>
 
-        <!-- Texto central com mês/ano -->
-        <span class="text-white text-lg font-semibold cursor-pointer hover:text-green-400 transition-colors select-none">Setembro/2024</span>
+      <!-- Cards de dívidas -->
+      <a href="/dashboard/index.html">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6" id="cards-dividas">
+          <!-- Card Dia 01 -->
+          <div id="card-dia-01"
+            class="bg-zinc-800 p-5 rounded-2xl shadow-lg text-white flex flex-col gap-2 hover:bg-zinc-700/50 transition-colors">
+            <div class="flex items-center justify-between">
+              <h3 class="text-lg font-semibold"><i class="fas fa-coins text-zinc-400 mr-2"></i> Despesas do Dia 01</h3>
+              <span id="quantidade-dia-01" class="text-sm text-zinc-400"></span>
+            </div>
+            <p class="text-3xl font-bold text-red-500" id="valor-dia-01">R$ 0,00</p>
+          </div>
+      </a>
 
-        <!-- Setas de navegação -->
-        <div class="chevron-right">
-          <button class="text-white hover:text-green-400 transition-colors px-4 py-1">
-            <i class="fas fa-chevron-right"></i>
-          </button>
+      <!-- Card Dia 15 -->
+      <a href="/dashboard/index.html">
+        <div id="card-dia-15"
+          class="bg-zinc-800 p-5 rounded-2xl shadow-lg text-white flex flex-col gap-2 hover:bg-zinc-700/50 transition-colors">
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg font-semibold"><i class="fas fa-coins text-zinc-400 mr-2"></i> Despesas do Dia 15</h3>
+            <span id="quantidade-dia-15" class="text-sm text-zinc-400"></span>
+          </div>
+          <p class="text-3xl font-bold text-red-500" id="valor-dia-15">R$ 0,00</p>
         </div>
-      </div>
-      <!-- Table -->
-      <div class="overflow-x-auto text-zinc-200 rounded-lg">
-        <div class="rounded-t-lg overflow-hidden">
-          <table class="min-w-full table-auto">
-            <thead class="bg-zinc-800 rounded-t-xl">
-              <tr class="">
-                <th class="py-3 px-6 text-left font-semibold text-sm cursor-pointer text-white hover:text-green-400 transition-colors select-none" onclick="ordenarTabela('name')">
-                Nome <i class="bi bi-arrow-down-up"></i>
-                </th>
-                <th class="py-3 px-6 text-left font-semibold text-sm cursor-default select-none">
-                  Tipo
-                </th>
-                <th class="py-3 px-6 text-left font-semibold text-sm cursor-pointer text-white hover:text-green-400 transition-colors select-none" onclick="ordenarTabela('category')">
-                  Categoria <i class="bi bi-arrow-down-up"></i>
-                </th>
-                <th class="py-3 px-6 text-left font-semibold text-sm cursor-pointer text-white hover:text-green-400 transition-colors select-none" onclick="ordenarTabela('dueDate')">
-                  Data de Vencimento <i class="bi bi-arrow-down-up"></i>
-                </th>
-                <th class="py-3 px-6 text-left font-semibold text-sm cursor-pointer text-white hover:text-green-400 transition-colors select-none" onclick="ordenarTabela('datepay')">
-                  Data de Pagamento <i class="bi bi-arrow-down-up"></i>
-                </th>
-                <th class="py-3 px-6 text-left font-semibold text-sm cursor-pointer text-white hover:text-green-400 transition-colors select-none" onclick="ordenarTabela('amount')">
-                  Valor <i class="bi bi-arrow-down-up"></i>
-                </th>
-                <th class="py-3 px-6 text-left font-semibold text-sm cursor-default select-none">
-                  Parcelas
-                </th>
-                <th class="py-3 px-6 text-left font-semibold text-sm cursor-default select-none">
-                  Ações
-                </th>
-              </tr>
-            </thead>
-            <tbody id="tableBody"></tbody>
-          </table>
-        </div>
-      </div>
-    </main>
+  </div>
+  </a>
+
+  <div class="flex items-center justify-between bg-zinc-800 p-3 rounded-lg shadow-lg mb-6 mx-auto ">
+    <!-- Setas de navegação -->
+    <div class="chevron-left">
+      <button class="text-white hover:text-green-400 transition-colors px-4 py-1">
+        <i class="fas fa-chevron-left"></i>
+      </button>
+    </div>
+
+    <!-- Texto central com mês/ano -->
+    <span
+      class="text-white text-lg font-semibold cursor-pointer hover:text-green-400 transition-colors select-none">Setembro/2024</span>
+
+    <!-- Setas de navegação -->
+    <div class="chevron-right">
+      <button class="text-white hover:text-green-400 transition-colors px-4 py-1">
+        <i class="fas fa-chevron-right"></i>
+      </button>
+    </div>
+  </div>
+  <!-- Table -->
+  <div class="overflow-x-auto text-zinc-200 rounded-lg">
+    <div class="rounded-t-lg overflow-hidden">
+      <table class="min-w-full table-auto">
+        <thead class="bg-zinc-800 rounded-t-xl">
+          <tr class="">
+            <th
+              class="py-3 px-6 text-left font-semibold text-sm cursor-pointer text-white hover:text-green-400 transition-colors select-none"
+              onclick="ordenarTabela('name')">
+              Nome <i class="bi bi-arrow-down-up"></i>
+            </th>
+            <th class="py-3 px-6 text-left font-semibold text-sm cursor-default select-none">
+              Tipo
+            </th>
+            <th
+              class="py-3 px-6 text-left font-semibold text-sm cursor-pointer text-white hover:text-green-400 transition-colors select-none"
+              onclick="ordenarTabela('category')">
+              Categoria <i class="bi bi-arrow-down-up"></i>
+            </th>
+            <th
+              class="py-3 px-6 text-left font-semibold text-sm cursor-pointer text-white hover:text-green-400 transition-colors select-none"
+              onclick="ordenarTabela('dueDate')">
+              Data de Vencimento <i class="bi bi-arrow-down-up"></i>
+            </th>
+            <th
+              class="py-3 px-6 text-left font-semibold text-sm cursor-pointer text-white hover:text-green-400 transition-colors select-none"
+              onclick="ordenarTabela('datepay')">
+              Data de Pagamento <i class="bi bi-arrow-down-up"></i>
+            </th>
+            <th
+              class="py-3 px-6 text-left font-semibold text-sm cursor-pointer text-white hover:text-green-400 transition-colors select-none"
+              onclick="ordenarTabela('amount')">
+              Valor <i class="bi bi-arrow-down-up"></i>
+            </th>
+            <th class="py-3 px-6 text-left font-semibold text-sm cursor-default select-none">
+              Parcelas
+            </th>
+            <th class="py-3 px-6 text-left font-semibold text-sm cursor-default select-none">
+              Ações
+            </th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+  </main>
   </div>
 
   <!-- Form Sidebar -->

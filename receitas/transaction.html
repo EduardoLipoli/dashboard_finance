@@ -111,8 +111,36 @@
     </header>
 
     <!-- Main section -->
-    <!-- Main section -->
     <main class="flex-1 p-6">
+
+      
+      <!-- Cards de dívidas -->
+      <a href="/dashboard/index.html">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6" id="cards-dividas">
+          <!-- Card Dia 01 -->
+          <div id="card-dia-01"
+            class="bg-zinc-800 p-5 rounded-2xl shadow-lg text-white flex flex-col gap-2 hover:bg-zinc-700/50 transition-colors">
+            <div class="flex items-center justify-between">
+              <h3 class="text-lg font-semibold"><i class="fas fa-coins text-zinc-400 mr-2"></i> Receitas do Dia 01</h3>
+              <span id="quantidade-dia-01" class="text-sm text-zinc-400"></span>
+            </div>
+            <p class="text-3xl font-bold text-green-500" id="valor-dia-01">R$ 0,00</p>
+          </div>
+      </a>
+
+      <!-- Card Dia 15 -->
+      <a href="/dashboard/index.html">
+        <div id="card-dia-15"
+          class="bg-zinc-800 p-5 rounded-2xl shadow-lg text-white flex flex-col gap-2 hover:bg-zinc-700/50 transition-colors">
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg font-semibold"><i class="fas fa-coins text-zinc-400 mr-2"></i> Receitas do Dia 15</h3>
+            <span id="quantidade-dia-15" class="text-sm text-zinc-400"></span>
+          </div>
+          <p class="text-3xl font-bold text-green-500" id="valor-dia-15">R$ 0,00</p>
+        </div>
+  </div>
+  </a>
+
       <div class="flex items-center justify-between bg-zinc-800 p-3 rounded-lg shadow-lg mb-6 mx-auto">
         <!-- Setas de navegação -->
         <div class="chevron-left">

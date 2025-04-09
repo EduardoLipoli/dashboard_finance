@@ -489,6 +489,73 @@ function displayTransactionsForCurrentMonth() {
     emptyRow.innerHTML = `<td colspan="8" class="text-center py-4">Nenhuma transação encontrada para este mês.</td>`;
     tableBody.appendChild(emptyRow);
   }
+
+  const valorDia01Element = document.getElementById("valor-dia-01");
+  const valorDia15Element = document.getElementById("valor-dia-15");
+  const qtdDia01Element = document.getElementById("quantidade-dia-01");
+  const qtdDia15Element = document.getElementById("quantidade-dia-15");
+  
+  if (valorDia01Element && valorDia15Element) {
+    let totalDia01 = 0;
+    let totalDia15 = 0;
+    let countDia01 = 0;
+    let countDia15 = 0;
+  
+    transactions.forEach(transaction => {
+      const transactionMonth = transaction.dueDate.getMonth();
+      const transactionYear = transaction.dueDate.getFullYear();
+  
+      if (
+        transaction.type === "Gasto" &&
+        transactionMonth === currentMonth &&
+        transactionYear === currentYear &&
+        !transaction.isPaid
+      ) {
+        if (transaction.datepay === "01") {
+          totalDia01 += transaction.amount;
+          countDia01++;
+        } else if (transaction.datepay === "15") {
+          totalDia15 += transaction.amount;
+          countDia15++;
+        }
+      }
+    });
+  
+    // Animação de contagem dos valores dos cards
+    const valorAtual01 = parseFloat(valorDia01Element.textContent.replace(/[R$\s.]/g, '').replace(',', '.')) || 0;
+    const valorAtual15 = parseFloat(valorDia15Element.textContent.replace(/[R$\s.]/g, '').replace(',', '.')) || 0;
+
+    animateValue(valorDia01Element, valorAtual01, totalDia01, 800);
+    animateValue(valorDia15Element, valorAtual15, totalDia15, 800);
+
+  
+    qtdDia01Element.textContent = `${countDia01} despesa${countDia01 === 1 ? "" : "s"}`;
+    qtdDia15Element.textContent = `${countDia15} despesa${countDia15 === 1 ? "" : "s"}`;
+  }  
+
+  function animateValue(element, start, end, duration) {
+    const range = end - start;
+    let startTimestamp = null;
+  
+    const step = (timestamp) => {
+      if (!startTimestamp) startTimestamp = timestamp;
+      const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+      const value = start + range * progress;
+  
+      element.textContent = value.toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL"
+      });
+  
+      if (progress < 1) {
+        window.requestAnimationFrame(step);
+      }
+    };
+  
+    window.requestAnimationFrame(step);
+  }
+  
+
 }
 
 let ordenacaoAtual = { campo: null, asc: true };
@@ -1046,3 +1113,5 @@ function filterSuggestions() {
 
   suggestionsDiv.classList.remove("hidden");
 }
+
+
