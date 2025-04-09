@@ -58,6 +58,7 @@ async function loadTransactionsFromFirestore() {
     calculateTotals();
     updateCharts();
     setDefaultMonth();
+    checkIfUserIsNew();
   } catch (error) {
     hideLoading();
     console.error("Erro ao carregar transações ou categorias:", error);
@@ -322,7 +323,8 @@ document.addEventListener("DOMContentLoaded", loadUserName);
 function loadUserName(user) {
   const displayName = user.displayName || "Carregando...";
   document.getElementById("user-name").textContent = displayName; // Mantém no botão do dropdown
-  document.getElementById("user-greeting").textContent = `Bem-vindo de volta, ${displayName}!👋`; // Adiciona a saudação no header
+  document.getElementById("user-greeting").textContent = displayName // Adiciona a saudação no header
+  document.getElementById("user-modal").textContent = displayName;
 }
 
 function animarContador(id, valorFinal, duracao = 1000) {
@@ -357,7 +359,17 @@ function formatarMoeda(valor) {
 
 function gerarResumoAnual() {
   const container = document.getElementById("resumoAnual");
-  if (!container || !transactions.length) return;
+  if (!container) return;
+
+if (!transactions.length) {
+  container.innerHTML = `
+    <div class="bg-zinc-800 text-white p-4 rounded-lg text-center">
+      <p class="text-sm">Nenhum dado encontrado para gerar o resumo anual.</p>
+      <p class="text-sm mt-1 text-zinc-400">Adicione transações para começar a visualizar seu desempenho financeiro.</p>
+    </div>
+  `;
+  return;
+}
 
   const mesesNomes = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
   const dadosAnuais = Array.from({ length: 12 }, () => ({ receitas: 0, despesas: 0, sobra: 0 }));
@@ -420,7 +432,17 @@ function gerarResumoAnual() {
 
 function gerarPlanoFinanceiroPessoal() {
   const container = document.getElementById("planoFinanceiro");
-  if (!container || !transactions.length) return;
+  if (!container) return;
+
+  if (!transactions.length) {
+    container.innerHTML = `
+      <div class="bg-zinc-800 text-white p-4 rounded-lg text-center">
+        <p class="text-sm">Nenhum dado encontrado para gerar o plano financeiro.</p>
+        <p class="text-sm mt-1 text-zinc-400">Adicione transações para começar a visualizar seu desempenho financeiro.</p>
+      </div>
+    `;
+    return;
+  }
 
   const anoAtual = new Date().getFullYear();
   const transacoesAno = transactions.filter(t => {
@@ -563,4 +585,18 @@ document.addEventListener("click", function (event) {
     document.querySelectorAll(".btn-tab").forEach(btn => btn.classList.remove("bg-zinc-600", "text-white", "border-zinc-500", "shadow-md"));
   }
 });
+
+function showNewUserModal() {
+  document.getElementById("newUserModal").classList.remove("hidden");
+}
+
+function hideNewUserModal() {
+  document.getElementById("newUserModal").classList.add("hidden");
+}
+
+function checkIfUserIsNew() {
+  if (!transactions || transactions.length === 0) {
+    showNewUserModal();
+  }
+}
 
