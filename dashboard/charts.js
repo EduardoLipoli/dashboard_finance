@@ -1,3 +1,18 @@
+// Função para filtrar o dashboard pelo mês clicado no gráfico
+function filterByChartMonth(index) {
+  const monthSelect = document.getElementById("monthFilter");
+  if (!monthSelect) return;
+
+  // Se o mês clicado já está selecionado, volta para "Todos"
+  if (parseInt(monthSelect.value) === index) {
+    monthSelect.value = "all";
+  } else {
+    monthSelect.value = index.toString();
+  }
+
+  filterByMonth();
+}
+
 // Gráfico de Dívidas do dia 01 vs dia 15
 const debtsByDayCtx = document
   .getElementById("fixedVsInstallmentsChart")
@@ -160,61 +175,46 @@ const monthlyIncomeData = Array.from({ length: 12 }, (_, i) => {
 const monthlyIncomeChart = new Chart(monthlyIncomeCtx, {
   type: "bar",
   data: {
-    labels: [
-      "Jan",
-      "Fev",
-      "Mar",
-      "Abr",
-      "Mai",
-      "Jun",
-      "Jul",
-      "Ago",
-      "Set",
-      "Out",
-      "Nov",
-      "Dez",
-    ],
-    datasets: [
-      {
-        label: "Receitas por Mês",
-        data: monthlyIncomeData,
-        borderWidth: 2,
-        borderColor: "#4CAF50",
-        backgroundColor: "rgba(76, 175, 80, 0.2)",
-      },
-    ],
+    labels: ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"],
+    datasets: [{
+      label: "Receitas por Mês",
+      data: monthlyIncomeData,
+      borderWidth: 2,
+      borderColor: "#4CAF50",
+      backgroundColor: "rgba(76, 175, 80, 0.2)"
+    }]
   },
   options: {
+    // *** Aqui ***
+    onClick: function(evt, activeEls) {
+      if (activeEls.length) {
+        const idx = activeEls[0].index;
+        filterByChartMonth(idx);
+      }
+    },
+    hover: {
+      onHover: function(evt, activeEls) {
+        evt.native.target.style.cursor = activeEls[0] ? 'pointer' : 'default';
+      }
+    },
     plugins: {
       legend: { position: "top" },
-      tooltip: {
-        callbacks: {
-          label: (ctx) => `R$ ${ctx.raw.toFixed(2)}`,
-        },
-      },
+      tooltip: { callbacks: { label: ctx => `R$ ${ctx.raw.toFixed(2)}` } },
       datalabels: {
         anchor: "end",
         align: "end",
-        formatter: (value) => `R$ ${value.toFixed(2)}`,
+        formatter: val => `R$ ${val.toFixed(2)}`,
         color: "#fff",
-        font: { size: 10},
-      },
+        font: { size: 10 }
+      }
     },
     scales: {
-      x: {
-        title: { display: true, text: "Mês" },
-        grid: { color: "rgba(255, 255, 255, 0.1)" },
-      },
-      y: {
-        title: { display: true, text: "Receitas (R$)" },
-        beginAtZero: true,
-        grid: { color: "rgba(255, 255, 255, 0.1)" },
-      },
-    },
+      x: { title: { display: true, text: "Mês" }, grid: { color: "rgba(255,255,255,0.1)" } },
+      y: { title: { display: true, text: "Receitas (R$)" }, beginAtZero: true, grid: { color: "rgba(255,255,255,0.1)" } }
+    }
   },
-  plugins: [ChartDataLabels],
+  plugins: [ChartDataLabels]
 });
-
 // Gráfico de Gastos por Mês
 const monthlyExpensesCtx = document
   .getElementById("monthlyExpensesChart")
@@ -229,58 +229,42 @@ const monthlyExpensesData = Array.from({ length: 12 }, (_, i) => {
 const monthlyExpensesChart = new Chart(monthlyExpensesCtx, {
   type: "bar",
   data: {
-    labels: [
-      "Jan",
-      "Fev",
-      "Mar",
-      "Abr",
-      "Mai",
-      "Jun",
-      "Jul",
-      "Ago",
-      "Set",
-      "Out",
-      "Nov",
-      "Dez",
-    ],
-    datasets: [
-      {
-        label: "Gastos por Mês",
-        data: monthlyExpensesData,
-        borderWidth: 2,
-        borderColor: "#F44336",
-        backgroundColor: "rgba(244, 67, 54, 0.2)",
-      },
-    ],
+    labels: ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"],
+    datasets: [{
+      label: "Gastos por Mês",
+      data: monthlyExpensesData,
+      borderWidth: 2,
+      borderColor: "#F44336",
+      backgroundColor: "rgba(244, 67, 54, 0.2)"
+    }]
   },
   options: {
+    onClick: function(evt, activeEls) {
+      if (activeEls.length) {
+        const idx = activeEls[0].index;
+        filterByChartMonth(idx);
+      }
+    },
+    hover: {
+      onHover: function(evt, activeEls) {
+        evt.native.target.style.cursor = activeEls[0] ? 'pointer' : 'default';
+      }
+    },
     plugins: {
       legend: { position: "top" },
-      tooltip: {
-        callbacks: {
-          label: (ctx) => `R$ ${ctx.raw.toFixed(2)}`,
-        },
-      },
+      tooltip: { callbacks: { label: ctx => `R$ ${ctx.raw.toFixed(2)}` } },
       datalabels: {
         anchor: "end",
         align: "end",
-        formatter: (value) => `R$ ${value.toFixed(2)}`,
+        formatter: val => `R$ ${val.toFixed(2)}`,
         color: "#fff",
-        font: { size: 10},
-      },
+        font: { size: 10 }
+      }
     },
     scales: {
-      x: {
-        title: { display: true, text: "Mês" },
-        grid: { color: "rgba(255, 255, 255, 0.1)" },
-      },
-      y: {
-        title: { display: true, text: "Gastos (R$)" },
-        beginAtZero: true,
-        grid: { color: "rgba(255, 255, 255, 0.1)" },
-      },
-    },
+      x: { title: { display: true, text: "Mês" }, grid: { color: "rgba(255,255,255,0.1)" } },
+      y: { title: { display: true, text: "Gastos (R$)" }, beginAtZero: true, grid: { color: "rgba(255,255,255,0.1)" } }
+    }
   },
-  plugins: [ChartDataLabels],
+  plugins: [ChartDataLabels]
 });
-
