@@ -108,10 +108,12 @@
       <!-- Botão do Dropdown -->
       <div class="relative inline-block text-left">
         <button id="dropdownButton"
-          class="bg-green-500 text-white font-medium py-2 px-4 rounded focus:outline-none focus:ring-2 focus:ring-blue-300">
-          <span id="user-name">Carregando...</span> ▼
-        </button>
-
+        class="bg-green-500 text-white font-medium py-2 px-4 rounded flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-blue-300">
+        
+        <img id="user-photo" src="" alt="Foto" class="w-6 h-6 rounded-full hidden" />
+        <span id="user-name">Carregando...</span> ▼
+      </button>
+      
         <div id="dropdownMenu"
           class="hidden absolute right-0 mt-2 w-32 bg-white border border-gray-300 rounded-md shadow-lg z-50">
           <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100" onclick="logout()"><i class="bi bi-box-arrow-left"> </i> Sair</a>

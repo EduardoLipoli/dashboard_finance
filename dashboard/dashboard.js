@@ -67,9 +67,20 @@ async function loadTransactionsFromFirestore() {
 
 // Função para exibir o nome do usuário logado
 function loadUserName(user) {
-  const displayName = user.displayName || user.email || "Carregando...";
+  const displayName = user.displayName || user.email || "Usuário";
+  const photoURL = user.photoURL;
+
   document.getElementById("user-name").textContent = displayName;
+
+  const userPhoto = document.getElementById("user-photo");
+  if (photoURL) {
+    userPhoto.src = photoURL;
+    userPhoto.classList.remove("hidden");
+  } else {
+    userPhoto.classList.add("hidden");
+  }
 }
+
 
 // Função para calcular os totais de receitas, despesas e transações dos dias 01 e 15
 function calculateTotals() {
