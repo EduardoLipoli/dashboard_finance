@@ -321,7 +321,7 @@ function showAlert(message, type = 'success') {
 document.addEventListener("DOMContentLoaded", loadUserName);
 
 function loadUserName(user) {
-  const displayName = user.displayName || "Carregando...";
+  const displayName = user.displayName || "Usuário";
   document.getElementById("user-name").textContent = displayName; // Mantém no botão do dropdown
   document.getElementById("user-greeting").textContent = displayName // Adiciona a saudação no header
   document.getElementById("user-modal").textContent = displayName;
