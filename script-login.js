@@ -45,6 +45,38 @@ function login() {
     });
 }
 
+function loginWithGoogle() {
+  showLoading();
+
+  const provider = new firebase.auth.GoogleAuthProvider();
+
+  firebase
+    .auth()
+    .signInWithPopup(provider)
+    .then((result) => {
+      const user = result.user;
+
+      console.log("Nome:", user.displayName);
+      console.log("Email:", user.email);
+      console.log("Foto:", user.photoURL);
+      console.log("UID:", user.uid);
+
+      // Você pode salvar o usuário no Firestore aqui, se quiser.
+      window.location.href = "/dashboard/index.html";
+    })
+    .catch((error) => {
+      hideLoading();
+
+      if (error.code === "auth/account-exists-with-different-credential") {
+        showAlert("Já existe uma conta com esse e-mail. Faça login com e-mail e senha.", "error");
+      } else {
+        showAlert("Erro no login com Google: " + error.message, "error");
+        console.error(error);
+      }
+    });
+}
+
+
 function getErrorMessage(error) {
   if (error.code == "auth/invalid-login-credentials") {
     return showAlert('Usuário não encontrado!', 'error');
