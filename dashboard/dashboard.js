@@ -123,83 +123,133 @@ function calculateTotals() {
     if (transaction.type === "Ganho") {
       totalReceitas += transaction.amount;
 
-      if (transaction.datepay === "01") {
-        totalGanhoDia01 += transaction.amount;
-      } else if (transaction.datepay === "15") {
-        totalGanhoDia15 += transaction.amount;
-      }
+      if (transaction.datepay === "01") totalGanhoDia01 += transaction.amount;
+      else if (transaction.datepay === "15") totalGanhoDia15 += transaction.amount;
     } else if (transaction.type === "Gasto") {
       totalDespesas += transaction.amount;
 
-      if (transaction.datepay === "01") {
-        totalGastoDia01 += transaction.amount;
-      } else if (transaction.datepay === "15") {
-        totalGastoDia15 += transaction.amount;
-      }
+      if (transaction.datepay === "01") totalGastoDia01 += transaction.amount;
+      else if (transaction.datepay === "15") totalGastoDia15 += transaction.amount;
     }
   });
 
-  // Calcular sobra (totalReceitas - totalDespesas)
   const totalSobra = totalReceitas - totalDespesas;
   const sobraDia01 = totalGanhoDia01 - totalGastoDia01;
   const sobraDia15 = totalGanhoDia15 - totalGastoDia15;
 
-  // --- animação dos valores ---
-  animarContador("totalReceitas",   totalReceitas);
-  animarContador("totalDespesas",   totalDespesas);
-  animarContador("totalSobra",      totalSobra);
+  // Função para exibir badge
+  function renderBadge(id, pct) {
+    const span = document.getElementById(id);
+    if (!span) return;
+
+    if (pct === null || isNaN(pct)) {
+      span.classList.add("hidden");
+      return;
+    }
+
+    const valorFormatado = `${pct > 0 ? "+" : ""}${pct.toFixed(1)}% `;
+    span.textContent = valorFormatado;
+    span.classList.remove("hidden");
+
+    span.className = "ml-2 text-xs font-semibold px-2 py-0.5 rounded-full";
+    if (pct > 0) {
+      span.classList.add("bg-green-800","bg-opacity-25", "text-green-500");
+    } else if (pct < 0) {
+      span.classList.add("bg-red-800","bg-opacity-25", "text-red-500");
+    } else {
+      span.classList.add("bg-gray-500", "text-white");
+    }
+  }
+
+  function renderDiferencaTexto(id, diffValor) {
+    const el = document.getElementById(id);
+    if (!el) return;
+  
+    if (diffValor === null || isNaN(diffValor)) {
+      el.textContent = "";
+      return;
+    }
+  
+    const prefixo = diffValor > 0 ? "+" : diffValor < 0 ? "-" : "";
+    const texto = `${prefixo}${formatarMoeda(Math.abs(diffValor))} vs mês anterior`;
+
+    el.textContent = texto;
+
+  }
+  
+
+  // Calcular variações mensais
+  const selectedMonth = document.getElementById("monthFilter").value;
+  const mesAtual = selectedMonth === "all" ? null : parseInt(selectedMonth);
+  const mesAnterior = mesAtual !== null ? (mesAtual + 11) % 12 : null;
+
+  function somaPorTipoEMês(tipo, mes) {
+    return transactions.filter(t => 
+      t.type === tipo && t.dueDate instanceof Date && t.dueDate.getMonth() === mes
+    ).reduce((s, t) => s + t.amount, 0);
+  }
+
+  const receitasAtual = mesAtual !== null ? somaPorTipoEMês("Ganho", mesAtual) : null;
+  const receitasAnterior = mesAnterior !== null ? somaPorTipoEMês("Ganho", mesAnterior) : null;
+  const despesasAtual = mesAtual !== null ? somaPorTipoEMês("Gasto", mesAtual) : null;
+  const despesasAnterior = mesAnterior !== null ? somaPorTipoEMês("Gasto", mesAnterior) : null;
+
+  const sobraAtual = receitasAtual !== null && despesasAtual !== null ? receitasAtual - despesasAtual : null;
+  const sobraAnterior = receitasAnterior !== null && despesasAnterior !== null ? receitasAnterior - despesasAnterior : null;
+
+// Para receitas e sobra: quanto mais, melhor
+function variacaoPositiva(atual, anterior) {
+  return anterior > 0 ? ((atual - anterior) / anterior) * 100 : null;
+}
+
+// Para despesas: quanto menos, melhor (inverter o sinal)
+function variacaoNegativa(atual, anterior) {
+  return anterior > 0 ? ((anterior - atual) / anterior) * 100 : null;
+}
+
+  const diffReceitas = receitasAtual - receitasAnterior;
+  const diffDespesas = despesasAtual - despesasAnterior;
+  const diffSobra = sobraAtual - sobraAnterior;
+  
+  renderBadge("badgeReceitas", variacaoPositiva(receitasAtual, receitasAnterior), diffReceitas);
+  renderBadge("badgeDespesas", variacaoNegativa(despesasAtual, despesasAnterior), diffDespesas);
+  renderBadge("badgeSobra", variacaoPositiva(sobraAtual, sobraAnterior), diffSobra);
+  
+  
+  renderDiferencaTexto("diffReceitas", diffReceitas);
+  renderDiferencaTexto("diffDespesas", diffDespesas);
+  renderDiferencaTexto("diffSobra", diffSobra);
+  
+  
+
+  // Animação de valores
+  animarContador("totalReceitas", totalReceitas);
+  animarContador("totalDespesas", totalDespesas);
+  animarContador("totalSobra", totalSobra);
 
   animarContador("totalGanhoDia01", totalGanhoDia01);
   animarContador("totalGastoDia01", totalGastoDia01);
-  animarContador("sobraDia01",      sobraDia01);
+  animarContador("sobraDia01", sobraDia01);
 
   animarContador("totalGanhoDia15", totalGanhoDia15);
   animarContador("totalGastoDia15", totalGastoDia15);
-  animarContador("sobraDia15",      sobraDia15);
+  animarContador("sobraDia15", sobraDia15);
 
-  // Exibir os totais no dashboard
-  document.getElementById("totalReceitas").textContent = `${totalReceitas.toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  })}`;
-  document.getElementById("totalDespesas").textContent = `${totalDespesas.toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  })}`;
-  document.getElementById("totalSobra").textContent = `${totalSobra.toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  })}`;
+  // Texto final nos elementos
+  document.getElementById("totalReceitas").textContent = formatarMoeda(totalReceitas);
+  document.getElementById("totalDespesas").textContent = formatarMoeda(totalDespesas);
+  document.getElementById("totalSobra").textContent = formatarMoeda(totalSobra);
 
-  document.getElementById("totalGanhoDia01").textContent = `${totalGanhoDia01.toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  })}`;
-  document.getElementById("totalGastoDia01").textContent = `${totalGastoDia01.toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  })}`;
-  document.getElementById("sobraDia01").textContent = `${sobraDia01.toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  })}`;
+  document.getElementById("totalGanhoDia01").textContent = formatarMoeda(totalGanhoDia01);
+  document.getElementById("totalGastoDia01").textContent = formatarMoeda(totalGastoDia01);
+  document.getElementById("sobraDia01").textContent = formatarMoeda(sobraDia01);
 
-  document.getElementById("totalGanhoDia15").textContent = `${totalGanhoDia15.toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  })}`;
-  document.getElementById("totalGastoDia15").textContent = `${totalGastoDia15.toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  })}`;
-  document.getElementById("sobraDia15").textContent = `${sobraDia15.toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  })}`;
+  document.getElementById("totalGanhoDia15").textContent = formatarMoeda(totalGanhoDia15);
+  document.getElementById("totalGastoDia15").textContent = formatarMoeda(totalGastoDia15);
+  document.getElementById("sobraDia15").textContent = formatarMoeda(sobraDia15);
 
   gerarResumoAnual();
   gerarPlanoFinanceiroPessoal();
-
 }
 
 // Função para atualizar os gráficos após o filtro
