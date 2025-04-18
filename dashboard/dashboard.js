@@ -3,19 +3,38 @@ let filteredTransactions = [];
 const auth = firebase.auth();
 
 // Listener para garantir que a autenticação está concluída
-auth.onAuthStateChanged(async (user) => {
-  if (user) {
-    try {
-      await user.reload();
-      loadUserName(user);
-      loadTransactionsFromFirestore();
-    } catch (error) {
-      console.error("Erro ao atualizar dados do usuário:", error);
+document.addEventListener("DOMContentLoaded", function () {
+  auth.onAuthStateChanged(async (user) => {
+    if (user) {
+      try {
+        await user.reload();
+
+        const userPhoto = document.getElementById("user-photo");
+        const photoURL = user.photoURL;
+        const userEmail = document.getElementById("user-email");
+
+        const email = user.email || "E-mail não disponível";
+
+        userEmail.textContent = email;
+
+        if (photoURL && userPhoto) {
+          userPhoto.src = photoURL;
+          userPhoto.classList.remove("hidden");
+        } else if (userPhoto) {
+          userPhoto.classList.add("hidden");
+        }
+
+        loadUserName(user);
+        loadTransactionsFromFirestore();
+        
+      } catch (error) {
+        console.error("Erro ao atualizar dados do usuário:", error);
+      }
+    } else {
+      console.error("Usuário não autenticado.");
+      window.location.href = "/index.html";
     }
-  } else {
-    console.error("Usuário não autenticado.");
-    window.location.href = "/index.html";
-  }
+  });
 });
 
 // Função para carregar transações do Firestore
@@ -67,19 +86,28 @@ async function loadTransactionsFromFirestore() {
 
 // Função para exibir o nome do usuário logado
 function loadUserName(user) {
-  const displayName = user.displayName || user.email || "Usuário";
+  const name = user.displayName || user.email || "Usuário";
+  const email = user.email;
   const photoURL = user.photoURL;
 
-  document.getElementById("user-name").textContent = displayName;
+  const nameEl = document.getElementById("user-name");
+  const emailEl = document.getElementById("user-email");
+  const photoEl = document.getElementById("user-photo");
 
-  const userPhoto = document.getElementById("user-photo");
-  if (photoURL) {
-    userPhoto.src = photoURL;
-    userPhoto.classList.remove("hidden");
-  } else {
-    userPhoto.classList.add("hidden");
+  if (nameEl) nameEl.textContent = name;
+  if (emailEl) emailEl.textContent = email;
+  
+  if (photoURL && photoEl) {
+    photoEl.src = photoURL;
+    photoEl.classList.remove("hidden");
+  } else if (photoEl) {
+    photoEl.classList.add("hidden");
   }
+
+  console.log("Nome:", name);
+  console.log("Email:", email);
 }
+
 
 
 // Função para calcular os totais de receitas, despesas e transações dos dias 01 e 15
@@ -173,7 +201,6 @@ function calculateTotals() {
   gerarPlanoFinanceiroPessoal();
 
 }
-
 
 // Função para atualizar os gráficos após o filtro
 function updateCharts() {
