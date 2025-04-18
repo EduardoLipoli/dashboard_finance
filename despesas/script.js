@@ -26,6 +26,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         loadUserName(user);
+        loadCategoriesForTransaction();
         loadTransactionsFromFirestore();
         
       } catch (error) {
