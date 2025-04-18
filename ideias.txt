@@ -1,7 +1,0 @@
-Arrumar o editar para editar de todos os meses que aquele item foi cadastrado.
-Colocar a situação da despesa na tabela pago, atrasado e pendente.
-Fazer um campo para colocar cartão de crédito e adicionar ao forms para facilitar ao cadastrar divida de cartão de crédito
-Colocar algo para ordenar as que já foram pagas e as que ainda faltam pagar.
-Fazer um sistema de investimento
-Melhorar o relatório financeiro, para fazer mais sentido.
-Fazer uma pagina de metas.
