@@ -83,23 +83,19 @@
   </div>
 
   <!-- Main Content -->
-  <div class="flex-1 flex flex-col">
+  <div class="flex-1 flex flex-col ">
     <!-- Header -->
     <header class="bg-zinc-800 flex items-center justify-between px-6 py-4">
       <h1 class="text-lg font-bold text-green-500 flex-grow">
         <a href="/dashboard/index.html"> Dashboard Financeiro</a>
       </h1>
-      <select id="filterDatepay"
-        class="flex space-x-4 mr-2 mt-1 p-2 w-36 bg-zinc-900 border border-zinc-700 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
-        <option value="">Todos</option>
-        <option value="01">Dia 01</option>
-        <option value="15">Dia 15</option>
-      </select>
 
-      <button id="addBtn" class="bg-green-500 text-white font-bold px-4 py-2 mr-2 rounded hover:bg-green-600 shadow-md">
+      <button id="addBtn" class="bg-green-500 text-white font-bold px-4 py-2 rounded hover:bg-green-600 shadow-md">
         Adicionar
       </button>
 
+      <div class="h-6 w-px bg-zinc-700 mx-3"></div>
+      
       <!-- Botão do Dropdown -->
       <div class="relative inline-block text-left">
         <button id="dropdownButton"
@@ -125,7 +121,6 @@
 
     <!-- Main section -->
     <main class="flex-1 p-6">
-
       <!-- Cards de dívidas -->
       <a href="/dashboard/index.html">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6" id="cards-dividas">
@@ -172,6 +167,47 @@
       </button>
     </div>
   </div>
+
+  <div class="flex justify-end items-center space-x-2 mb-4">
+    <!-- 1) Container relative para o dropdown -->
+    <div class="relative inline-block">
+      <!-- botão Filtros -->
+      <button id="filterBtn"
+        class="flex items-center justify-between w-40 px-4 py-2 bg-zinc-900 text-white rounded-lg border border-zinc-700 hover:bg-zinc-800 focus:outline-none">
+        <span class="flex items-center">
+          <i class="fa-solid fa-filter mr-2"></i>
+          Filtros
+        </span>
+        <i id="filterChevron" class="fa-solid fa-chevron-down transform transition-transform duration-200"></i>
+      </button>
+
+      <!-- menu dropdown agora alinhado à esquerda -->
+      <div id="filterMenu"
+        class="hidden absolute right-0 mt-1 w-48 bg-zinc-800 text-white rounded-lg shadow-xl border border-zinc-700 divide-y divide-zinc-700 z-30">
+        <!-- Status -->
+        <div class="px-4 py-3 space-y-1">
+          <label for="filterStatus" class="block text-sm font-medium">Status</label>
+          <select id="filterStatus"
+            class="w-full px-3 py-2 bg-zinc-700 border border-zinc-500 rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-green-500">
+            <option value="">Todos</option>
+            <option value="paid">Pago</option>
+            <option value="unpaid">Pendente</option>
+          </select>
+        </div>
+        <!-- Dia -->
+        <div class="px-4 py-3 space-y-1">
+          <label for="filterDatepay" class="block text-sm font-medium">Dia de pagamento</label>
+          <select id="filterDatepay"
+            class="w-full px-3 py-2 bg-zinc-700 border border-zinc-500 rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-green-500">
+            <option value="">Todos</option>
+            <option value="01">Dia 01</option>
+            <option value="15">Dia 15</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Table -->
   <div class="overflow-x-auto text-zinc-200 rounded-lg">
     <div class="rounded-t-lg overflow-hidden">

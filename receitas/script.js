@@ -449,6 +449,26 @@ function capitalizeName(name) {
   return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
 }
 
+const filterBtn       = document.getElementById("filterBtn");
+const filterMenu      = document.getElementById("filterMenu");
+const filterChevron   = document.getElementById("filterChevron");
+const selectStatus    = document.getElementById("filterStatus");
+const selectDatepay   = document.getElementById("filterDatepay");
+
+filterBtn.addEventListener("click", (e) => {
+  e.stopPropagation();
+  filterMenu.classList.toggle("hidden");
+  filterChevron.classList.toggle("rotate-180");
+});
+document.addEventListener("click", (e) => {
+  if (!filterMenu.contains(e.target) && !filterBtn.contains(e.target)) {
+    filterMenu.classList.add("hidden");
+    filterChevron.classList.remove("rotate-180");
+  }
+});
+
+selectDatepay.addEventListener("change", displayTransactionsForCurrentMonth);
+
 function displayTransactionsForCurrentMonth() {
   const filterDatepay = document.getElementById("filterDatepay").value;
   tableBody.innerHTML = "";

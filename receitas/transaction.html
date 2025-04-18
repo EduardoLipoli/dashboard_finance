@@ -85,15 +85,11 @@
       <h1 class="text-lg font-bold text-green-500 flex-grow">
         <a href="/dashboard/index.html"> Dashboard Financeiro </a>
       </h1>
-      <select id="filterDatepay"
-        class="flex space-x-4 mr-2 mt-1 p-2 w-36 bg-zinc-900 border border-zinc-700 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
-        <option value="">Todos</option>
-        <option value="01">Dia 01</option>
-        <option value="15">Dia 15</option>
-      </select>
-      <button id="addBtn" class="bg-green-500 text-white font-bold mr-2 px-4 py-2 rounded hover:bg-green-600 shadow-md">
+      <button id="addBtn" class="bg-green-500 text-white font-bold px-4 py-2 rounded hover:bg-green-600 shadow-md">
         Adicionar
       </button>
+
+      <div class="h-6 w-px bg-zinc-700 mx-3"></div>
 
       <!-- Botão do Dropdown -->
       <div class="relative inline-block text-left">
@@ -115,13 +111,13 @@
           </a>
         </div>
       </div>
-      
+
     </header>
 
     <!-- Main section -->
     <main class="flex-1 p-6">
 
-      
+
       <!-- Cards de dívidas -->
       <a href="/dashboard/index.html">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6" id="cards-dividas">
@@ -149,179 +145,222 @@
   </div>
   </a>
 
-      <div class="flex items-center justify-between bg-zinc-800 p-3 rounded-lg shadow-lg mb-6 mx-auto">
-        <!-- Setas de navegação -->
-        <div class="chevron-left">
-          <button class="text-white hover:text-green-400 transition-colors px-4 py-1">
-            <i class="fas fa-chevron-left"></i>
-          </button>
-        </div>
-
-        <!-- Texto central com mês/ano -->
-        <span class="text-white text-lg font-semibold cursor-pointer hover:text-green-400 transition-colors select-none">Setembro/2024</span>
-
-        <!-- Setas de navegação -->
-        <div class="chevron-right">
-          <button class="text-white hover:text-green-400 transition-colors px-4 py-1">
-            <i class="fas fa-chevron-right"></i>
-          </button>
-        </div>
-      </div>
-      <!-- Table -->
-      <div class="overflow-x-auto text-zinc-200 rounded-lg">
-        <div class="rounded-t-lg overflow-hidden">
-          <table class="min-w-full table-auto">
-            <thead class="bg-zinc-800 rounded-t-xl">
-              <tr class="">
-                <th class="py-3 px-6 text-left font-semibold text-sm cursor-pointer text-white hover:text-green-400 transition-colors select-none" onclick="ordenarTabela('name')">
-                Nome <i class="bi bi-arrow-down-up"></i>
-                </th>
-                <th class="py-3 px-6 text-left font-semibold text-sm cursor-default select-none">
-                  Tipo
-                </th>
-                <th class="py-3 px-6 text-left font-semibold text-sm cursor-pointer text-white hover:text-green-400 transition-colors select-none" onclick="ordenarTabela('category')">
-                  Categoria <i class="bi bi-arrow-down-up"></i>
-                </th>
-                <th class="py-3 px-6 text-left font-semibold text-sm cursor-pointer text-white hover:text-green-400 transition-colors select-none" onclick="ordenarTabela('dueDate')">
-                  Data de Vencimento <i class="bi bi-arrow-down-up"></i>
-                </th>
-                <th class="py-3 px-6 text-left font-semibold text-sm cursor-pointer text-white hover:text-green-400 transition-colors select-none" onclick="ordenarTabela('datepay')">
-                  Data de Pagamento <i class="bi bi-arrow-down-up"></i>
-                </th>
-                <th class="py-3 px-6 text-left font-semibold text-sm cursor-pointer text-white hover:text-green-400 transition-colors select-none" onclick="ordenarTabela('amount')">
-                  Valor <i class="bi bi-arrow-down-up"></i>
-                </th>
-                <th class="py-3 px-6 text-left font-semibold text-sm cursor-default select-none">
-                  Parcelas
-                </th>
-                <th class="py-3 px-6 text-left font-semibold text-sm cursor-default select-none">
-                  Ações
-                </th>
-              </tr>
-            </thead>
-            <tbody id="tableBody"></tbody>
-          </table>
-        </div>
-      </div>
-    </main>
-  </div>
-
-<!-- Form Sidebar -->
-<div id="formSidebar"
-class="fixed right-0 top-0 h-full bg-zinc-900 overflow-hidden form-closed transition-all duration-300">
-<div class="p-6">
-  <h2 class="text-lg text-white mb-4">Adicionar Transação</h2>
-  <form id="dataForm" class="space-y-4">
-    <div>
-      <label for="type" class="block text-sm font-medium">Tipo</label>
-      <input type="hidden" id="type" name="type" value="Ganho" />
-      <span class="block mt-1 p-2 bg-zinc-900 border border-zinc-700 rounded-md text-gray-400">
-        Ganho
-      </span>
-    </div>
-    <div>
-      <label for="name" class="block mb-1">Nome</label>
-      <input type="text" autocomplete="off" id="name" oninput="filterSuggestions()"
-        class="w-full px-3 py-1 bg-zinc-900 border border-zinc-700 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-        required />
-      <div class="error text-sm text-red-500 hidden" id="name-required-error">
-        Nome é obrigatório
-      </div>
-      <!-- Div onde sugestões serão exibidas -->
-      <div id="suggestions" class="bg-zinc-800 border border-zinc-700 rounded mt-1 hidden"></div>
-    </div>
-
-
-    <div>
-      <label for="amount" class="block mb-1">Valor</label>
-      <input type="text" autocomplete="off" id="amount" onchange="onChangeAmount()"
-        class="w-full px-3 py-1 bg-zinc-900 border border-zinc-700 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-        required placeholder="0,00" />
-      <div class="error text-sm text-red-500 hidden" id="amount-required-error">
-        Valor é obrigatório
-      </div>
-      <div class="error text-sm text-red-500 hidden" id="amount-less-or-equal-to-zero-error">
-        Valor deve ser maior que zero
-      </div>
-    </div>
-
-    <div>
-      <label for="type" class="block text-sm font-medium">Categoria</label>
-      <select id="category" class="w-full mt-1 p-2 bg-zinc-900 border border-zinc-700 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500" required>
-          <option value="Salario">Salário</option>
-          <option value="Freelance">Freelance</option>
-          <option value="Vendas">Vendas</option>
-          <option value="Bonificacao">Bonificação</option>
-          <option value="Decimo">Décimo Terceiro</option>
-          <option value="Ferias">Férias</option>
-          <option value="Outros Ganhos">Outros Ganhos</option>
-      </select>
-  </div>
-
-    <div>
-      <label for="dueDate" class="block text-sm font-medium">Data de Vencimento</label>
-      <input type="date" id="dueDate" name="dueDate" onchange="onChangeDate()"
-        class="dark w-full mt-1 p-2 bg-zinc-900 border border-zinc-700 rounded-md text-zinc-200 focus:outline-none focus:ring-2 focus:ring-green-500"
-        required />
-      <div class="error text-sm text-red-500 hidden" id="date-required-error">
-        Data é obrigatória/inválida
-      </div>
-    </div>
-
-    <div>
-      <label for="type" class="block text-sm font-medium">Data de Pagamento</label>
-      <select id="datepay"
-        class="w-full mt-1 p-2 bg-zinc-900 border border-zinc-700 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-        required>
-        <option value="01">Dia 01</option>
-        <option value="15">Dia 15</option>
-      </select>
-    </div>
-    <div>
-      <label for="type" class="block text-sm font-medium mb-2 text-gray-300">Frequência</label>
-      <div class="grid grid-cols-3 gap-2">
-        <input id="single" type="radio" value="single" name="bordered-radio" class="hidden peer/single" checked />
-        <label for="single"
-          class="w-full text-center py-2 px-3 text-sm font-medium text-gray-300 cursor-pointer bg-zinc-800 rounded-lg transition-all peer-checked/single:bg-green-500 peer-checked/single:text-white">
-          Único
-        </label>
-
-        <input id="fixed" type="radio" value="fixed" name="bordered-radio" class="hidden peer/fixed" />
-        <label for="fixed"
-          class="w-full text-center py-2 px-3 text-sm font-medium text-gray-300 cursor-pointer bg-zinc-800 rounded-lg transition-all peer-checked/fixed:bg-green-500 peer-checked/fixed:text-white">
-          Fixo
-        </label>
-
-        <input id="parcel" type="radio" value="parcel" name="bordered-radio" class="hidden peer/parcel" />
-        <label for="parcel"
-          class="w-full text-center py-2 px-3 text-sm font-medium text-gray-300 cursor-pointer bg-zinc-800 rounded-lg transition-all peer-checked/parcel:bg-green-500 peer-checked/parcel:text-white">
-          Parcelado
-        </label>
-      </div>
-    </div>
-
-
-    <div id="installmentsContainer" class="hidden">
-      <label for="installments" class="block mb-1">Parcelas</label>
-      <input type="number" autocomplete="off" id="installments"
-        class="w-full px-3 py-1 bg-zinc-900 border border-zinc-700 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-        min="1" value="1" placeholder="Número de parcelas" />
-    </div>
-
-    <div class="grid grid-cols-2 gap-2">
-      <button type="button" id="cancelBtn"
-        class="w-full bg-zinc-500 text-white px-4 py-2 rounded hover:bg-zinc-600">
-        Cancelar
-      </button>
-      <button type="submit" id="save-button"
-        class="w-full bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
-        disabled>
-        Salvar
+  <div class="flex items-center justify-between bg-zinc-800 p-3 rounded-lg shadow-lg mb-6 mx-auto">
+    <!-- Setas de navegação -->
+    <div class="chevron-left">
+      <button class="text-white hover:text-green-400 transition-colors px-4 py-1">
+        <i class="fas fa-chevron-left"></i>
       </button>
     </div>
-  </form>
-</div>
-</div>
+
+    <!-- Texto central com mês/ano -->
+    <span
+      class="text-white text-lg font-semibold cursor-pointer hover:text-green-400 transition-colors select-none">Setembro/2024</span>
+
+    <!-- Setas de navegação -->
+    <div class="chevron-right">
+      <button class="text-white hover:text-green-400 transition-colors px-4 py-1">
+        <i class="fas fa-chevron-right"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="flex justify-end items-center space-x-2 mb-4">
+    <!-- 1) Container relative para o dropdown -->
+    <div class="relative inline-block">
+      <!-- botão Filtros -->
+      <button id="filterBtn"
+        class="flex items-center justify-between w-40 px-4 py-2 bg-zinc-900 text-white rounded-lg border border-zinc-700 hover:bg-zinc-800 focus:outline-none">
+        <span class="flex items-center">
+          <i class="fa-solid fa-filter mr-2"></i>
+          Filtros
+        </span>
+        <i id="filterChevron" class="fa-solid fa-chevron-down transform transition-transform duration-200"></i>
+      </button>
+
+      <!-- menu dropdown agora alinhado à esquerda -->
+      <div id="filterMenu"
+        class="hidden absolute right-0 mt-1 w-48 bg-zinc-800 text-white rounded-lg shadow-xl border border-zinc-700 divide-y divide-zinc-700 z-30">
+        <!-- Dia -->
+        <div class="px-4 py-3 space-y-1">
+          <label for="filterDatepay" class="block text-sm font-medium">Dia de pagamento</label>
+          <select id="filterDatepay"
+            class="w-full px-3 py-2 bg-zinc-700 border border-zinc-500 rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-green-500">
+            <option value="">Todos</option>
+            <option value="01">Dia 01</option>
+            <option value="15">Dia 15</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Table -->
+  <div class="overflow-x-auto text-zinc-200 rounded-lg">
+    <div class="rounded-t-lg overflow-hidden">
+      <table class="min-w-full table-auto">
+        <thead class="bg-zinc-800 rounded-t-xl">
+          <tr class="">
+            <th
+              class="py-3 px-6 text-left font-semibold text-sm cursor-pointer text-white hover:text-green-400 transition-colors select-none"
+              onclick="ordenarTabela('name')">
+              Nome <i class="bi bi-arrow-down-up"></i>
+            </th>
+            <th class="py-3 px-6 text-left font-semibold text-sm cursor-default select-none">
+              Tipo
+            </th>
+            <th
+              class="py-3 px-6 text-left font-semibold text-sm cursor-pointer text-white hover:text-green-400 transition-colors select-none"
+              onclick="ordenarTabela('category')">
+              Categoria <i class="bi bi-arrow-down-up"></i>
+            </th>
+            <th
+              class="py-3 px-6 text-left font-semibold text-sm cursor-pointer text-white hover:text-green-400 transition-colors select-none"
+              onclick="ordenarTabela('dueDate')">
+              Data de Vencimento <i class="bi bi-arrow-down-up"></i>
+            </th>
+            <th
+              class="py-3 px-6 text-left font-semibold text-sm cursor-pointer text-white hover:text-green-400 transition-colors select-none"
+              onclick="ordenarTabela('datepay')">
+              Data de Pagamento <i class="bi bi-arrow-down-up"></i>
+            </th>
+            <th
+              class="py-3 px-6 text-left font-semibold text-sm cursor-pointer text-white hover:text-green-400 transition-colors select-none"
+              onclick="ordenarTabela('amount')">
+              Valor <i class="bi bi-arrow-down-up"></i>
+            </th>
+            <th class="py-3 px-6 text-left font-semibold text-sm cursor-default select-none">
+              Parcelas
+            </th>
+            <th class="py-3 px-6 text-left font-semibold text-sm cursor-default select-none">
+              Ações
+            </th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+  </main>
+  </div>
+
+  <!-- Form Sidebar -->
+  <div id="formSidebar"
+    class="fixed right-0 top-0 h-full bg-zinc-900 overflow-hidden form-closed transition-all duration-300">
+    <div class="p-6">
+      <h2 class="text-lg text-white mb-4">Adicionar Transação</h2>
+      <form id="dataForm" class="space-y-4">
+        <div>
+          <label for="type" class="block text-sm font-medium">Tipo</label>
+          <input type="hidden" id="type" name="type" value="Ganho" />
+          <span class="block mt-1 p-2 bg-zinc-900 border border-zinc-700 rounded-md text-gray-400">
+            Ganho
+          </span>
+        </div>
+        <div>
+          <label for="name" class="block mb-1">Nome</label>
+          <input type="text" autocomplete="off" id="name" oninput="filterSuggestions()"
+            class="w-full px-3 py-1 bg-zinc-900 border border-zinc-700 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+            required />
+          <div class="error text-sm text-red-500 hidden" id="name-required-error">
+            Nome é obrigatório
+          </div>
+          <!-- Div onde sugestões serão exibidas -->
+          <div id="suggestions" class="bg-zinc-800 border border-zinc-700 rounded mt-1 hidden"></div>
+        </div>
+
+
+        <div>
+          <label for="amount" class="block mb-1">Valor</label>
+          <input type="text" autocomplete="off" id="amount" onchange="onChangeAmount()"
+            class="w-full px-3 py-1 bg-zinc-900 border border-zinc-700 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+            required placeholder="0,00" />
+          <div class="error text-sm text-red-500 hidden" id="amount-required-error">
+            Valor é obrigatório
+          </div>
+          <div class="error text-sm text-red-500 hidden" id="amount-less-or-equal-to-zero-error">
+            Valor deve ser maior que zero
+          </div>
+        </div>
+
+        <div>
+          <label for="type" class="block text-sm font-medium">Categoria</label>
+          <select id="category"
+            class="w-full mt-1 p-2 bg-zinc-900 border border-zinc-700 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            required>
+            <option value="Salario">Salário</option>
+            <option value="Freelance">Freelance</option>
+            <option value="Vendas">Vendas</option>
+            <option value="Bonificacao">Bonificação</option>
+            <option value="Decimo">Décimo Terceiro</option>
+            <option value="Ferias">Férias</option>
+            <option value="Outros Ganhos">Outros Ganhos</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="dueDate" class="block text-sm font-medium">Data de Vencimento</label>
+          <input type="date" id="dueDate" name="dueDate" onchange="onChangeDate()"
+            class="dark w-full mt-1 p-2 bg-zinc-900 border border-zinc-700 rounded-md text-zinc-200 focus:outline-none focus:ring-2 focus:ring-green-500"
+            required />
+          <div class="error text-sm text-red-500 hidden" id="date-required-error">
+            Data é obrigatória/inválida
+          </div>
+        </div>
+
+        <div>
+          <label for="type" class="block text-sm font-medium">Data de Pagamento</label>
+          <select id="datepay"
+            class="w-full mt-1 p-2 bg-zinc-900 border border-zinc-700 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            required>
+            <option value="01">Dia 01</option>
+            <option value="15">Dia 15</option>
+          </select>
+        </div>
+        <div>
+          <label for="type" class="block text-sm font-medium mb-2 text-gray-300">Frequência</label>
+          <div class="grid grid-cols-3 gap-2">
+            <input id="single" type="radio" value="single" name="bordered-radio" class="hidden peer/single" checked />
+            <label for="single"
+              class="w-full text-center py-2 px-3 text-sm font-medium text-gray-300 cursor-pointer bg-zinc-800 rounded-lg transition-all peer-checked/single:bg-green-500 peer-checked/single:text-white">
+              Único
+            </label>
+
+            <input id="fixed" type="radio" value="fixed" name="bordered-radio" class="hidden peer/fixed" />
+            <label for="fixed"
+              class="w-full text-center py-2 px-3 text-sm font-medium text-gray-300 cursor-pointer bg-zinc-800 rounded-lg transition-all peer-checked/fixed:bg-green-500 peer-checked/fixed:text-white">
+              Fixo
+            </label>
+
+            <input id="parcel" type="radio" value="parcel" name="bordered-radio" class="hidden peer/parcel" />
+            <label for="parcel"
+              class="w-full text-center py-2 px-3 text-sm font-medium text-gray-300 cursor-pointer bg-zinc-800 rounded-lg transition-all peer-checked/parcel:bg-green-500 peer-checked/parcel:text-white">
+              Parcelado
+            </label>
+          </div>
+        </div>
+
+
+        <div id="installmentsContainer" class="hidden">
+          <label for="installments" class="block mb-1">Parcelas</label>
+          <input type="number" autocomplete="off" id="installments"
+            class="w-full px-3 py-1 bg-zinc-900 border border-zinc-700 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+            min="1" value="1" placeholder="Número de parcelas" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <button type="button" id="cancelBtn"
+            class="w-full bg-zinc-500 text-white px-4 py-2 rounded hover:bg-zinc-600">
+            Cancelar
+          </button>
+          <button type="submit" id="save-button"
+            class="w-full bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled>
+            Salvar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js"></script>

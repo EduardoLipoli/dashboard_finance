@@ -592,169 +592,155 @@ function capitalizeName(name) {
   return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
 }
 
+const filterBtn       = document.getElementById("filterBtn");
+const filterMenu      = document.getElementById("filterMenu");
+const filterChevron   = document.getElementById("filterChevron");
+const selectStatus    = document.getElementById("filterStatus");
+const selectDatepay   = document.getElementById("filterDatepay");
+
+filterBtn.addEventListener("click", (e) => {
+  e.stopPropagation();
+  filterMenu.classList.toggle("hidden");
+  filterChevron.classList.toggle("rotate-180");
+});
+document.addEventListener("click", (e) => {
+  if (!filterMenu.contains(e.target) && !filterBtn.contains(e.target)) {
+    filterMenu.classList.add("hidden");
+    filterChevron.classList.remove("rotate-180");
+  }
+});
+
+selectStatus.addEventListener("change", displayTransactionsForCurrentMonth);
+selectDatepay.addEventListener("change", displayTransactionsForCurrentMonth);
+
 function displayTransactionsForCurrentMonth() {
-  const filterDatepay = document.getElementById("filterDatepay").value;
+  const statusFilter  = selectStatus.value;
+  const datepayFilter = selectDatepay.value;
+
   tableBody.innerHTML = "";
 
   transactions.forEach((transaction, index) => {
     const transactionMonth = transaction.dueDate.getMonth();
-    const transactionYear = transaction.dueDate.getFullYear();
+    const transactionYear  = transaction.dueDate.getFullYear();
 
-    if (transaction.type === "Gasto") {
-      if (
-        transactionMonth === currentMonth &&
-        transactionYear === currentYear &&
-        (filterDatepay === "" || transaction.datepay === filterDatepay)
-      ) {
-        const formattedName = capitalizeName(transaction.name);
-        const formattedAmount = new Intl.NumberFormat("pt-BR", {
-          style: "currency",
-          currency: "BRL",
-          minimumFractionDigits: 2,
-        }).format(transaction.amount);
+    if (
+      transaction.type !== "Gasto" ||
+      transactionMonth  !== currentMonth ||
+      transactionYear   !== currentYear
+    ) return;
 
-        const categoryName = categoryMap[transaction.category] || "Categoria desconhecida";
+    if (
+      (statusFilter === "paid"   && !transaction.isPaid) ||
+      (statusFilter === "unpaid" &&  transaction.isPaid)
+    ) return;
 
-        const row = document.createElement("tr");
-        row.classList.add("border-b", "border-zinc-700");
-        row.classList.toggle("is-Paid", transaction.isPaid);
+    if (
+      datepayFilter !== "" &&
+      transaction.datepay !== datepayFilter
+    ) return;
 
-        row.innerHTML = `
-                <td class="py-3 px-6 font-medium">${formattedName}</td>
-                <td class="py-3 px-6">
-                    <span class="px-2 py-1 rounded-full text-sm ${
-                      transaction.type === "Ganho"
-                        ? `bg-green-800 bg-opacity-25 text-green-500 ${
-                            transaction.isPaid ? "text-opacity-50" : ""
-                          }`
-                        : `bg-red-900 bg-opacity-25 text-red-500 ${
-                            transaction.isPaid ? "text-opacity-50" : ""
-                          }`
-                    }">${transaction.type}</span>
-                </td>
-                <td class="py-3 px-6">${categoryName}</td>
-                <td class="py-3 px-6">${transaction.dueDate.toLocaleDateString(
-                  "pt-BR",
-                  { day: "2-digit", month: "2-digit", year: "numeric" }
-                )}</td>
-                <td class="py-3 px-6">Dia ${transaction.datepay}</td>
-                <td class="py-3 px-6 font-medium">${formattedAmount}</td>
-                <td class="py-3 px-6">${
-                  transaction.isFixed ? "Fixa" : `${transaction.installments}x`
-                }</td>
-                <td class="py-3 px-6">
-                  ${getTransactionStatus(transaction)}
-                </td>
+    const formattedName   = capitalizeName(transaction.name);
+    const formattedAmount = new Intl.NumberFormat("pt-BR", {
+      style: "currency", currency: "BRL", minimumFractionDigits: 2
+    }).format(transaction.amount);
+    const categoryName    = categoryMap[transaction.category] || "Categoria desconhecida";
 
-                <td class="py-3 px-6">
-                    <button class="text-zinc-500 hover:text-zinc-700" onclick="editTransaction(${index})">
-                        <i class="fa-regular fa-pen-to-square"></i>
-                    </button>
-                    <button class="text-red-500 hover:text-red-700 ml-2 remove-btn" onclick="openDeleteModal(${index})">
-                        <i class="fa-regular fa-trash-can"></i>
-                    </button>
-                </td>
-            `;
-
-        row.addEventListener("click", (event) => {
-          toggleTransactionPaid(index, event);
-        });
-
-        tableBody.appendChild(row);
-      }
-    }
+    const row = document.createElement("tr");
+    row.classList.add("border-b", "border-zinc-700");
+    row.classList.toggle("is-Paid", transaction.isPaid);
+    row.innerHTML = `
+      <td class="py-3 px-6 font-medium">${formattedName}</td>
+      <td class="py-3 px-6">
+        <span class="px-2 py-1 rounded-full text-sm ${
+          transaction.type === "Ganho"
+            ? `bg-green-800 bg-opacity-25 text-green-500 ${transaction.isPaid ? "text-opacity-50" : ""}`
+            : `bg-red-900 bg-opacity-25 text-red-500 ${transaction.isPaid ? "text-opacity-50" : ""}`
+        }">${transaction.type}</span>
+      </td>
+      <td class="py-3 px-6">${categoryName}</td>
+      <td class="py-3 px-6">${transaction.dueDate.toLocaleDateString("pt-BR", {
+        day: "2-digit", month: "2-digit", year: "numeric"
+      })}</td>
+      <td class="py-3 px-6">Dia ${transaction.datepay}</td>
+      <td class="py-3 px-6 font-medium">${formattedAmount}</td>
+      <td class="py-3 px-6">${
+        transaction.isFixed ? "Fixa" : `${transaction.installments}x`
+      }</td>
+      <td class="py-3 px-6">${getTransactionStatus(transaction)}</td>
+      <td class="py-3 px-6">
+        <button class="text-zinc-500 hover:text-zinc-700" onclick="editTransaction(${index})">
+          <i class="fa-regular fa-pen-to-square"></i>
+        </button>
+        <button class="text-red-500 hover:text-red-700 ml-2" onclick="openDeleteModal(${index})">
+          <i class="fa-regular fa-trash-can"></i>
+        </button>
+      </td>
+    `;
+    row.addEventListener("click", event => toggleTransactionPaid(index, event));
+    tableBody.appendChild(row);
   });
 
   if (tableBody.innerHTML === "") {
     const emptyRow = document.createElement("tr");
-    emptyRow.innerHTML = `<td colspan="8" class="text-center py-4">Nenhuma transação encontrada para este mês.</td>`;
+    emptyRow.innerHTML = `<td colspan="9" class="text-center py-4">Nenhuma transação encontrada para este mês.</td>`;
     tableBody.appendChild(emptyRow);
   }
 
-  function getTransactionStatus(transaction) {
-    if (transaction.isPaid) {
-      return `<span class="text-green-500">Pago</span>`;
-    }
-  
-    const today = new Date();
-    const dueDate = new Date(transaction.dueDate);
-    dueDate.setHours(0, 0, 0, 0);
-    today.setHours(0, 0, 0, 0);
-  
-    if (dueDate < today) {
-      return `<span class="text-red-500">Atrasado</span>`;
-    }
-  
-    return `<span class="text-white">Pendente</span>`;
-  }
-  
+  const valorDia01Element  = document.getElementById("valor-dia-01");
+  const valorDia15Element  = document.getElementById("valor-dia-15");
+  const qtdDia01Element    = document.getElementById("quantidade-dia-01");
+  const qtdDia15Element    = document.getElementById("quantidade-dia-15");
 
-  const valorDia01Element = document.getElementById("valor-dia-01");
-  const valorDia15Element = document.getElementById("valor-dia-15");
-  const qtdDia01Element = document.getElementById("quantidade-dia-01");
-  const qtdDia15Element = document.getElementById("quantidade-dia-15");
-  
   if (valorDia01Element && valorDia15Element) {
-    let totalDia01 = 0;
-    let totalDia15 = 0;
-    let countDia01 = 0;
-    let countDia15 = 0;
-  
-    transactions.forEach(transaction => {
-      const transactionMonth = transaction.dueDate.getMonth();
-      const transactionYear = transaction.dueDate.getFullYear();
-  
-      if (
-        transaction.type === "Gasto" &&
-        transactionMonth === currentMonth &&
-        transactionYear === currentYear &&
-        !transaction.isPaid
-      ) {
-        if (transaction.datepay === "01") {
-          totalDia01 += transaction.amount;
-          countDia01++;
-        } else if (transaction.datepay === "15") {
-          totalDia15 += transaction.amount;
-          countDia15++;
-        }
+    let totalDia01 = 0, totalDia15 = 0;
+    let countDia01 = 0, countDia15 = 0;
+
+    transactions.forEach(tx => {
+      const m = tx.dueDate.getMonth(), y = tx.dueDate.getFullYear();
+      if (tx.type === "Gasto" && m === currentMonth && y === currentYear && !tx.isPaid) {
+        if (tx.datepay === "01") { totalDia01 += tx.amount; countDia01++; }
+        if (tx.datepay === "15") { totalDia15 += tx.amount; countDia15++; }
       }
     });
-  
-    // Animação de contagem dos valores dos cards
-    const valorAtual01 = parseFloat(valorDia01Element.textContent.replace(/[R$\s.]/g, '').replace(',', '.')) || 0;
-    const valorAtual15 = parseFloat(valorDia15Element.textContent.replace(/[R$\s.]/g, '').replace(',', '.')) || 0;
 
+    const valorAtual01 = parseFloat(valorDia01Element.textContent.replace(/[R$\s.]/g,"").replace(",", ".")) || 0;
+    const valorAtual15 = parseFloat(valorDia15Element.textContent.replace(/[R$\s.]/g,"").replace(",", ".")) || 0;
     animateValue(valorDia01Element, valorAtual01, totalDia01, 800);
     animateValue(valorDia15Element, valorAtual15, totalDia15, 800);
-
-  
-    qtdDia01Element.textContent = `${countDia01} despesa${countDia01 === 1 ? "" : "s"}`;
-    qtdDia15Element.textContent = `${countDia15} despesa${countDia15 === 1 ? "" : "s"}`;
-  }  
-
-  function animateValue(element, start, end, duration) {
-    const range = end - start;
-    let startTimestamp = null;
-  
-    const step = (timestamp) => {
-      if (!startTimestamp) startTimestamp = timestamp;
-      const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-      const value = start + range * progress;
-  
-      element.textContent = value.toLocaleString("pt-BR", {
-        style: "currency",
-        currency: "BRL"
-      });
-  
-      if (progress < 1) {
-        window.requestAnimationFrame(step);
-      }
-    };
-  
-    window.requestAnimationFrame(step);
+    qtdDia01Element.textContent = `${countDia01} despesa${countDia01!==1?'s':''}`;
+    qtdDia15Element.textContent = `${countDia15} despesa${countDia15!==1?'s':''}`;
   }
-  
+}
 
+function getTransactionStatus(transaction) {
+  if (transaction.isPaid) return `<span class="min-w-[80px] text-center inline-block px-2 py-1 rounded-full text-sm bg-green-800 bg-opacity-25 text-green-500">Pago</span>`;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const due   = new Date(transaction.dueDate); due.setHours(0,0,0,0);
+  return due < today
+    ? `<span class="min-w-[80px] text-center inline-block px-2 py-1 rounded-full text-sm bg-red-800 bg-opacity-25 text-red-500">Atrasado</span>`
+    : `<span class="min-w-[80px] text-center inline-block px-2 py-1 rounded-full text-sm bg-white bg-opacity-25 text-white">Pendente</span>`;
+}
+
+function animateValue(element, start, end, duration) {
+  const range = end - start;
+  let startTimestamp = null;
+
+  const step = (timestamp) => {
+    if (!startTimestamp) startTimestamp = timestamp;
+    const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+    const value    = start + range * progress;
+
+    element.textContent = value.toLocaleString("pt-BR", {
+      style:     "currency",
+      currency:  "BRL"
+    });
+
+    if (progress < 1) {
+      window.requestAnimationFrame(step);
+    }
+  };
+
+  window.requestAnimationFrame(step);
 }
 
 let ordenacaoAtual = { campo: null, asc: true };
