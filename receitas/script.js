@@ -116,9 +116,15 @@ form.addEventListener("submit", function (e) {
   const [year, month, day] = dueDateInput.split("-").map(Number);
   const dueDate = new Date(year, month - 1, day);
   const isFixed = document.getElementById("fixed").checked;
-  const installments = isFixed
-    ? 0
-    : parseInt(document.getElementById("installments").value);
+  let installments;
+  if (isFixed) {
+    installments = 0;
+  } else if (parcelRadio.checked) {
+    installments = parseInt(document.getElementById("installments").value) || 1;
+  } else {
+    // Caso seja uma transação única
+    installments = 1;
+  }
 
   const transaction = {
     id:
@@ -133,18 +139,23 @@ form.addEventListener("submit", function (e) {
     datepay,
     isFixed,
     installments,
-    addedOn: new Date(),
-    isPaid:
-      currentEditIndex !== null ? transactions[currentEditIndex].isPaid : false, // Novo atributo
+    addedOn:  new Date(),
+    isPaid:   currentEditIndex !== null
+                ? transactions[currentEditIndex].isPaid
+                : false,
   };
 
   if (currentEditIndex !== null) {
-    // Atualizar a transação existente
+    // — EDIÇÃO: atualiza original e sincroniza réplicas —
     transactions[currentEditIndex] = transaction;
+    saveTransactionToFirestore(transaction);
+    syncReplicatedTransactions(transaction);
     currentEditIndex = null;
+
   } else {
-    // Adicionar uma nova transação
+    // — CRIAÇÃO: empurra e gera réplicas —
     transactions.push(transaction);
+    saveTransactionToFirestore(transaction);
 
     if (isFixed) {
       replicateFixedTransaction(transaction);
@@ -241,15 +252,144 @@ function replicateInstallments(transaction) {
   batch
     .commit()
     .then(() => {
+      hideLoading();
       displayTransactionsForCurrentMonth();
     })
     .catch((error) => {
+      hideLoading();
       console.error(
         "Erro ao replicar transações parceladas no Firestore:",
         error
       );
     });
 }
+
+function updateReplicatedTransactions(transaction) {
+  showLoading();
+  const user = firebase.auth().currentUser;
+  if (!user) {
+    console.error("Usuário não autenticado.");
+    hideLoading();
+    return;
+  }
+
+  const db = firebase.firestore();
+  const txRef = db
+    .collection("users")
+    .doc(user.uid)
+    .collection("transactions");
+
+  // Extrai o "baseId" (tudo antes do primeiro "-")
+  const baseId = transaction.id.split("-")[0];
+
+  txRef.get().then((snapshot) => {
+    const batch = db.batch();
+
+    snapshot.forEach((doc) => {
+      const docId = doc.id;
+      // pula o original, pega só os que começam com baseId-
+      if (docId !== transaction.id && docId.startsWith(baseId + "-")) {
+        const docRef = txRef.doc(docId);
+        // Campos que queremos propagar
+        batch.update(docRef, {
+          name:        transaction.name,
+          amount:      transaction.amount,
+          type:        transaction.type,
+          category:    transaction.category,
+          datepay:     transaction.datepay,
+          isFixed:     transaction.isFixed,
+          installments:transaction.installments,
+        });
+        // também atualiza no array local
+        const idx = transactions.findIndex((t) => t.id === docId);
+        if (idx >= 0) {
+          Object.assign(transactions[idx], {
+            name:        transaction.name,
+            amount:      transaction.amount,
+            type:        transaction.type,
+            category:    transaction.category,
+            datepay:     transaction.datepay,
+            isFixed:     transaction.isFixed,
+            installments:transaction.installments,
+          });
+        }
+      }
+    });
+
+    return batch.commit();
+  })
+  .then(() => {
+    hideLoading();
+    displayTransactionsForCurrentMonth();
+  })
+  .catch((err) => {
+    hideLoading();
+    console.error("Erro ao propagar edição nas réplicas:", err);
+  });
+}
+
+function syncReplicatedTransactions(newTx) {
+  showLoading();
+  const user = firebase.auth().currentUser;
+  if (!user) {
+    console.error("Não autenticado.");
+    hideLoading();
+    return;
+  }
+
+  const db = firebase.firestore();
+  const txRef = db
+    .collection("users")
+    .doc(user.uid)
+    .collection("transactions");
+
+  const baseId = newTx.id.split("-")[0];
+
+  txRef
+    .get()
+    .then((snap) => {
+      const batch = db.batch();
+
+      // Apaga todas as réplicas, exceto a principal
+      snap.forEach((doc) => {
+        const id = doc.id;
+        if (id !== newTx.id && id.startsWith(baseId + "-")) {
+          batch.delete(doc.ref);
+        }
+      });
+
+      return batch.commit();
+    })
+    .then(() => {
+      // Atualiza a lista local
+      transactions = transactions.filter((t) => {
+        const [bid] = t.id.split("-");
+        return bid !== baseId || t.id === newTx.id;
+      });
+
+      // Decide o que fazer conforme o tipo da transação
+      if (newTx.isFixed) {
+        replicateFixedTransaction(newTx);
+        hideLoading();
+      } else if (newTx.installments > 1) {
+        replicateInstallments(newTx);
+      } else {
+        // Caso seja transação única
+        newTx.installments = 1;
+
+        // Atualiza a transação principal no Firestore
+        return txRef.doc(newTx.id).update({ installments: 1 }).then(() => {
+          hideLoading();
+          displayTransactionsForCurrentMonth();
+        });
+      }
+    })
+    .catch((err) => {
+      console.error("Erro ao sincronizar réplicas:", err);
+      hideLoading();
+    });
+}
+
 
 let currentMonth = new Date().getMonth();
 let currentYear = new Date().getFullYear();
