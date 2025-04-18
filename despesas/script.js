@@ -4,15 +4,40 @@ let transactions = [];
 let categoryMap = {};
 const auth = firebase.auth();
 
-firebase.auth().onAuthStateChanged((user) => {
-  if (user) {
-    loadTransactionsFromFirestore();
-    loadCategoriesForTransaction();
-    setTimeout(showOverduePopup, 1000);
-  } else {
-    console.log("Usuário não está logado.");
-  }
+document.addEventListener("DOMContentLoaded", function () {
+  auth.onAuthStateChanged(async (user) => {
+    if (user) {
+      try {
+        await user.reload();
+
+        const userPhoto = document.getElementById("user-photo");
+        const photoURL = user.photoURL;
+        const userEmail = document.getElementById("user-email");
+
+        const email = user.email || "E-mail não disponível";
+
+        userEmail.textContent = email;
+
+        if (photoURL && userPhoto) {
+          userPhoto.src = photoURL;
+          userPhoto.classList.remove("hidden");
+        } else if (userPhoto) {
+          userPhoto.classList.add("hidden");
+        }
+
+        loadUserName(user);
+        loadTransactionsFromFirestore();
+        
+      } catch (error) {
+        console.error("Erro ao atualizar dados do usuário:", error);
+      }
+    } else {
+      console.error("Usuário não autenticado.");
+      window.location.href = "/index.html";
+    }
+  });
 });
+
 
 // Função para salvar uma transação no Firestore
 function saveTransactionToFirestore(transaction) {
