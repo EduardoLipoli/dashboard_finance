@@ -141,6 +141,7 @@ function loadTransactionsFromFirestore() {
         transactions.push(transaction);
       });
       displayTransactionsForCurrentMonth();
+      showOverduePopup();
     })
     .catch((error) => {
       hideLoading();
@@ -154,7 +155,7 @@ function convertToDate(value) {
   } else if (typeof value === "string" || typeof value === "number") {
     return new Date(value);
   }
-  return value; // já é Date
+  return value;
 }
 
 form.addEventListener("submit", function (e) {
@@ -619,7 +620,7 @@ function displayTransactionsForCurrentMonth() {
         row.classList.toggle("is-Paid", transaction.isPaid);
 
         row.innerHTML = `
-                <td class="py-3 px-6">${formattedName}</td>
+                <td class="py-3 px-6 font-medium">${formattedName}</td>
                 <td class="py-3 px-6">
                     <span class="px-2 py-1 rounded-full text-sm ${
                       transaction.type === "Ganho"
@@ -637,7 +638,7 @@ function displayTransactionsForCurrentMonth() {
                   { day: "2-digit", month: "2-digit", year: "numeric" }
                 )}</td>
                 <td class="py-3 px-6">Dia ${transaction.datepay}</td>
-                <td class="py-3 px-6">${formattedAmount}</td>
+                <td class="py-3 px-6 font-medium">${formattedAmount}</td>
                 <td class="py-3 px-6">${
                   transaction.isFixed ? "Fixa" : `${transaction.installments}x`
                 }</td>
