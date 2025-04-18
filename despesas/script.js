@@ -136,8 +136,13 @@ function loadTransactionsFromFirestore() {
       transactions = [];
       querySnapshot.forEach((doc) => {
         const transaction = doc.data();
-        transaction.dueDate = transaction.dueDate.toDate();
-        transaction.addedOn = transaction.addedOn.toDate();
+        if (transaction.dueDate instanceof firebase.firestore.Timestamp) {
+          transaction.dueDate = transaction.dueDate.toDate();
+        }
+        
+        if (transaction.addedOn instanceof firebase.firestore.Timestamp) {
+          transaction.addedOn = transaction.addedOn.toDate();
+        }        
         transactions.push(transaction);
       });
       displayTransactionsForCurrentMonth();
@@ -633,6 +638,10 @@ function displayTransactionsForCurrentMonth() {
                   transaction.isFixed ? "Fixa" : `${transaction.installments}x`
                 }</td>
                 <td class="py-3 px-6">
+                  ${getTransactionStatus(transaction)}
+                </td>
+
+                <td class="py-3 px-6">
                     <button class="text-zinc-500 hover:text-zinc-700" onclick="editTransaction(${index})">
                         <i class="fa-regular fa-pen-to-square"></i>
                     </button>
@@ -656,6 +665,24 @@ function displayTransactionsForCurrentMonth() {
     emptyRow.innerHTML = `<td colspan="8" class="text-center py-4">Nenhuma transação encontrada para este mês.</td>`;
     tableBody.appendChild(emptyRow);
   }
+
+  function getTransactionStatus(transaction) {
+    if (transaction.isPaid) {
+      return `<span class="text-green-500">Pago</span>`;
+    }
+  
+    const today = new Date();
+    const dueDate = new Date(transaction.dueDate);
+    dueDate.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
+  
+    if (dueDate < today) {
+      return `<span class="text-red-500">Atrasado</span>`;
+    }
+  
+    return `<span class="text-white">Pendente</span>`;
+  }
+  
 
   const valorDia01Element = document.getElementById("valor-dia-01");
   const valorDia15Element = document.getElementById("valor-dia-15");
