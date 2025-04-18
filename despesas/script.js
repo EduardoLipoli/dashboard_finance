@@ -136,13 +136,8 @@ function loadTransactionsFromFirestore() {
       transactions = [];
       querySnapshot.forEach((doc) => {
         const transaction = doc.data();
-        if (transaction.dueDate instanceof firebase.firestore.Timestamp) {
-          transaction.dueDate = transaction.dueDate.toDate();
-        }
-        
-        if (transaction.addedOn instanceof firebase.firestore.Timestamp) {
-          transaction.addedOn = transaction.addedOn.toDate();
-        }        
+        transaction.dueDate = convertToDate(transaction.dueDate);
+        transaction.addedOn = convertToDate(transaction.addedOn);        
         transactions.push(transaction);
       });
       displayTransactionsForCurrentMonth();
@@ -151,6 +146,15 @@ function loadTransactionsFromFirestore() {
       hideLoading();
       console.error("Erro ao carregar transações do Firestore:", error);
     });
+}
+
+function convertToDate(value) {
+  if (value instanceof firebase.firestore.Timestamp) {
+    return value.toDate();
+  } else if (typeof value === "string" || typeof value === "number") {
+    return new Date(value);
+  }
+  return value; // já é Date
 }
 
 form.addEventListener("submit", function (e) {
