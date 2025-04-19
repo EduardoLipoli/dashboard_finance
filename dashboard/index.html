@@ -144,11 +144,25 @@
             </div>
             <div>
               <h3 class="text-sm text-zinc-400">Receitas</h3>
-              <p id="totalReceitas" class="text-2xl font-bold"></p>
-              <div class="flex items-center mt-2">
-                <span id="badgeReceitas" class="ml-2 text-xs font-semibold px-2 py-0.5 rounded-full hidden"></span>
-                <small id="diffReceitas" class="text-sm text-zinc-400 ml-1 block"></small>
+              <div class="flex items-center">
+                <p id="totalReceitas" class="text-2xl font-bold"></p>
+                <div class="relative group inline-block">
+                  <span id="badgeReceitas" class="ml-2 text-xs font-semibold px-2 py-0.5 rounded-full hidden">
+
+                    3
+                  </span>
+                  <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3
+                  bg-black text-white text-sm font-semibold px-4 py-2 rounded
+                  opacity-0 group-hover:opacity-100 transition-opacity duration-300
+                  whitespace-nowrap z-10
+                  after:content-[''] after:absolute after:top-full after:left-1/2 
+                  after:-translate-x-1/2 after:border-8 after:border-transparent 
+                  after:border-t-black pointer-events-none">
+                    Comparação ao mês anterior
+                  </div>
+                </div>
               </div>
+              <small id="diffReceitas" class="text-sm text-zinc-400 ml-1 block mt-2"></small>
             </div>
           </div>
 
@@ -169,11 +183,26 @@
             </div>
             <div>
               <h3 class="text-sm text-zinc-400">Despesas</h3>
-              <p id="totalDespesas" class="text-2xl font-bold"></p>
               <div class="flex items-center mt-2">
-                <span id="badgeDespesas" class="ml-2 text-xs font-semibold px-2 py-0.5 rounded-full hidden"></span>
-                <small id="diffDespesas" class="text-sm text-zinc-400 ml-1 block"></small>
+                <p id="totalDespesas" class="text-2xl font-bold"></p>
+                <div class="relative group inline-block">
+                  <span id="badgeDespesas"
+                    class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-semibold px-1.5 py-0.5 rounded-full hidden">
+                    3
+                  </span>
+                  <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3
+                  bg-black text-white text-sm font-semibold px-4 py-2 rounded
+                  opacity-0 group-hover:opacity-100 transition-opacity duration-300
+                  whitespace-nowrap z-10
+                  after:content-[''] after:absolute after:top-full after:left-1/2 
+                  after:-translate-x-1/2 after:border-8 after:border-transparent 
+                  after:border-t-black pointer-events-none">
+                    Comparação ao mês anterior
+                  </div>
+                </div>
+
               </div>
+              <small id="diffDespesas" class="text-sm text-zinc-400 ml-1 block mt-2"></small>
             </div>
           </div>
 
@@ -194,11 +223,24 @@
             </div>
             <div>
               <h3 class="text-sm text-zinc-400">Sobra</h3>
-              <p id="totalSobra" class="text-2xl font-bold"></p>
               <div class="flex items-center mt-2">
-                <span id="badgeSobra" class="ml-2 text-xs font-semibold px-2 py-0.5 rounded-full hidden"></span>
-                <small id="diffSobra" class="text-sm text-zinc-400 ml-1 block"></small>
+                <p id="totalSobra" class="text-2xl font-bold"></p>
+                <div class="relative group inline-block">
+                  <span id="badgeSobra" class="ml-2 text-xs font-semibold px-2 py-0.5 rounded-full hidden">
+                    3
+                  </span>
+                  <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3
+                  bg-black text-white text-sm font-semibold px-4 py-2 rounded
+                  opacity-0 group-hover:opacity-100 transition-opacity duration-300
+                  whitespace-nowrap z-10
+                  after:content-[''] after:absolute after:top-full after:left-1/2 
+                  after:-translate-x-1/2 after:border-8 after:border-transparent 
+                  after:border-t-black pointer-events-none">
+                    Comparação ao mês anterior
+                  </div>
+                </div>
               </div>
+              <small id="diffSobra" class="text-sm text-zinc-400 ml-1 block mt-2"></small>
             </div>
           </div>
 

@@ -95,7 +95,7 @@
       </button>
 
       <div class="h-6 w-px bg-zinc-700 mx-3"></div>
-      
+
       <!-- Botão do Dropdown -->
       <div class="relative inline-block text-left">
         <button id="dropdownButton"
@@ -151,20 +151,53 @@
   <div class="flex items-center justify-between bg-zinc-800 p-3 rounded-lg shadow-lg mb-6 mx-auto ">
     <!-- Setas de navegação -->
     <div class="chevron-left">
-      <button class="text-white hover:text-green-400 transition-colors px-4 py-1">
-        <i class="fas fa-chevron-left"></i>
-      </button>
+      <div class="relative group inline-block">
+        <button class="text-white hover:text-green-400 transition-colors px-4 py-1">
+          <i class="fas fa-chevron-left"></i>
+        </button>
+        <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3
+          bg-black text-white text-sm font-semibold px-4 py-2 rounded
+          opacity-0 group-hover:opacity-100 transition-opacity duration-300
+          whitespace-nowrap z-10
+          after:content-[''] after:absolute after:top-full after:left-1/2 
+          after:-translate-x-1/2 after:border-8 after:border-transparent 
+          after:border-t-black pointer-events-none">
+          Mês Anterior
+        </div>
+      </div>
     </div>
 
     <!-- Texto central com mês/ano -->
-    <span
-      class="text-white text-lg font-semibold cursor-pointer hover:text-green-400 transition-colors select-none">Setembro/2024</span>
+    <div class="relative group inline-block">
+      <span
+        class="text-white text-lg font-semibold cursor-pointer hover:text-green-400 transition-colors select-none">Setembro/2024</span>
+      <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3
+        bg-black text-white text-sm font-semibold px-4 py-2 rounded
+        opacity-0 group-hover:opacity-100 transition-opacity duration-300
+        whitespace-nowrap z-10
+        after:content-[''] after:absolute after:top-full after:left-1/2 
+        after:-translate-x-1/2 after:border-8 after:border-transparent 
+        after:border-t-black pointer-events-none">
+        Abrir Calendário
+      </div>
+    </div>
 
     <!-- Setas de navegação -->
     <div class="chevron-right">
-      <button class="text-white hover:text-green-400 transition-colors px-4 py-1">
-        <i class="fas fa-chevron-right"></i>
-      </button>
+      <div class="relative group inline-block">
+        <button class="text-white hover:text-green-400 transition-colors px-4 py-1">
+          <i class="fas fa-chevron-right"></i>
+        </button>
+        <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3
+          bg-black text-white text-sm font-semibold px-4 py-2 rounded
+          opacity-0 group-hover:opacity-100 transition-opacity duration-300
+          whitespace-nowrap z-10
+          after:content-[''] after:absolute after:top-full after:left-1/2 
+          after:-translate-x-1/2 after:border-8 after:border-transparent 
+          after:border-t-black pointer-events-none">
+          Próximo Mês
+        </div>
+      </div>
     </div>
   </div>
 
@@ -209,49 +242,127 @@
   </div>
 
   <!-- Table -->
-  <div class="overflow-x-auto text-zinc-200 rounded-lg">
-    <div class="rounded-t-lg overflow-hidden">
-      <table class="min-w-full table-auto">
+  <div class="text-zinc-200 rounded-lg">
+    <div class="rounded-t-lg z-10">
+      <table class="min-w-full table-auto z-20">
         <thead class="bg-zinc-800 rounded-t-xl">
-          <tr class="">
-            <th
-              class="py-3 px-6 text-left font-semibold text-sm cursor-pointer text-white hover:text-green-400 transition-colors select-none"
-              onclick="ordenarTabela('name')">
-              Nome <i class="bi bi-arrow-down-up"></i>
+          <tr>
+            <!-- Nome -->
+            <th onclick="ordenarTabela('name')"
+              class="group relative py-3 px-6 text-left font-semibold text-sm cursor-pointer text-white hover:text-green-400 transition-colors select-none">
+              <div class="relative group inline-block">
+                <span class="inline-flex items-center gap-1">
+                  Nome <i class="bi bi-arrow-down-up ml-2"></i>
+                </span>
+                <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3
+          bg-black text-white text-sm font-semibold px-4 py-2 rounded
+          opacity-0 group-hover:opacity-100 transition-opacity duration-300
+          whitespace-nowrap z-10
+          after:content-[''] after:absolute after:top-full after:left-1/2 
+          after:-translate-x-1/2 after:border-8 after:border-transparent 
+          after:border-t-black pointer-events-none">
+                  Ordenar por nome
+                </div>
+              </div>
             </th>
+
+            <!-- Tipo (estático) -->
             <th class="py-3 px-6 text-left font-semibold text-sm cursor-default select-none">
               Tipo
             </th>
-            <th
-              class="py-3 px-6 text-left font-semibold text-sm cursor-pointer text-white hover:text-green-400 transition-colors select-none"
-              onclick="ordenarTabela('category')">
-              Categoria <i class="bi bi-arrow-down-up"></i>
+
+            <!-- Categoria -->
+            <th onclick="ordenarTabela('category')"
+              class="group relative py-3 px-6 text-left font-semibold text-sm cursor-pointer text-white hover:text-green-400 transition-colors select-none">
+              <div class="relative group inline-block">
+                <span class="inline-flex items-center gap-1">
+                  Categoria <i class="bi bi-arrow-down-up ml-2"></i>
+                </span>
+                <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3
+          bg-black text-white text-sm font-semibold px-4 py-2 rounded
+          opacity-0 group-hover:opacity-100 transition-opacity duration-300
+          whitespace-nowrap z-10
+          after:content-[''] after:absolute after:top-full after:left-1/2 
+          after:-translate-x-1/2 after:border-8 after:border-transparent 
+          after:border-t-black pointer-events-none">
+                  Ordenar por categoria
+                </div>
+              </div>
             </th>
-            <th
-              class="py-3 px-6 text-left font-semibold text-sm cursor-pointer text-white hover:text-green-400 transition-colors select-none"
-              onclick="ordenarTabela('dueDate')">
-              Data de Vencimento <i class="bi bi-arrow-down-up"></i>
+
+            <!-- Data de Vencimento -->
+            <th onclick="ordenarTabela('dueDate')"
+              class="group relative py-3 px-6 text-left font-semibold text-sm cursor-pointer text-white hover:text-green-400 transition-colors select-none">
+              <div class="relative group inline-block">
+                <span class="inline-flex items-center gap-1">
+                  Data de Vencimento <i class="bi bi-arrow-down-up ml-2"></i>
+                </span>
+                <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3
+          bg-black text-white text-sm font-semibold px-4 py-2 rounded
+          opacity-0 group-hover:opacity-100 transition-opacity duration-300
+          whitespace-nowrap z-10
+          after:content-[''] after:absolute after:top-full after:left-1/2 
+          after:-translate-x-1/2 after:border-8 after:border-transparent 
+          after:border-t-black pointer-events-none">
+                  Ordenar por data de vencimento
+                </div>
+              </div>
             </th>
-            <th
-              class="py-3 px-6 text-left font-semibold text-sm cursor-pointer text-white hover:text-green-400 transition-colors select-none"
-              onclick="ordenarTabela('datepay')">
-              Data de Pagamento <i class="bi bi-arrow-down-up"></i>
+
+            <!-- Data de Pagamento -->
+            <th onclick="ordenarTabela('datepay')"
+              class="group relative py-3 px-6 text-left font-semibold text-sm cursor-pointer text-white hover:text-green-400 transition-colors select-none">
+              <div class="relative group inline-block">
+                <span class="inline-flex items-center gap-1">
+                  Data de Pagamento <i class="bi bi-arrow-down-up ml-2"></i>
+                </span>
+                <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3
+          bg-black text-white text-sm font-semibold px-4 py-2 rounded
+          opacity-0 group-hover:opacity-100 transition-opacity duration-300
+          whitespace-nowrap z-10
+          after:content-[''] after:absolute after:top-full after:left-1/2 
+          after:-translate-x-1/2 after:border-8 after:border-transparent 
+          after:border-t-black pointer-events-none">
+                  Ordenar por data de pagamento
+                </div>
+              </div>
             </th>
-            <th
-              class="py-3 px-6 text-left font-semibold text-sm cursor-pointer text-white hover:text-green-400 transition-colors select-none"
-              onclick="ordenarTabela('amount')">
-              Valor <i class="bi bi-arrow-down-up"></i>
+
+            <!-- Valor -->
+            <th onclick="ordenarTabela('amount')"
+              class="group relative py-3 px-6 text-left font-semibold text-sm cursor-pointer text-white hover:text-green-400 transition-colors select-none">
+              <div class="relative group inline-block">
+                <span class="inline-flex items-center gap-1">
+                  Valor <i class="bi bi-arrow-down-up ml-2"></i>
+                </span>
+                <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3
+          bg-black text-white text-sm font-semibold px-4 py-2 rounded
+          opacity-0 group-hover:opacity-100 transition-opacity duration-300
+          whitespace-nowrap z-10
+          after:content-[''] after:absolute after:top-full after:left-1/2 
+          after:-translate-x-1/2 after:border-8 after:border-transparent 
+          after:border-t-black pointer-events-none">
+                  Ordenar por valor
+                </div>
+              </div>
             </th>
+
+            <!-- Parcelas (estático) -->
             <th class="py-3 px-6 text-left font-semibold text-sm cursor-default select-none">
               Parcelas
             </th>
+
+            <!-- Situação (estático) -->
             <th class="py-3 px-6 text-left font-semibold text-sm cursor-default select-none">
               Situação
             </th>
+
+            <!-- Ações (estático) -->
             <th class="py-3 px-6 text-left font-semibold text-sm cursor-default select-none">
               Ações
             </th>
           </tr>
+
         </thead>
         <tbody id="tableBody"></tbody>
       </table>

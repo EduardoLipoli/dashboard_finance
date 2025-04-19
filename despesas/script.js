@@ -645,11 +645,37 @@ function displayTransactionsForCurrentMonth() {
     }).format(transaction.amount);
     const categoryName    = categoryMap[transaction.category] || "Categoria desconhecida";
 
+  const nameCell = `
+      <div class="relative group inline-block">
+        <span class="font-medium cursor-pointer">${formattedName}</span>
+        <div class="absolute left-1/2 top-full mt-2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300
+                            bg-black text-white text-xs font-medium px-4 py-2 rounded z-20 whitespace-nowrap
+                            after:content-[''] after:absolute after:bottom-full after:left-1/2 after:-translate-x-1/2
+                            after:border-8 after:border-transparent after:border-b-black">
+          Marcar como pago
+        </div>
+      </div>
+  `;
+
+  const nameCellSel = `
+  <div class="relative group inline-block">
+    <span class="font-medium cursor-pointer">${formattedName}</span>
+    <div class="absolute left-1/2 top-full mt-2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300
+                            bg-black text-white text-xs font-medium px-4 py-2 rounded z-20 whitespace-nowrap
+                            after:content-[''] after:absolute after:bottom-full after:left-1/2 after:-translate-x-1/2
+                            after:border-8 after:border-transparent after:border-b-black">
+      Desmarcar como pago
+    </div>
+  </div>
+`;
+
     const row = document.createElement("tr");
     row.classList.add("border-b", "border-zinc-700");
     row.classList.toggle("is-Paid", transaction.isPaid);
     row.innerHTML = `
-      <td class="py-3 px-6 font-medium">${formattedName}</td>
+      <td class="py-3 px-6 font-medium flex items-center gap-2">
+        ${!transaction.isPaid ? nameCell : nameCellSel}
+      </td>
       <td class="py-3 px-6">
         <span class="px-2 py-1 rounded-full text-sm ${
           transaction.type === "Ganho"
@@ -710,6 +736,21 @@ function displayTransactionsForCurrentMonth() {
     qtdDia01Element.textContent = `${countDia01} despesa${countDia01!==1?'s':''}`;
     qtdDia15Element.textContent = `${countDia15} despesa${countDia15!==1?'s':''}`;
   }
+}
+
+function showTooltip(event) {
+  const tooltip = document.getElementById('tooltipContainer');
+  const rect = event.target.getBoundingClientRect();
+
+  // Ajuste na posição para ficar abaixo do item
+  tooltip.style.left = `${rect.left + rect.width / 2}px`; // Centraliza o tooltip
+  tooltip.style.top = `${rect.bottom + window.scrollY + 5}px`; // Fica logo abaixo do cabeçalho
+  tooltip.classList.remove('hidden');
+}
+
+function hideTooltip() {
+  const tooltip = document.getElementById('tooltipContainer');
+  tooltip.classList.add('hidden');
 }
 
 function getTransactionStatus(transaction) {
