@@ -610,12 +610,18 @@ document.addEventListener("click", (e) => {
   }
 });
 
+const searchInput = document.getElementById("searchInput");
+searchInput.addEventListener("input", displayTransactionsForCurrentMonth);
+
+
 selectStatus.addEventListener("change", displayTransactionsForCurrentMonth);
 selectDatepay.addEventListener("change", displayTransactionsForCurrentMonth);
 
 function displayTransactionsForCurrentMonth() {
   const statusFilter  = selectStatus.value;
   const datepayFilter = selectDatepay.value;
+  const searchTerm    = searchInput.value.trim().toLowerCase();
+
 
   tableBody.innerHTML = "";
 
@@ -638,6 +644,9 @@ function displayTransactionsForCurrentMonth() {
       datepayFilter !== "" &&
       transaction.datepay !== datepayFilter
     ) return;
+
+    if (searchTerm && !transaction.name.toLowerCase().includes(searchTerm)) return;
+
 
     const formattedName   = capitalizeName(transaction.name);
     const formattedAmount = new Intl.NumberFormat("pt-BR", {
@@ -752,6 +761,7 @@ function hideTooltip() {
   const tooltip = document.getElementById('tooltipContainer');
   tooltip.classList.add('hidden');
 }
+
 
 function getTransactionStatus(transaction) {
   if (transaction.isPaid) return `<span class="min-w-[80px] text-center inline-block px-2 py-1 rounded-full text-sm bg-green-800 bg-opacity-25 text-green-500">Pago</span>`;

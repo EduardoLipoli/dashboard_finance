@@ -467,72 +467,78 @@ document.addEventListener("click", (e) => {
   }
 });
 
+const searchInput = document.getElementById("searchInput");
+searchInput.addEventListener("input", displayTransactionsForCurrentMonth);
+
 selectDatepay.addEventListener("change", displayTransactionsForCurrentMonth);
 
 function displayTransactionsForCurrentMonth() {
   const filterDatepay = document.getElementById("filterDatepay").value;
+  const searchInput = document.getElementById("searchInput");
+  const searchTerm = searchInput.value.trim().toLowerCase(); // Filtro de busca
+
   tableBody.innerHTML = "";
 
   transactions.forEach((transaction, index) => {
     const transactionMonth = transaction.dueDate.getMonth();
     const transactionYear = transaction.dueDate.getFullYear();
+    const formattedName = capitalizeName(transaction.name); // Nome formatado para comparação
 
-    if (transaction.type === "Ganho") {
-      if (
-        transactionMonth === currentMonth &&
-        transactionYear === currentYear &&
-        (filterDatepay === "" || transaction.datepay === filterDatepay)
-      ) {
-        const formattedName = capitalizeName(transaction.name);
-        const formattedAmount = new Intl.NumberFormat("pt-BR", {
-          style: "currency",
-          currency: "BRL",
-          minimumFractionDigits: 2,
-        }).format(transaction.amount);
+    if (
+      transaction.type === "Ganho" &&
+      transactionMonth === currentMonth &&
+      transactionYear === currentYear &&
+      (filterDatepay === "" || transaction.datepay === filterDatepay) &&
+      formattedName.toLowerCase().includes(searchTerm) // Verifica se o nome inclui o termo de busca
+    ) {
+      const formattedAmount = new Intl.NumberFormat("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+        minimumFractionDigits: 2,
+      }).format(transaction.amount);
 
-        const row = document.createElement("tr");
-        row.classList.add("border-b", "border-zinc-700");
-        row.classList.toggle("is-Paid", transaction.isPaid);
+      const row = document.createElement("tr");
+      row.classList.add("border-b", "border-zinc-700");
+      row.classList.toggle("is-Paid", transaction.isPaid);
 
-        row.innerHTML = `
-                <td class="py-3 px-6 font-medium">${formattedName}</td>
-                <td class="py-3 px-6">
-                    <span class="px-2 py-1 rounded-full text-sm ${
-                      transaction.type === "Ganho"
-                        ? `bg-green-800 bg-opacity-25 text-green-500 ${
-                            transaction.isPaid ? "text-opacity-50" : ""
-                          }`
-                        : `bg-red-900 bg-opacity-25 text-red-500 ${
-                            transaction.isPaid ? "text-opacity-50" : ""
-                          }`
-                    }">${transaction.type}</span>
-                </td>
-                <td class="py-3 px-6">${transaction.category}</td>
-                <td class="py-3 px-6">${transaction.dueDate.toLocaleDateString(
-                  "pt-BR",
-                  { day: "2-digit", month: "2-digit", year: "numeric" }
-                )}</td>
-                <td class="py-3 px-6">Dia ${transaction.datepay}</td>
-                <td class="py-3 px-6 font-medium">${formattedAmount}</td>
-                <td class="py-3 px-6">${
-                  transaction.isFixed ? "Fixa" : `${transaction.installments}x`
-                }</td>
-                <td class="py-3 px-6">
-                    <button class="text-zinc-500 hover:text-zinc-700" onclick="editTransaction(${index})">
-                        <i class="fa-regular fa-pen-to-square"></i>
-                    </button>
-                    <button class="text-red-500 hover:text-red-700 ml-2 remove-btn" onclick="openDeleteModal(${index})">
-                        <i class="fa-regular fa-trash-can"></i>
-                    </button>
-                </td>
-            `;
+      row.innerHTML = `
+        <td class="py-3 px-6 font-medium">${formattedName}</td>
+        <td class="py-3 px-6">
+            <span class="px-2 py-1 rounded-full text-sm ${
+              transaction.type === "Ganho"
+                ? `bg-green-800 bg-opacity-25 text-green-500 ${
+                    transaction.isPaid ? "text-opacity-50" : ""
+                  }`
+                : `bg-red-900 bg-opacity-25 text-red-500 ${
+                    transaction.isPaid ? "text-opacity-50" : ""
+                  }`
+            }">${transaction.type}</span>
+        </td>
+        <td class="py-3 px-6">${transaction.category}</td>
+        <td class="py-3 px-6">${transaction.dueDate.toLocaleDateString(
+          "pt-BR",
+          { day: "2-digit", month: "2-digit", year: "numeric" }
+        )}</td>
+        <td class="py-3 px-6">Dia ${transaction.datepay}</td>
+        <td class="py-3 px-6 font-medium">${formattedAmount}</td>
+        <td class="py-3 px-6">${
+          transaction.isFixed ? "Fixa" : `${transaction.installments}x`
+        }</td>
+        <td class="py-3 px-6">
+            <button class="text-zinc-500 hover:text-zinc-700" onclick="editTransaction(${index})">
+                <i class="fa-regular fa-pen-to-square"></i>
+            </button>
+            <button class="text-red-500 hover:text-red-700 ml-2 remove-btn" onclick="openDeleteModal(${index})">
+                <i class="fa-regular fa-trash-can"></i>
+            </button>
+        </td>
+      `;
 
-        row.addEventListener("click", (event) => {
-          toggleTransactionPaid(index, event);
-        });
+      row.addEventListener("click", (event) => {
+        toggleTransactionPaid(index, event);
+      });
 
-        tableBody.appendChild(row);
-      }
+      tableBody.appendChild(row);
     }
   });
 
@@ -546,17 +552,17 @@ function displayTransactionsForCurrentMonth() {
   const valorDia15Element = document.getElementById("valor-dia-15");
   const qtdDia01Element = document.getElementById("quantidade-dia-01");
   const qtdDia15Element = document.getElementById("quantidade-dia-15");
-  
+
   if (valorDia01Element && valorDia15Element) {
     let totalDia01 = 0;
     let totalDia15 = 0;
     let countDia01 = 0;
     let countDia15 = 0;
-  
+
     transactions.forEach(transaction => {
       const transactionMonth = transaction.dueDate.getMonth();
       const transactionYear = transaction.dueDate.getFullYear();
-  
+
       if (
         transaction.type === "Ganho" &&
         transactionMonth === currentMonth &&
@@ -572,7 +578,7 @@ function displayTransactionsForCurrentMonth() {
         }
       }
     });
-  
+
     // Animação de contagem dos valores dos cards
     const valorAtual01 = parseFloat(valorDia01Element.textContent.replace(/[R$\s.]/g, '').replace(',', '.')) || 0;
     const valorAtual15 = parseFloat(valorDia15Element.textContent.replace(/[R$\s.]/g, '').replace(',', '.')) || 0;
@@ -580,33 +586,31 @@ function displayTransactionsForCurrentMonth() {
     animateValue(valorDia01Element, valorAtual01, totalDia01, 800);
     animateValue(valorDia15Element, valorAtual15, totalDia15, 800);
 
-  
     qtdDia01Element.textContent = `${countDia01} entrada${countDia01 === 1 ? "" : "s"}`;
     qtdDia15Element.textContent = `${countDia15} entrada${countDia15 === 1 ? "" : "s"}`;
-  }  
+  }
 
   function animateValue(element, start, end, duration) {
     const range = end - start;
     let startTimestamp = null;
-  
+
     const step = (timestamp) => {
       if (!startTimestamp) startTimestamp = timestamp;
       const progress = Math.min((timestamp - startTimestamp) / duration, 1);
       const value = start + range * progress;
-  
+
       element.textContent = value.toLocaleString("pt-BR", {
         style: "currency",
         currency: "BRL"
       });
-  
+
       if (progress < 1) {
         window.requestAnimationFrame(step);
       }
     };
-  
+
     window.requestAnimationFrame(step);
   }
-  
 }
 
 
