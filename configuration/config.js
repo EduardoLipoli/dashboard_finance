@@ -161,7 +161,6 @@ function saveCategoryToFirestore(categoryName) {
   showLoading();
 
   const user = firebase.auth().currentUser;
-
   if (!user) {
     showAlert("Usuário não autenticado.", "error");
     hideLoading();
@@ -174,25 +173,45 @@ function saveCategoryToFirestore(categoryName) {
   userRef
     .add({
       name: categoryName,
+      tipo: currentCategoryType // <-- pega dinamicamente
     })
     .then(() => {
       showAlert("Categoria salva com sucesso!", "success");
-      loadCategories();
+      loadCategories(currentCategoryType);
     })
     .catch((error) => {
-      showAlert(
-        "Erro ao salvar categoria no Firestore: " + error.message,
-        "error"
-      );
+      showAlert("Erro ao salvar categoria: " + error.message, "error");
     })
     .finally(() => {
       hideLoading();
     });
 }
 
+let currentCategoryType = "Gasto"; // Valor padrão
+
 // Função para carregar categorias
-function loadCategories() {
+function loadCategories(tipo = currentCategoryType) {
   showLoading();
+  currentCategoryType = tipo; // <-- garante que tudo fique sincronizado
+
+  const expenseBtn = document.getElementById("expenseBtn");
+  const incomeBtn = document.getElementById("incomeBtn");
+
+  // Resetar estilo dos dois botões
+  expenseBtn.classList.remove("bg-green-500", "text-white");
+  incomeBtn.classList.remove("bg-green-500", "text-white");
+
+  expenseBtn.classList.add("bg-zinc-700");
+  incomeBtn.classList.add("bg-zinc-700");
+
+  // Marcar botão ativo
+  if (tipo === "Gasto") {
+    expenseBtn.classList.remove("bg-zinc-700");
+    expenseBtn.classList.add("bg-green-500", "text-white");
+  } else {
+    incomeBtn.classList.remove("bg-zinc-700");
+    incomeBtn.classList.add("bg-green-500", "text-white");
+  }
 
   const user = firebase.auth().currentUser;
   if (!user) {
@@ -204,7 +223,7 @@ function loadCategories() {
   const db = firebase.firestore();
   const userRef = db.collection("users").doc(user.uid).collection("categories");
 
-  userRef.get()
+  userRef.where("tipo", "==", tipo).get()
     .then((querySnapshot) => {
       const categoriesContainer = document.getElementById("categoriesContainer");
       categoriesContainer.innerHTML = '';  // Limpa a lista antes de renderizar novamente
@@ -488,29 +507,25 @@ function closeModal() {
   document.getElementById("deleteModal").classList.add("hidden");
 }
 
-// Função para adicionar categoria via formulário
 document.getElementById("addCategoryForm").addEventListener("submit", (e) => {
   e.preventDefault();
   const categoryInput = document.getElementById("categoryInput");
-  saveCategoryToFirestore(categoryInput.value);
-  categoryInput.value = "";
-});
+  const name = categoryInput.value.trim();
 
-const defaultCategories = [
-  "🚗 Transporte",
-  "📞 Comunicação",
-  "📚 Educação",
-  "🏠 Moradia",
-  "🛍️ Compras e Parcelamentos",
-  "👨‍👩‍👧‍👦 Gastos Pessoais",
-  "💳 Bancos e Créditos",
-];
+  if (name) {
+    saveCategoryToFirestore(name); // já usa o tipo dinâmico
+    categoryInput.value = "";
+  } else {
+    showAlert("O nome da categoria não pode estar vazio.", "error");
+  }
+});
 
 firebase.auth().onAuthStateChanged((user) => {
   if (user) {
-    if (localStorage.getItem("dontRestoreCategories") === "true") {
+    if (localStorage.getItem("dontRestoreCategories") === "false") {
       return;
     }
+    fixOldCategories(user.uid);
     checkAndCreateDefaultCategories(user.uid);
   }
 });
@@ -603,27 +618,90 @@ function checkAndCreateDefaultCategories(userId) {
 
 function addDefaultCategories(userId) {
   const db = firebase.firestore();
-  const categoriesRef = db
-    .collection("users")
-    .doc(userId)
-    .collection("categories");
+  const categoriesRef = db.collection("users").doc(userId).collection("categories");
 
-  const promises = defaultCategories.map((category) =>
-    categoriesRef.add({ name: category })
-  );
+  // Categorias padrão separadas por tipo
+  const defaultExpenseCategories = [
+    "🚗 Transporte",
+    "📞 Comunicação",
+    "📚 Educação",
+    "🏠 Moradia",
+    "🛍️ Compras e Parcelamentos",
+    "👨‍👩‍👧‍👦 Gastos Pessoais",
+    "💳 Bancos e Créditos",
+  ];
 
-  Promise.all(promises)
-    .then(() => {
-      showAlert("Todas as categorias padrão foram restauradas.", "success");
-      loadCategories();
+  const defaultIncomeCategories = [
+    "💼 Salário",
+    "🧾 Reembolso",
+    "💸 Transferência recebida",
+    "📈 Investimentos",
+    "🎁 Presentes / Extras"
+  ];
+
+  categoriesRef.get()
+    .then((querySnapshot) => {
+      const existing = new Set();
+
+      querySnapshot.forEach(doc => {
+        const data = doc.data();
+        if (data.name && data.tipo) {
+          existing.add(`${data.name}-${data.tipo}`);
+        }
+      });
+
+      const missingExpenses = defaultExpenseCategories
+        .filter(name => !existing.has(`${name}-Gasto`))
+        .map(name => categoriesRef.add({ name, tipo: "Gasto" }));
+
+      const missingIncomes = defaultIncomeCategories
+        .filter(name => !existing.has(`${name}-Ganho`))
+        .map(name => categoriesRef.add({ name, tipo: "Ganho" }));
+
+      return Promise.all([...missingExpenses, ...missingIncomes]);
     })
-    .catch((error) =>
-      showAlert(
-        "Erro ao adicionar categorias padrão: " + error.message,
-        "error"
-      )
-    );
+    .then(() => {
+      showAlert("Categorias padrão adicionadas com sucesso!", "success");
+      loadCategories(currentCategoryType);
+    })
+    .catch((error) => {
+      showAlert("Erro ao adicionar categorias padrão: " + error.message, "error");
+    });
 }
+
+function fixOldCategories(userId) {
+  const db = firebase.firestore();
+  const categoriesRef = db.collection("users").doc(userId).collection("categories");
+
+  categoriesRef.get()
+    .then((querySnapshot) => {
+      const batch = db.batch();
+      let hasOldCategories = false;
+
+      querySnapshot.forEach(doc => {
+        const data = doc.data();
+        if (!data.tipo) {
+          const categoryRef = categoriesRef.doc(doc.id);
+          batch.update(categoryRef, { tipo: "Gasto" });
+          hasOldCategories = true;
+        }
+      });
+
+      if (hasOldCategories) {
+        return batch.commit()
+          .then(() => {
+            console.log("Categorias antigas corrigidas com sucesso.");
+          });
+      } else {
+        console.log("Nenhuma categoria antiga para corrigir.");
+      }
+    })
+    .catch((error) => {
+      console.error("Erro ao corrigir categorias antigas:", error);
+    });
+}
+
+
 
 // Verifica se o usuario apagou todas as categorias
 function checkIfCategoriesAreEmpty(userId) {

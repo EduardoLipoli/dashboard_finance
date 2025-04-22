@@ -202,6 +202,19 @@
                 Restaurar categorias padrão
               </button>
             </div>
+
+            <div class="flex gap-2 mb-4">
+              <button id="expenseBtn" onclick="loadCategories('Gasto')" 
+                      class="bg-zinc-700 text-white px-4 py-2 rounded-md transition-all duration-200">
+                Despesas
+              </button>
+              <button id="incomeBtn" onclick="loadCategories('Ganho')"
+                      class="bg-zinc-700 text-white px-4 py-2 rounded-md transition-all duration-200">
+                Receitas
+              </button>
+            </div>
+            
+            
             <form id="addCategoryForm" class="space-y-4">
               <div class="flex items-center space-x-3">
                 <input type="text" id="categoryInput" placeholder="Nome da categoria" required

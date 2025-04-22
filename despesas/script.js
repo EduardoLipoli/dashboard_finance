@@ -70,16 +70,17 @@ function saveTransactionToFirestore(transaction) {
 
 function loadCategoriesForTransaction() {
   const user = firebase.auth().currentUser;
-
   if (!user) {
     console.error("Usuário não autenticado.");
     return;
   }
 
+  const selectedType = document.getElementById("type").value; // Gasto ou Ganho
   const db = firebase.firestore();
   const userRef = db.collection("users").doc(user.uid).collection("categories");
 
   userRef
+    .where("tipo", "==", selectedType)
     .get()
     .then((querySnapshot) => {
       const categorySelect = document.getElementById("categorySelect");
@@ -96,7 +97,7 @@ function loadCategoriesForTransaction() {
         const categoryId = doc.id;
         const categoryName = doc.data().name;
 
-        categoryMap[categoryId] = categoryName; // Armazena no objeto
+        categoryMap[categoryId] = categoryName;
 
         const option = document.createElement("option");
         option.value = categoryId;
@@ -104,7 +105,6 @@ function loadCategoriesForTransaction() {
         categorySelect.appendChild(option);
       });
 
-      // Após carregar as categorias, atualizar a exibição das transações
       displayTransactionsForCurrentMonth();
     })
     .catch((error) => {

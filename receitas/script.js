@@ -25,6 +25,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         loadUserName(user);
+        loadCategoriesForTransaction();
         loadTransactionsFromFirestore();
         
       } catch (error) {
@@ -63,6 +64,50 @@ function saveTransactionToFirestore(transaction) {
       "Usuário não autenticado. Não é possível salvar no Firestore."
     );
   }
+}
+
+function loadCategoriesForTransaction() {
+  const user = firebase.auth().currentUser;
+  if (!user) {
+    console.error("Usuário não autenticado.");
+    return;
+  }
+
+  const selectedType = document.getElementById("type").value; // Gasto ou Ganho
+  const db = firebase.firestore();
+  const userRef = db.collection("users").doc(user.uid).collection("categories");
+
+  userRef
+    .where("tipo", "==", selectedType)
+    .get()
+    .then((querySnapshot) => {
+      const categorySelect = document.getElementById("categorySelect");
+      categorySelect.innerHTML = "";
+
+      const defaultOption = document.createElement("option");
+      defaultOption.value = "";
+      defaultOption.textContent = "Selecione a categoria";
+      categorySelect.appendChild(defaultOption);
+
+      categoryMap = {}; // Limpa o objeto antes de carregar novamente
+
+      querySnapshot.forEach((doc) => {
+        const categoryId = doc.id;
+        const categoryName = doc.data().name;
+
+        categoryMap[categoryId] = categoryName;
+
+        const option = document.createElement("option");
+        option.value = categoryId;
+        option.textContent = categoryName;
+        categorySelect.appendChild(option);
+      });
+
+      displayTransactionsForCurrentMonth();
+    })
+    .catch((error) => {
+      console.error("Erro ao carregar categorias para transação:", error);
+    });
 }
 
 function loadTransactionsFromFirestore() {
@@ -120,7 +165,7 @@ form.addEventListener("submit", function (e) {
     document.getElementById("amount").value.replace(",", ".")
   );
   const type = document.getElementById("type").value;
-  const category = document.getElementById("category").value;
+  const category     = document.getElementById("categorySelect").value;
   const datepay = document.getElementById("datepay").value;
   const dueDateInput = document.getElementById("dueDate").value;
   const [year, month, day] = dueDateInput.split("-").map(Number);
@@ -483,13 +528,15 @@ function displayTransactionsForCurrentMonth() {
     const transactionMonth = transaction.dueDate.getMonth();
     const transactionYear = transaction.dueDate.getFullYear();
     const formattedName = capitalizeName(transaction.name); // Nome formatado para comparação
+    const categoryName    = categoryMap[transaction.category] || "Categoria desconhecida";
+
 
     if (
       transaction.type === "Ganho" &&
       transactionMonth === currentMonth &&
       transactionYear === currentYear &&
       (filterDatepay === "" || transaction.datepay === filterDatepay) &&
-      formattedName.toLowerCase().includes(searchTerm) // Verifica se o nome inclui o termo de busca
+      formattedName.toLowerCase().includes(searchTerm)
     ) {
       const formattedAmount = new Intl.NumberFormat("pt-BR", {
         style: "currency",
@@ -514,7 +561,7 @@ function displayTransactionsForCurrentMonth() {
                   }`
             }">${transaction.type}</span>
         </td>
-        <td class="py-3 px-6">${transaction.category}</td>
+      <td class="py-3 px-6">${categoryName}</td>
         <td class="py-3 px-6">${transaction.dueDate.toLocaleDateString(
           "pt-BR",
           { day: "2-digit", month: "2-digit", year: "numeric" }
@@ -840,6 +887,7 @@ function closeFormSidebar() {
   formSidebar.classList.add("form-closed");
 
   overlay.classList.add("hidden");
+  document.getElementById("save-button").disabled = true;
 }
 
 let currentEditIndex = null; // Índice da transação que está sendo editada
@@ -854,13 +902,15 @@ function editTransaction(index) {
     .toString()
     .replace(".", ",");
   document.getElementById("type").value = transaction.type;
-  document.getElementById("category").value = transaction.category;
+  document.getElementById("categorySelect").value = transaction.category;
   document.getElementById("datepay").value = transaction.datepay;
   document.getElementById("dueDate").value = transaction.dueDate
     .toISOString()
     .split("T")[0];
   document.getElementById("fixed").checked = transaction.isFixed;
   document.getElementById("parcel").checked = !transaction.isFixed;
+  document.getElementById("save-button").disabled = false;
+
 
   if (!transaction.isFixed) {
     document.getElementById("installments").value = transaction.installments;
