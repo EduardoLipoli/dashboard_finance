@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Finance Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="icon" type="image/x-icon" href="/images/money.ico" />
+    <link rel="stylesheet" href="/style-global.css" />
+
+    <style>
+        .progress-ring__circle {
+            transition: stroke-dashoffset 0.35s;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+
+        .goal-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+    </style>
+
+</head>
+
+<body class="bg-zinc-900 text-zinc-200 h-screen grid grid-cols-[auto,1fr]">
+
+    <!-- Alert Container para exibir mensagens -->
+    <div id="alert-container" class="fixed top-20 right-4 z-50"></div>
+
+    <!--SideBar-->
+    <div id="sidebar"
+        class="flex flex-col items-center bg-zinc-800 h-full w-16 group hover:w-48 transition-all duration-300">
+        <div class="p-4">
+            <i class="fas fa-coins text-green-500 text-2xl"></i>
+        </div>
+
+        <ul class="mt-4 w-full">
+            <!-- Seção: Dashboard -->
+            <li class="w-full px-4 py-2 hidden group-hover:block text-zinc-500 text-xs uppercase font-semibold">
+                Dashboard
+            </li>
+            <a href="/dashboard/index.html">
+                <li class="flex items-center gap-4 p-4 hover:bg-zinc-700 w-full text-zinc-400 text-sm">
+                    <i class="fas fa-chart-line text-lg"></i>
+                    <span class="hidden group-hover:block">Dashboard</span>
+                </li>
+            </a>
+
+            <!-- Seção: Financeiro -->
+            <li class="w-full px-4 py-2 mt-2 hidden group-hover:block text-zinc-500 text-xs uppercase font-semibold">
+                Financeiro
+            </li>
+            <a href="/planejamento/index.html">
+                <li class="flex items-center gap-4 p-4 hover:bg-zinc-700 w-full text-green-400 text-sm">
+                    <i class="fas fa-bullseye text-lg"></i>
+                    <span class="hidden group-hover:block">Planejamento</span>
+                </li>
+            </a>
+
+            <a href="/receitas/transaction.html">
+                <li class="flex items-center gap-4 p-4 hover:bg-zinc-700 w-full text-zinc-400 text-sm">
+                    <i class="fas fa-wallet text-lg"></i>
+                    <span class="hidden group-hover:block">Carteira</span>
+                </li>
+            </a>
+
+            <a href="/despesas/transaction.html">
+                <li class="flex items-center gap-4 p-4 hover:bg-zinc-700 w-full text-zinc-400 text-sm">
+                    <i class="fas fa-money-check-alt text-lg"></i>
+                    <span class="hidden group-hover:block">Despesas</span>
+                </li>
+            </a>
+
+            <!-- Seção: Configuração -->
+            <li class="w-full px-4 py-2 mt-2 hidden group-hover:block text-zinc-500 text-xs uppercase font-semibold">
+                Configuração
+            </li>
+            <a href="/configuration/config.html">
+                <li class="flex items-center gap-4 p-4 hover:bg-zinc-700 w-full text-zinc-500 text-sm">
+                    <i class="fas fa-cog text-lg"></i>
+                    <span class="hidden group-hover:block">Configuração</span>
+                </li>
+            </a>
+        </ul>
+    </div>
+
+
+    <!-- Header fixo -->
+    <div class="flex-1 flex flex-col overflow-auto h-screen">
+        <header class="bg-zinc-800 flex items-center justify-between px-6 py-4 sticky top-0 z-20 flex-shrink-0">
+            <h1 class="text-lg font-bold text-green-500 flex-grow">
+                <a href="/dashboard/index.html"> Dashboard Financeiro </a>
+            </h1>
+
+            <!-- Botão do Dropdown -->
+            <div class="relative inline-block text-left">
+                <button id="dropdownButton"
+                    class="bg-zinc-900 text-white font-medium py-2 px-4 border border-zinc-700 hover:bg-zinc-800 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 flex items-center space-x-2">
+
+                    <img id="user-photo" src="" alt="Foto de Perfil" class="w-8 h-8 rounded-full hidden" />
+
+                    <div class="text-left">
+                        <div id="user-name" class="text-sm font-medium">Carregando...</div>
+                        <div id="user-email" class="text-xs text-gray-400">Carregando...</div>
+                    </div>
+                </button>
+
+                <div id="dropdownMenu"
+                    class="hidden absolute right-0 mt-2 w-48 bg-white border border-gray-300 rounded-md shadow-lg z-50 p-2">
+                    <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100" onclick="logout()">
+                        <i class="bi bi-box-arrow-left"> </i> Sair
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col p-6 gap-6 bg-zinc-900 text-zinc-50">
+            <!-- Summary Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 select-none">
+                <div class="bg-zinc-800 rounded-xl shadow-sm p-6 border border-zinc-700 hover:bg-zinc-700/50 transition-colors">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-zinc-300">Total de Metas</p>
+                            <h3 class="text-2xl font-bold text-zinc-50" id="totalGoals">5</h3>
+                        </div>
+                        <div class="p- bg-green-900 bg-opacity-25 text-green-500 py-2 px-3 rounded-lg">
+                            
+                            <i class="fas fa-bullseye"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-zinc-800 rounded-xl shadow-sm p-6 border border-zinc-700 hover:bg-zinc-700/50 transition-colors">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-zinc-300">Metas Concluídas</p>
+                            <h3 class="text-2xl font-bold text-zinc-50" id="completedGoals">2</h3>
+                        </div>
+                        <div class="p- bg-green-900 bg-opacity-25 text-green-500 py-2 px-3 rounded-lg">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-zinc-800 rounded-xl shadow-sm p-6 border border-zinc-700 hover:bg-zinc-700/50 transition-colors">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-zinc-300">Valor Total</p>
+                            <h3 class="text-2xl font-bold text-zinc-50"><span id="totalAmount">0,00</span></h3>
+                        </div>
+                        <div class="p- bg-green-900 bg-opacity-25 text-green-500 py-2 px-3 rounded-lg">
+                            <i class="fas fa-coins"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Goals Section -->
+            <div class="mb-8 select-none">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-zinc-50">Suas Metas</h2>
+                    <button id="addGoalBtn"
+                        class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors">
+                        <i class="fas fa-plus"></i>
+                        <span>Nova Meta</span>
+                    </button>
+                </div>
+
+                <!-- Goals Filter -->
+                <div class="flex space-x-2 mb-6">
+                    <button class="filter-btn active px-4 py-2 rounded-lg bg-green-600 text-white"
+                        data-filter="all">Todas</button>
+                    <button class="filter-btn px-4 py-2 rounded-lg bg-zinc-700 hover:bg-zinc-600 text-zinc-200"
+                        data-filter="active">Em Andamento</button>
+                    <button class="filter-btn px-4 py-2 rounded-lg bg-zinc-700 hover:bg-zinc-600 text-zinc-200"
+                        data-filter="completed">Concluídas</button>
+                </div>
+
+                <!-- Goals List -->
+                <div id="goalsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Goal cards serão inseridos dinamicamente -->
+                </div>
+            </div>
+        </main>
+
+        <!-- Página de detalhes -->
+        <div id="goalDetailsPage" class="hidden w-full flex flex-col gap-4 p-6 bg-zinc-900 text-zinc-50">
+            <button id="backToList" class="self-start px-4 py-2 bg-zinc-700 text-white rounded hover:bg-zinc-600">
+                ← Voltar
+            </button>
+
+            <h2 id="detailGoalName" class="text-2xl font-bold"></h2>
+            <p id="detailRemaining" class="text-zinc-400"></p>
+
+            <div id="tableWrapper"
+                class="w-full overflow-x-auto overflow-y-auto border border-zinc-700 rounded bg-zinc-900"
+                style="max-height: 400px;">
+                <!-- Tabela será injetada aqui -->
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Add Goal Modal -->
+    <div id="addGoalModal" class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+        <div class="bg-zinc-900 rounded-xl shadow-lg w-full max-w-md mx-4 border border-zinc-700">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-zinc-50">Adicionar Nova Meta</h3>
+                    <button id="closeModalBtn" class="text-zinc-400 hover:text-zinc-200">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <form id="goalForm" class="space-y-4">
+                    <div>
+                        <label for="goalName" class="block text-sm font-medium text-zinc-300 mb-1">Nome da Meta</label>
+                        <input type="text" id="goalName" class="w-full px-4 py-2 border border-zinc-700 bg-zinc-800 text-zinc-50 rounded-lg
+                        focus:ring-2 focus:ring-green-500 focus:border-green-500" placeholder="Ex: Comprar um carro"
+                            required>
+                    </div>
+                    <div>
+                        <label for="goalAmount" class="block text-sm font-medium text-zinc-300 mb-1">
+                            Valor da Meta (R$)
+                        </label>
+                        <input type="number" id="goalAmount" class="w-full px-4 py-2 border border-zinc-700 bg-zinc-800 text-zinc-50 rounded-lg
+                        focus:ring-2 focus:ring-green-500 focus:border-green-500" placeholder="0.00" min="0"
+                            step="0.01" required>
+                    </div>
+                    <div>
+                        <label for="goalCurrentAmount" class="block text-sm font-medium text-zinc-300 mb-1">
+                            Valor Atual (R$)
+                        </label>
+                        <input type="number" id="goalCurrentAmount" class="w-full px-4 py-2 border border-zinc-700 bg-zinc-800 text-zinc-50 rounded-lg
+                        focus:ring-2 focus:ring-green-500 focus:border-green-500" placeholder="0.00" min="0"
+                            step="0.01" required>
+                    </div>
+                    <div>
+                        <label for="goalDeadline" class="block text-sm font-medium text-zinc-300 mb-1">Data
+                            Limite</label>
+                        <input type="date" id="goalDeadline" class="w-full px-4 py-2 border border-zinc-700 bg-zinc-800 text-zinc-50 rounded-lg
+                        focus:ring-2 focus:ring-green-500 focus:border-green-500" required>
+                    </div>
+                    <div>
+                        <label for="goalPriority"
+                            class="block text-sm font-medium text-zinc-300 mb-1">Prioridade</label>
+                        <select id="goalPriority" class="w-full px-4 py-2 border border-zinc-700 bg-zinc-800 text-zinc-50 rounded-lg
+                         focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                            <option value="low">Baixa</option>
+                            <option value="medium" selected>Média</option>
+                            <option value="high">Alta</option>
+                        </select>
+                    </div>
+                    <div class="pt-2">
+                        <button type="submit"
+                            class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors">
+                            Adicionar Meta
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Goal Details Modal -->
+    <div id="goalDetailsModal"
+        class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+        <div class="bg-zinc-900 rounded-xl shadow-lg w-full max-w-md mx-4 border border-zinc-700">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 id="detailTitle" class="text-xl font-bold text-zinc-50">Detalhes da Meta</h3>
+                    <button id="closeDetailsModalBtn" class="text-zinc-400 hover:text-zinc-200">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="space-y-4">
+                    <div class="flex justify-center">
+                        <div class="relative w-32 h-32">
+                            <svg class="w-full h-full" viewBox="0 0 100 100">
+                                <circle class="text-zinc-700" stroke-width="8" stroke="currentColor" fill="transparent"
+                                    r="40" cx="50" cy="50" />
+                                <circle id="detailProgressCircle" class="text-green-500  progress-ring__circle"
+                                    stroke-width="8" stroke-linecap="round" stroke="currentColor" fill="transparent"
+                                    r="40" cx="50" cy="50" />
+                            </svg>
+                            <div class="absolute inset-0 flex items-center justify-center flex-col">
+                                <span id="detailProgressPercent" class="text-2xl font-bold text-zinc-50">75%</span>
+                                <span class="text-xs text-zinc-300">concluído</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <p class="text-sm text-zinc-300">Valor da Meta</p>
+                            <p id="detailGoalAmount" class="font-medium text-zinc-50">R$ 15.000,00</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-zinc-300">Valor Atual</p>
+                            <p id="detailCurrentAmount" class="font-medium text-zinc-50">R$ 11.250,00</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-zinc-300">Data Limite</p>
+                            <p id="detailDeadline" class="font-medium text-zinc-50">15/12/2023</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-zinc-300">Prioridade</p>
+                            <p id="detailPriority" class="font-medium text-zinc-50">
+                                <span class="px-2 py-1 rounded text-xs bg-green-500 text-zinc-900">Média</span>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="pt-4">
+                        <label for="addToGoal" class="block text-sm font-medium text-zinc-300 mb-1">
+                            Adicionar valor à meta
+                        </label>
+                        <div class="flex space-x-2">
+                            <input type="number" id="addToGoal" class="flex-1 px-4 py-2 border border-zinc-700 bg-zinc-800 text-zinc-50 rounded-lg
+                          focus:ring-2 focus:ring-green-500 focus:border-green-500" placeholder="0.00" min="0"
+                                step="0.01">
+                            <button id="addAmountBtn"
+                                class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors">
+                                Adicionar
+                            </button>
+                        </div>
+                    </div>
+                    <div class="pt-4 flex flex-col space-y-2">
+                        <button id="viewDetailsBtn"
+                            class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+                            Ver Detalhes
+                        </button>
+                        <div class="flex justify-between">
+                            <button id="editGoalBtn"
+                                class="px-4 py-2 border border-zinc-700 rounded-lg text-zinc-50 hover:bg-zinc-700 transition-colors">
+                                Editar
+                            </button>
+                            <button id="deleteGoalBtn"
+                                class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors">
+                                Excluir
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+    <!-- Firebase e seus scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
+    <script src="/firebase-init.js"></script>
+
+    <script src="/loading.js"></script>
+    <script src="/metas/teste.js"></script>
+
+</body>
+
+</html>

@@ -33,10 +33,38 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 });
 
+// Função para deslogar o usuário
+function logout() {
+  firebase
+    .auth()
+    .signOut()
+    .then(() => {
+      window.location.href = "/index.html";
+    })
+    .catch((error) => {
+      showAlert("Erro ao deslogar: " + error.message, "error");
+    });
+}
+
+// Função para exibir o nome do usuário logado
 function loadUserName(user) {
   const displayName = user.displayName || user.email || "Carregando...";
   document.getElementById("user-name").textContent = displayName;
 }
+
+const dropdownButton = document.getElementById("dropdownButton");
+const dropdownMenu = document.getElementById("dropdownMenu");
+
+dropdownButton.addEventListener("click", () => {
+  dropdownMenu.classList.toggle("hidden");
+});
+
+// Fechar dropdown ao clicar fora
+document.addEventListener("click", (event) => {
+  if (!dropdownButton.contains(event.target)) {
+    dropdownMenu.classList.add("hidden");
+  }
+});
 
 // Helpers
 function formatMonthLabel(iso) {
