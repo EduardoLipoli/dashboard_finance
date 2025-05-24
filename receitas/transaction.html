@@ -39,69 +39,80 @@
     </div>
   </div>
 
-<!--SideBar-->
-<div id="sidebar"
-  class="flex flex-col items-center bg-zinc-800 h-full w-16 group hover:w-48 transition-all duration-300">
-  <div class="p-4">
-    <i class="fas fa-coins text-green-500 text-2xl"></i>
+  <!--SideBar-->
+  <div id="sidebar"
+    class="flex flex-col items-center bg-zinc-800 h-full w-16 group hover:w-48 transition-all duration-300">
+    <div class="p-4">
+      <i class="fas fa-coins text-green-500 text-2xl"></i>
+    </div>
+
+    <ul class="mt-4 w-full">
+      <!-- Seção: Dashboard -->
+      <li class="w-full px-4 py-2 hidden group-hover:block text-zinc-500 text-xs uppercase font-semibold">
+        Dashboard
+      </li>
+      <a href="/dashboard/index.html">
+        <li class="flex items-center gap-4 p-4 hover:bg-zinc-700 w-full text-zinc-400 text-sm">
+          <i class="fas fa-chart-pie text-lg"></i>
+          <span class="hidden group-hover:block">Dashboard</span>
+        </li>
+      </a>
+
+      <!-- Seção: Financeiro -->
+      <li class="w-full px-4 py-2 mt-2 hidden group-hover:block text-zinc-500 text-xs uppercase font-semibold">
+        Organização
+      </li>
+      <a href="/planejamento/index.html">
+        <li class="flex items-center gap-4 p-4 hover:bg-zinc-700 w-full text-zinc-400 text-sm">
+          <i class="fas fa-bullseye text-lg"></i>
+          <span class="hidden group-hover:block">Planejamento</span>
+        </li>
+      </a>
+
+      <a href="/metas/index.html">
+        <li class="flex items-center gap-4 p-4 hover:bg-zinc-700 w-full text-zinc-400 text-sm">
+          <i class="fas fa-flag text-lg"></i>
+          <span class="hidden group-hover:block">Metas</span>
+        </li>
+      </a>
+
+      <li class="w-full px-4 py-2 mt-2 hidden group-hover:block text-zinc-500 text-xs uppercase font-semibold">
+        Financeiro
+      </li>
+      <a href="/receitas/transaction.html">
+        <li class="flex items-center gap-4 p-4 hover:bg-zinc-700 w-full text-green-400 text-sm">
+          <i class="fas fa-wallet text-lg"></i>
+          <span class="hidden group-hover:block">Carteira</span>
+        </li>
+      </a>
+
+      <a href="/despesas/transaction.html">
+        <li class="flex items-center gap-4 p-4 hover:bg-zinc-700 w-full text-zinc-400 text-sm">
+          <i class="fas fa-money-check-alt text-lg"></i>
+          <span class="hidden group-hover:block">Despesas</span>
+        </li>
+      </a>
+
+      <!-- Novo item: Investimentos -->
+      <a href="/investimento/index.html">
+        <li class="flex items-center gap-4 p-4 hover:bg-zinc-700 w-full text-zinc-400 text-sm">
+          <i class="fas fa-chart-line text-lg"></i>
+          <span class="hidden group-hover:block">Investimentos</span>
+        </li>
+      </a>
+
+      <!-- Seção: Configuração -->
+      <li class="w-full px-4 py-2 mt-2 hidden group-hover:block text-zinc-500 text-xs uppercase font-semibold">
+        Configuração
+      </li>
+      <a href="/configuration/config.html">
+        <li class="flex items-center gap-4 p-4 hover:bg-zinc-700 w-full text-zinc-500 text-sm">
+          <i class="fas fa-cog text-lg"></i>
+          <span class="hidden group-hover:block">Configuração</span>
+        </li>
+      </a>
+    </ul>
   </div>
-
-  <ul class="mt-4 w-full">
-    <!-- Seção: Dashboard -->
-    <li class="w-full px-4 py-2 hidden group-hover:block text-zinc-500 text-xs uppercase font-semibold">
-      Dashboard
-    </li>
-    <a href="/dashboard/index.html">
-      <li class="flex items-center gap-4 p-4 hover:bg-zinc-700 w-full text-zinc-400 text-sm">
-        <i class="fas fa-chart-line text-lg"></i>
-        <span class="hidden group-hover:block">Dashboard</span>
-      </li>
-    </a>
-
-    <!-- Seção: Financeiro -->
-    <li class="w-full px-4 py-2 mt-2 hidden group-hover:block text-zinc-500 text-xs uppercase font-semibold">
-      Financeiro
-    </li>
-    <a href="/planejamento/index.html">
-      <li class="flex items-center gap-4 p-4 hover:bg-zinc-700 w-full text-zinc-400 text-sm">
-        <i class="fas fa-bullseye text-lg"></i>
-        <span class="hidden group-hover:block">Planejamento</span>
-      </li>
-    </a>
-
-    <a href="/metas/index.html">
-      <li class="flex items-center gap-4 p-4 hover:bg-zinc-700 w-full text-zinc-400 text-sm">
-        <i class="fas fa-flag text-lg"></i>
-        <span class="hidden group-hover:block">Metas</span>
-      </li>
-    </a>
-
-    <a href="/receitas/transaction.html">
-      <li class="flex items-center gap-4 p-4 hover:bg-zinc-700 w-full text-green-400 text-sm">
-        <i class="fas fa-wallet text-lg"></i>
-        <span class="hidden group-hover:block">Carteira</span>
-      </li>
-    </a>
-
-    <a href="/despesas/transaction.html">
-      <li class="flex items-center gap-4 p-4 hover:bg-zinc-700 w-full text-zinc-400 text-sm">
-        <i class="fas fa-money-check-alt text-lg"></i>
-        <span class="hidden group-hover:block">Despesas</span>
-      </li>
-    </a>
-
-    <!-- Seção: Configuração -->
-    <li class="w-full px-4 py-2 mt-2 hidden group-hover:block text-zinc-500 text-xs uppercase font-semibold">
-      Configuração
-    </li>
-    <a href="/configuration/config.html">
-      <li class="flex items-center gap-4 p-4 hover:bg-zinc-700 w-full text-zinc-500 text-sm">
-        <i class="fas fa-cog text-lg"></i>
-        <span class="hidden group-hover:block">Configuração</span>
-      </li>
-    </a>
-  </ul>
-</div>
 
   <!-- Main Content -->
   <div class="flex-1 flex flex-col">
@@ -230,7 +241,7 @@
       <div class="flex justify-between items-center">
         <!-- Título -->
         <h2 class="text-2xl font-semibold text-white">Todas as transações</h2>
-  
+
         <!-- Controles -->
         <div class="flex items-center space-x-4">
           <!-- Filtro -->
@@ -243,7 +254,7 @@
               </span>
               <i id="filterChevron" class="fa-solid fa-chevron-down transform transition-transform duration-200"></i>
             </button>
-  
+
             <!-- Dropdown -->
             <div id="filterMenu"
               class="hidden absolute right-0 mt-2 w-48 bg-zinc-800 text-white rounded-lg shadow-xl border border-zinc-700 divide-y divide-zinc-700 z-30">
@@ -259,7 +270,7 @@
               </div>
             </div>
           </div>
-  
+
           <!-- Campo de busca -->
           <div class="relative w-64">
             <input type="text" id="searchInput" placeholder="Buscar transações..."
