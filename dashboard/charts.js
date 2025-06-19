@@ -1,270 +1,487 @@
+// --- DECLARAÇÃO DE VARIÁVEIS GLOBAIS PARA OS GRÁFICOS ---
+let debtsByDayChart;
+let categoriesChart;
+let paidVsPendingChart;
+let monthlyIncomeChart;
+let monthlyExpensesChart;
+
+// --- FUNÇÕES AUXILIARES ---
+
+// Função para filtrar o dashboard pela seleção do gráfico (mês, categoria, etc.)
+function filterDashboardByChartSelection(type, value, isToggle = true) {
+    const monthFilter = document.getElementById("monthFilter");
+    const monthValue = monthFilter.value;
+
+    if (type === 'category' && monthValue !== "all") {
+        monthFilter.value = "all";
+        if (typeof filterByMonth === 'function') {
+            filterByMonth();
+        }
+    }
+
+    if (type === 'category') {
+        if (isToggle && window.currentCategoryFilter === value) {
+            window.filteredTransactions = [...window.transactions];
+            window.currentCategoryFilter = null;
+            console.log("Filtro de categoria desativado:", value);
+        } else {
+            if (window.transactions) {
+                window.filteredTransactions = window.transactions.filter(t => t.type === "Gasto" && t.category === value);
+                window.currentCategoryFilter = value;
+                console.log("Filtro de categoria ativado para:", value);
+            } else {
+                console.error("Variável 'transactions' não acessível globalmente em charts.js");
+            }
+        }
+    }
+
+    if (typeof calculateTotals === 'function' && typeof updateCharts === 'function') {
+        calculateTotals();
+        updateCharts();
+    } else {
+        console.error("As funções 'calculateTotals' ou 'updateCharts' não estão definidas ou acessíveis. Verifique a ordem de carregamento dos scripts.");
+    }
+}
+
 // Função para filtrar o dashboard pelo mês clicado no gráfico
 function filterByChartMonth(index) {
   const monthSelect = document.getElementById("monthFilter");
   if (!monthSelect) return;
 
-  // Se o mês clicado já está selecionado, volta para "Todos"
   if (parseInt(monthSelect.value) === index) {
     monthSelect.value = "all";
   } else {
     monthSelect.value = index.toString();
   }
 
-  filterByMonth();
+  if (typeof filterByMonth === 'function') {
+      filterByMonth();
+  } else {
+      console.error("filterByMonth não está definido. Verifique a ordem de carregamento dos scripts.");
+  }
 }
 
-// Gráfico de Dívidas do dia 01 vs dia 15
-const debtsByDayCtx = document
-  .getElementById("fixedVsInstallmentsChart")
-  .getContext("2d");
+// Função para criar gradiente (para cores nomeadas como 'green', 'red', 'blue')
+function createGradient(ctx, color) {
+  const gradient = ctx.createLinearGradient(0, 0, 0, 400); // Gradiente vertical
 
-const debtsByDayChart = new Chart(debtsByDayCtx, {
-  type: "doughnut",
-  data: {
-    labels: ["Dívidas do dia 01", "Dívidas do dia 15"],
-    datasets: [
-      {
-        data: [
-          transactions
-            .filter((t) => t.type === "Gasto" && t.datepay === "01")
-            .reduce((sum, t) => sum + t.amount, 0),
-          transactions
-            .filter((t) => t.type === "Gasto" && t.datepay === "15")
-            .reduce((sum, t) => sum + t.amount, 0),
-        ],
-        borderColor: ["#4CAF50", "#F44336"],
-        backgroundColor: ["rgba(76, 175, 80, 0.2)", "rgba(244, 67, 54, 0.2)"],
-      },
-    ],
-  },
-  options: {
-    plugins: {
-      legend: { position: "top" },
-      tooltip: {
-        callbacks: {
-          label: (ctx) => `R$ ${ctx.raw.toFixed(2)}`,
-        },
-      },
-      datalabels: {
-        formatter: (value, ctx) =>
-          `R$ ${value.toFixed(2)} (${(
-            (value /
-              ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0)) *
-            100
-          ).toFixed(1)}%)`,
-        color: "#fff",
-        font: { size: 14 },
-        anchor: "center",
-        align: "center",
-        offset: 10,
-      },
-    },
-  },
-  plugins: [ChartDataLabels],
-});
-
-// Gráfico de Dívidas por Categoria
-const categoriesCtx = document
-  .getElementById("categoriesChart")
-  .getContext("2d");
-
-const categoriesData = filteredTransactions.reduce((acc, t) => {
-  if (t.type === "Gasto") {
-    acc[t.category] = (acc[t.category] || 0) + t.amount;
+  if (color === 'green') {
+    gradient.addColorStop(0, 'rgba(34, 197, 94, 0.7)'); // green-500
+    gradient.addColorStop(1, 'rgba(34, 197, 94, 0.1)');
+  } else if (color === 'red') {
+    gradient.addColorStop(0, 'rgba(239, 68, 68, 0.7)'); // red-500
+    gradient.addColorStop(1, 'rgba(239, 68, 68, 0.1)');
+  } else if (color === 'blue') {
+    gradient.addColorStop(0, 'rgba(59, 130, 246, 0.7)'); // blue-500
+    gradient.addColorStop(1, 'rgba(59, 130, 246, 0.1)');
   }
-  return acc;
-}, {});
 
-const categoriesChart = new Chart(categoriesCtx, {
-  type: "bar",
-  data: {
-    labels: Object.keys(categoriesData),
-    datasets: [
-      {
-        label: "Dívidas por Categoria (R$)",
-        data: Object.values(categoriesData),
-        borderWidth: 2,
-        borderColor: "#bebebe",
-        backgroundColor: "rgba(166, 166, 166, 0.2)",
+  return gradient;
+}
+
+// Função genérica para criar gradiente a partir de uma cor hexadecimal (para barras)
+function createGradientForBar(ctx, hexColor) {
+    const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+    gradient.addColorStop(0, hexColor + '33'); // Mais transparente no topo
+    gradient.addColorStop(1, hexColor + 'FF'); // Cor sólida na base
+    return gradient;
+}
+
+// Função para criar gradiente para fatias de doughnut (ajustada para mais suavidade)
+function createGradientForDoughnutSlice(ctx, colorsArray) {
+    return colorsArray.map(hexColor => {
+        // Criamos um gradiente linear para simular um gradiente suave por fatia.
+        // É uma abordagem simplificada, pois o gradiente radial pode ser mais complexo para controlar a direção por fatia.
+        // Vai de uma cor semi-transparente para outra mais opaca, replicando a suavidade dos gráficos de barra.
+        const gradient = ctx.createLinearGradient(0, 0, ctx.canvas.width, ctx.canvas.height); // Gradiente diagonal/linear
+        gradient.addColorStop(0, hexColor + 'B3'); // ~70% de opacidade (como nos gráficos de barra)
+        gradient.addColorStop(1, hexColor + '1A'); // ~10% de opacidade (como nos gráficos de barra)
+        return gradient;
+    });
+}
+
+
+// --- INICIALIZAÇÃO DOS GRÁFICOS ---
+document.addEventListener("DOMContentLoaded", function() {
+
+  // Gráfico de Dívidas do dia 01 vs dia 15 (Doughnut com Gradiente Suave)
+  const debtsByDayCtx = document.getElementById("fixedVsInstallmentsChart")?.getContext("2d");
+  if (debtsByDayCtx) {
+    const debtsColors = ["#22c55e", "#ef4444"]; // green-500, red-500
+    debtsByDayChart = new Chart(debtsByDayCtx, {
+      type: "doughnut",
+      data: {
+        labels: ["Dívidas do dia 01", "Dívidas do dia 15"],
+        datasets: [
+          {
+            data: [0, 0],
+            borderColor: debtsColors,
+            backgroundColor: createGradientForDoughnutSlice(debtsByDayCtx, debtsColors), // Usando a nova função
+          },
+        ],
       },
-    ],
-  },
-  options: {
-    plugins: {
-      legend: { position: "top" },
-      tooltip: {
-        callbacks: {
-          label: (ctx) => {
-            const value = ctx.raw;
-            return `R$ ${value.toLocaleString("pt-BR", {
-              minimumFractionDigits: 2,
-            })}`; 
+      options: {
+        plugins: {
+          legend: { position: "top", labels: { color: '#a1a1aa' } },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => `R$ ${ctx.raw.toFixed(2)}`,
+            },
+            backgroundColor: 'rgba(24, 24, 27, 0.9)',
+            borderColor: 'rgba(255, 255, 255, 0.1)',
+            borderWidth: 1,
+            titleColor: '#fff',
+            bodyColor: '#fff',
+          },
+          datalabels: {
+            formatter: (value, ctx) =>
+              `R$ ${value.toFixed(2)} (${(
+                (value /
+                  ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0)) *
+                100
+              ).toFixed(1)}%)`,
+            color: "#fff",
+            font: { size: 14 },
+            anchor: "center",
+            align: "center",
+            offset: 10,
           },
         },
       },
-      datalabels: {
-        formatter: (value, ctx) => {
-          const total = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b);
-          const percentage = ((value / total) * 100).toFixed(1);
-          return `R$ ${value.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} (${percentage}%)`; 
+      plugins: [ChartDataLabels],
+    });
+  }
+
+  // Gráfico de Dívidas por Categoria (BARRA com GRADIENTE - SEM CLIQUE para filtro)
+  const categoriesCtx = document.getElementById("categoriesChart")?.getContext("2d");
+  if (categoriesCtx) {
+    const categoryColorsPalette = [
+      '#4ade80', '#3b82f6', '#facc15', '#ef4444', '#a855f7', '#ec4899',
+      '#6ee7b7', '#8b5cf6', '#f97316', '#6b7280', '#14b8a6', '#f43f5e',
+      '#c084fc', '#fde047', '#fbbf24', '#f472b6'
+    ];
+
+    categoriesChart = new Chart(categoriesCtx, {
+      type: "bar",
+      data: {
+        labels: [],
+        datasets: [{
+          label: "Dívidas por Categoria (R$)",
+          data: [],
+          borderWidth: 0,
+          borderRadius: 6,
+          backgroundColor: categoryColorsPalette.map(colorHex => {
+            return createGradientForBar(categoriesCtx, colorHex);
+          }),
+          hoverBackgroundColor: categoryColorsPalette.map(color => {
+            let c = color.substring(1);
+            let rgb = parseInt(c, 16);
+            let r = (rgb >> 16) & 0xff;
+            let g = (rgb >> 8) & 0xff;
+            let b = (rgb >> 0) & 0xff;
+            return `rgba(${Math.max(0, r - 20)}, ${Math.max(0, g - 20)}, ${Math.max(0, b - 20)}, 0.9)`;
+          }),
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        // 'onClick' removido daqui conforme solicitado
+        hover: {
+          onHover: function(evt, activeEls) {
+            evt.native.target.style.cursor = activeEls[0] ? 'pointer' : 'default';
+          }
         },
-        color: "#fff",
-        font: { size: 14 },
-        anchor: "center",
-        align: "center",
-        offset: 10,
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => {
+                const value = ctx.raw;
+                return `R$ ${value.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
+              },
+            },
+            backgroundColor: 'rgba(24, 24, 27, 0.9)',
+            padding: 12,
+            displayColors: true,
+            borderColor: 'rgba(255, 255, 255, 0.1)',
+            borderWidth: 1,
+            titleColor: '#fff',
+            bodyColor: '#fff',
+          },
+          datalabels: {
+            anchor: 'end',
+            align: 'right',
+            formatter: (value, ctx) => {
+              const total = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b);
+              const percentage = ((value / total) * 100).toFixed(1);
+              return `${percentage}%`;
+            },
+            color: "#fff",
+            font: {
+              size: 10,
+              weight: 'bold'
+            },
+            textStrokeColor: '#000',
+            textStrokeWidth: 2,
+          }
+        },
+        scales: {
+          x: {
+            grid: {
+              color: 'rgba(255, 255, 255, 0.05)'
+            },
+            ticks: {
+              color: '#a1a1aa'
+            }
+          },
+          y: {
+            grid: {
+              display: false
+            },
+            ticks: {
+              color: '#a1a1aa'
+            }
+          }
+        },
+        animation: {
+          duration: 2000,
+          easing: 'easeOutQuart'
+        }
       },
-    },
-  },
-  plugins: [ChartDataLabels],
-});
+      plugins: [ChartDataLabels]
+    });
+  }
 
-
-// Gráfico de Pagas vs Pendentes
-const paidVsPendingCtx = document
-  .getElementById("paidVsPendingChart")
-  .getContext("2d");
-
-const paidTransactions = transactions.filter((t) => t.isPaid).length;
-const pendingTransactions = transactions.filter((t) => !t.isPaid).length;
-
-const paidVsPendingChart = new Chart(paidVsPendingCtx, {
-  type: "doughnut",
-  data: {
-    labels: ["Pagas", "Pendentes"],
-    datasets: [
-      {
-        data: [paidTransactions, pendingTransactions],
-        borderColor: ["#4CAF50", "#F44336"],
-        backgroundColor: ["rgba(76, 175, 80, 0.2)", "rgba(244, 67, 54, 0.2)"],
+  // Gráfico de Pagas vs Pendentes (Doughnut com Gradiente Suave)
+  const paidVsPendingCtx = document.getElementById("paidVsPendingChart")?.getContext("2d");
+  if (paidVsPendingCtx) {
+    const paidPendingColors = ["#22c55e", "#ef4444"]; // green-500, red-500
+    paidVsPendingChart = new Chart(paidVsPendingCtx, {
+      type: "doughnut",
+      data: {
+        labels: ["Pagas", "Pendentes"],
+        datasets: [
+          {
+            data: [0, 0], // Inicia vazio
+            borderColor: paidPendingColors,
+            backgroundColor: createGradientForDoughnutSlice(paidVsPendingCtx, paidPendingColors), // Usando a nova função
+          },
+        ],
       },
-    ],
-  },
-  options: {
-    plugins: {
-      legend: { position: "top" },
-      tooltip: {
-        callbacks: {
-          label: (ctx) => `${ctx.raw} transações`,
+      options: {
+        plugins: {
+          legend: { position: "top", labels: { color: '#a1a1aa' } },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => `${ctx.raw} transações`,
+            },
+            backgroundColor: 'rgba(24, 24, 27, 0.9)',
+            borderColor: 'rgba(255, 255, 255, 0.1)',
+            borderWidth: 1,
+            titleColor: '#fff',
+            bodyColor: '#fff',
+          },
+          datalabels: {
+            formatter: (value, ctx) => `${value} (${((value / ctx.chart.data.datasets[0].data.reduce((a, b) => a + b)) * 100).toFixed(1)}%)`,
+            color: "#fff",
+            font: { size: 14 },
+            anchor: "center",
+            align: "center",
+            offset: 10,
+          },
         },
       },
-      datalabels: {
-        formatter: (value, ctx) => `${value} (${((value / ctx.chart.data.datasets[0].data.reduce((a, b) => a + b)) * 100).toFixed(1)}%)`,
-        color: "#fff",
-        font: { size: 14 },
-        anchor: "center",
-        align: "center",
-        offset: 10,
+      plugins: [ChartDataLabels],
+    });
+  }
+
+  // Gráfico de Receitas por Mês (BARRA com GRADIENTE e FILTRO por CLIQUE no Mês)
+  const monthlyIncomeCtx = document.getElementById("monthlyIncomeChart")?.getContext("2d");
+  if (monthlyIncomeCtx) {
+    monthlyIncomeChart = new Chart(monthlyIncomeCtx, {
+      type: "bar",
+      data: {
+        labels: ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"],
+        datasets: [{
+          label: "Receitas por Mês",
+          data: Array(12).fill(0), // Inicia com zeros
+          borderWidth: 0,
+          borderRadius: 6,
+          backgroundColor: createGradient(monthlyIncomeCtx, 'green'),
+          hoverBackgroundColor: 'rgba(34, 197, 94, 0.8)',
+        }]
       },
-    },
-  },
-  plugins: [ChartDataLabels],
-});
+      options: {
+        onClick: function(evt, activeEls) {
+          if (activeEls.length) {
+            const idx = activeEls[0].index;
+            filterByChartMonth(idx);
+          }
+        },
+        hover: {
+          onHover: function(evt, activeEls) {
+            evt.native.target.style.cursor = activeEls[0] ? 'pointer' : 'default';
+          }
+        },
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            callbacks: {
+              label: ctx => `R$ ${ctx.raw.toFixed(2)}`
+            },
+            backgroundColor: 'rgba(24, 24, 27, 0.9)',
+            titleFont: {
+              size: 14
+            },
+            bodyFont: {
+              size: 14
+            },
+            padding: 12,
+            displayColors: false,
+            borderColor: 'rgba(34, 197, 94, 0.5)',
+            borderWidth: 1,
+            titleColor: '#fff',
+            bodyColor: '#fff',
+          },
+          datalabels: {
+            anchor: "end",
+            align: "end",
+            formatter: val => `R$ ${val > 0 ? val.toFixed(2) : ''}`,
+            color: "#fff",
+            font: {
+              size: 9,
+              weight: 'bold'
+            },
+            textStrokeColor: '#000',
+            textStrokeWidth: 2,
+          }
+        },
+        scales: {
+          x: {
+            grid: {
+              display: false
+            },
+            ticks: {
+              color: '#a1a1aa'
+            }
+          },
+          y: {
+            beginAtZero: true,
+            grid: {
+              color: "rgba(255,255,255,0.05)"
+            },
+            ticks: {
+              color: '#a1a1aa',
+              callback: function(value) {
+                return 'R$ ' + value;
+              }
+            }
+          }
+        },
+        animation: {
+          duration: 2000,
+          easing: 'easeOutQuart'
+        }
+      },
+      plugins: [ChartDataLabels]
+    });
+  }
 
-
-// Gráfico de Receitas por Mês
-const monthlyIncomeCtx = document
-  .getElementById("monthlyIncomeChart")
-  .getContext("2d");
-const monthlyIncomeData = Array.from({ length: 12 }, (_, i) => {
-  return transactions
-    .filter((t) => t.type === "Ganho" && t.dueDate.getMonth() === i)
-    .reduce((sum, t) => sum + t.amount, 0);
-});
-
-const monthlyIncomeChart = new Chart(monthlyIncomeCtx, {
-  type: "bar",
-  data: {
-    labels: ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"],
-    datasets: [{
-      label: "Receitas por Mês",
-      data: monthlyIncomeData,
-      borderWidth: 2,
-      borderColor: "#4CAF50",
-      backgroundColor: "rgba(76, 175, 80, 0.2)"
-    }]
-  },
-  options: {
-    // *** Aqui ***
-    onClick: function(evt, activeEls) {
-      if (activeEls.length) {
-        const idx = activeEls[0].index;
-        filterByChartMonth(idx);
-      }
-    },
-    hover: {
-      onHover: function(evt, activeEls) {
-        evt.native.target.style.cursor = activeEls[0] ? 'pointer' : 'default';
-      }
-    },
-    plugins: {
-      legend: { position: "top" },
-      tooltip: { callbacks: { label: ctx => `R$ ${ctx.raw.toFixed(2)}` } },
-      datalabels: {
-        anchor: "end",
-        align: "end",
-        formatter: val => `R$ ${val.toFixed(2)}`,
-        color: "#fff",
-        font: { size: 10 }
-      }
-    },
-    scales: {
-      x: { title: { display: true, text: "Mês" }, grid: { color: "rgba(255,255,255,0.1)" } },
-      y: { title: { display: true, text: "Receitas (R$)" }, beginAtZero: true, grid: { color: "rgba(255,255,255,0.1)" } }
-    }
-  },
-  plugins: [ChartDataLabels]
-});
-// Gráfico de Gastos por Mês
-const monthlyExpensesCtx = document
-  .getElementById("monthlyExpensesChart")
-  .getContext("2d");
-
-const monthlyExpensesData = Array.from({ length: 12 }, (_, i) => {
-  return transactions
-    .filter((t) => t.type === "Gasto" && t.dueDate.getMonth() === i)
-    .reduce((sum, t) => sum + t.amount, 0);
-});
-
-const monthlyExpensesChart = new Chart(monthlyExpensesCtx, {
-  type: "bar",
-  data: {
-    labels: ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"],
-    datasets: [{
-      label: "Gastos por Mês",
-      data: monthlyExpensesData,
-      borderWidth: 2,
-      borderColor: "#F44336",
-      backgroundColor: "rgba(244, 67, 54, 0.2)"
-    }]
-  },
-  options: {
-    onClick: function(evt, activeEls) {
-      if (activeEls.length) {
-        const idx = activeEls[0].index;
-        filterByChartMonth(idx);
-      }
-    },
-    hover: {
-      onHover: function(evt, activeEls) {
-        evt.native.target.style.cursor = activeEls[0] ? 'pointer' : 'default';
-      }
-    },
-    plugins: {
-      legend: { position: "top" },
-      tooltip: { callbacks: { label: ctx => `R$ ${ctx.raw.toFixed(2)}` } },
-      datalabels: {
-        anchor: "end",
-        align: "end",
-        formatter: val => `R$ ${val.toFixed(2)}`,
-        color: "#fff",
-        font: { size: 10 }
-      }
-    },
-    scales: {
-      x: { title: { display: true, text: "Mês" }, grid: { color: "rgba(255,255,255,0.1)" } },
-      y: { title: { display: true, text: "Gastos (R$)" }, beginAtZero: true, grid: { color: "rgba(255,255,255,0.1)" } }
-    }
-  },
-  plugins: [ChartDataLabels]
+  // Gráfico de Gastos por Mês (BARRA com GRADIENTE e FILTRO por CLIQUE no Mês)
+  const monthlyExpensesCtx = document.getElementById("monthlyExpensesChart")?.getContext("2d");
+  if (monthlyExpensesCtx) {
+    monthlyExpensesChart = new Chart(monthlyExpensesCtx, {
+      type: "bar",
+      data: {
+        labels: ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"],
+        datasets: [{
+          label: "Gastos por Mês",
+          data: Array(12).fill(0), // Inicia com zeros
+          borderWidth: 0,
+          borderRadius: 6,
+          backgroundColor: createGradient(monthlyExpensesCtx, 'red'),
+          hoverBackgroundColor: 'rgba(239, 68, 68, 0.8)',
+        }]
+      },
+      options: {
+        onClick: function(evt, activeEls) {
+          if (activeEls.length) {
+            const idx = activeEls[0].index;
+            filterByChartMonth(idx);
+          }
+        },
+        hover: {
+          onHover: function(evt, activeEls) {
+            evt.native.target.style.cursor = activeEls[0] ? 'pointer' : 'default';
+          }
+        },
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            callbacks: {
+              label: ctx => `R$ ${ctx.raw.toFixed(2)}`
+            },
+            backgroundColor: 'rgba(24, 24, 27, 0.9)',
+            titleFont: {
+              size: 14
+            },
+            bodyFont: {
+              size: 14
+            },
+            padding: 12,
+            displayColors: false,
+            borderColor: 'rgba(239, 68, 68, 0.5)',
+            borderWidth: 1,
+            titleColor: '#fff',
+            bodyColor: '#fff',
+          },
+          datalabels: {
+            anchor: "end",
+            align: "end",
+            formatter: val => `R$ ${val > 0 ? val.toFixed(2) : ''}`,
+            color: "#fff",
+            font: {
+              size: 9,
+              weight: 'bold'
+            },
+            textStrokeColor: '#000',
+            textStrokeWidth: 2,
+          }
+        },
+        scales: {
+          x: {
+            grid: {
+              display: false
+            },
+            ticks: {
+              color: '#a1a1aa'
+            }
+          },
+          y: {
+            beginAtZero: true,
+            grid: {
+              color: "rgba(255,255,255,0.05)"
+            },
+            ticks: {
+              color: '#a1a1aa',
+              callback: function(value) {
+                return 'R$ ' + value;
+              }
+            }
+          }
+        },
+        animation: {
+          duration: 2000,
+          easing: 'easeOutQuart'
+        }
+      },
+      plugins: [ChartDataLabels]
+    });
+  }
 });

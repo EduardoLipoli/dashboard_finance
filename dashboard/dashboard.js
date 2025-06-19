@@ -9,10 +9,11 @@ document.addEventListener("DOMContentLoaded", function () {
       try {
         await user.reload();
 
+        loadUserName(user);
+
         const userPhoto = document.getElementById("user-photo");
         const photoURL = user.photoURL;
         const userEmail = document.getElementById("user-email");
-
         const email = user.email || "E-mail não disponível";
 
         userEmail.textContent = email;
@@ -24,9 +25,13 @@ document.addEventListener("DOMContentLoaded", function () {
           userPhoto.classList.add("hidden");
         }
 
-        loadUserName(user);
-        loadTransactionsFromFirestore();
-        
+        // CHAME loadTransactionsFromFirestore() PRIMEIRO
+        await loadTransactionsFromFirestore(); // Adicione 'await' aqui
+
+        // AGORA QUE AS TRANSAÇÕES ESTÃO CARREGADAS, DEFINA O MÊS PADRÃO E FILTRE
+        setDefaultMonth(); // Esta chamada agora garantirá que 'transactions' já está preenchido
+        checkIfUserIsNew(); // Mova para depois que as transações são carregadas, para verificar corretamente se há transações
+
       } catch (error) {
         console.error("Erro ao atualizar dados do usuário:", error);
       }
@@ -36,6 +41,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 });
+
 
 // Função para carregar transações do Firestore
 async function loadTransactionsFromFirestore() {
@@ -84,19 +90,23 @@ async function loadTransactionsFromFirestore() {
   }
 }
 
-// Função para exibir o nome do usuário logado
+// Function to load user name (unified and corrected)
 function loadUserName(user) {
-  const name = user.displayName || user.email || "Usuário";
-  const email = user.email;
+  const displayName = user.displayName || "Carregando...";
+  const email = user.email || "E-mail não disponível";
   const photoURL = user.photoURL;
 
   const nameEl = document.getElementById("user-name");
   const emailEl = document.getElementById("user-email");
   const photoEl = document.getElementById("user-photo");
+  const userGreetingEl = document.getElementById("user-greeting");
+  const userModalEl = document.getElementById("user-modal");
 
-  if (nameEl) nameEl.textContent = name;
+  if (nameEl) nameEl.textContent = displayName;
   if (emailEl) emailEl.textContent = email;
-  
+  if (userGreetingEl) userGreetingEl.textContent = displayName; // Update user greeting
+  if (userModalEl) userModalEl.textContent = displayName; // Update user modal
+
   if (photoURL && photoEl) {
     photoEl.src = photoURL;
     photoEl.classList.remove("hidden");
@@ -104,11 +114,9 @@ function loadUserName(user) {
     photoEl.classList.add("hidden");
   }
 
-  console.log("Nome:", name);
+  console.log("Nome:", displayName);
   console.log("Email:", email);
 }
-
-
 
 // Função para calcular os totais de receitas, despesas e transações dos dias 01 e 15
 function calculateTotals() {
@@ -151,15 +159,19 @@ function calculateTotals() {
     span.textContent = valorFormatado;
     span.classList.remove("hidden");
 
-    span.className = "ml-2 text-xs font-semibold px-2 py-0.5 rounded-full";
+    // Reset classes
+    span.className = "text-xs font-semibold px-2 py-1 rounded-full";
+
     if (pct > 0) {
-      span.classList.add("bg-green-800","bg-opacity-25", "text-green-500");
+      span.classList.add("bg-green-800/25", "text-green-400", "badge-positive");
     } else if (pct < 0) {
-      span.classList.add("bg-red-800","bg-opacity-25", "text-red-500");
+      span.classList.add("bg-red-800/25", "text-red-400", "badge-negative");
     } else {
-      span.classList.add("bg-gray-500", "text-white");
+      // Alterado para zinc-700 e zinc-300
+      span.classList.add("bg-zinc-700", "text-zinc-300");
     }
   }
+
 
   function renderDiferencaTexto(id, diffValor) {
     const el = document.getElementById(id);
@@ -211,18 +223,16 @@ function variacaoNegativa(atual, anterior) {
   const diffDespesas = despesasAtual - despesasAnterior;
   const diffSobra = sobraAtual - sobraAnterior;
   
-  renderBadge("badgeReceitas", variacaoPositiva(receitasAtual, receitasAnterior), diffReceitas);
-  renderBadge("badgeDespesas", variacaoNegativa(despesasAtual, despesasAnterior), diffDespesas);
-  renderBadge("badgeSobra", variacaoPositiva(sobraAtual, sobraAnterior), diffSobra);
+    renderBadge("badgeReceitas", variacaoPositiva(receitasAtual, receitasAnterior));
+  renderBadge("badgeDespesas", variacaoNegativa(despesasAtual, despesasAnterior));
+  renderBadge("badgeSobra", variacaoPositiva(sobraAtual, sobraAnterior));
   
   
   renderDiferencaTexto("diffReceitas", diffReceitas);
   renderDiferencaTexto("diffDespesas", diffDespesas);
   renderDiferencaTexto("diffSobra", diffSobra);
-  
-  
 
-  // Animação de valores
+ // Animação de valores
   animarContador("totalReceitas", totalReceitas);
   animarContador("totalDespesas", totalDespesas);
   animarContador("totalSobra", totalSobra);
@@ -230,7 +240,16 @@ function variacaoNegativa(atual, anterior) {
   animarContador("totalGanhoDia01", totalGanhoDia01);
   animarContador("totalGastoDia01", totalGastoDia01);
   animarContador("sobraDia01", sobraDia01);
+  animarContador("totalGanhoDia15", totalGanhoDia15);
+  animarContador("totalGastoDia15", totalGastoDia15);
+  animarContador("sobraDia15", sobraDia15);// Animação de valores
+  animarContador("totalReceitas", totalReceitas);
+  animarContador("totalDespesas", totalDespesas);
+  animarContador("totalSobra", totalSobra);
 
+  animarContador("totalGanhoDia01", totalGanhoDia01);
+  animarContador("totalGastoDia01", totalGastoDia01);
+  animarContador("sobraDia01", sobraDia01);
   animarContador("totalGanhoDia15", totalGanhoDia15);
   animarContador("totalGastoDia15", totalGastoDia15);
   animarContador("sobraDia15", sobraDia15);
@@ -347,19 +366,51 @@ function logout() {
     });
 }
 
-const dropdownButton = document.getElementById("dropdownButton");
-const dropdownMenu = document.getElementById("dropdownMenu");
+  // Listener para fechar o dropdown ao clicar fora
+  const dropdownButton = document.getElementById("dropdownButton");
+  const dropdownMenu = document.getElementById("dropdownMenu");
 
-dropdownButton.addEventListener("click", () => {
-  dropdownMenu.classList.toggle("hidden");
-});
-
-document.addEventListener("click", (event) => {
-  if (!dropdownButton.contains(event.target)) {
-    dropdownMenu.classList.add("hidden");
+  if (dropdownButton) {
+    dropdownButton.addEventListener("click", (event) => {
+      event.stopPropagation(); // Evita que o clique no botão feche o menu imediatamente
+      dropdownMenu.classList.toggle("hidden");
+    });
   }
-});
 
+  document.addEventListener("click", (event) => {
+    if (dropdownMenu && !dropdownButton.contains(event.target)) {
+      dropdownMenu.classList.add("hidden");
+    }
+  });
+
+  // Listener para o botão de hambúrguer e botão de fechar a sidebar móvel
+  const hamburgerBtn = document.getElementById("hamburgerBtn");
+  const closeSidebarBtn = document.getElementById("closeSidebarBtn");
+  const mobileSidebar = document.getElementById("sidebar"); // A própria sidebar
+  const mobileOverlay = document.getElementById("mobile-sidebar-overlay");
+
+  if (hamburgerBtn) {
+      hamburgerBtn.addEventListener("click", toggleMobileSidebar);
+  }
+  if (closeSidebarBtn) {
+      closeSidebarBtn.addEventListener("click", toggleMobileSidebar);
+  }
+  if (mobileOverlay) {
+      mobileOverlay.addEventListener("click", toggleMobileSidebar);
+  }
+
+// Função para abrir/fechar a sidebar móvel (GLOBALMENTE ACESSÍVEL)
+function toggleMobileSidebar() {
+    const mobileSidebar = document.getElementById("sidebar");
+    const mobileOverlay = document.getElementById("mobile-sidebar-overlay");
+    const closeSidebarBtn = document.getElementById("closeSidebarBtn");
+
+    if (mobileSidebar && mobileOverlay && closeSidebarBtn) {
+        mobileSidebar.classList.toggle("is-open");
+        mobileOverlay.classList.toggle("hidden");
+        closeSidebarBtn.classList.toggle("hidden"); // Mostra/esconde o botão de fechar
+    }
+}
 
 function closeModal() {
   const modal = document.getElementById("no-transactions-popup");
@@ -409,7 +460,7 @@ function showAlert(message, type = 'success') {
 document.addEventListener("DOMContentLoaded", loadUserName);
 
 function loadUserName(user) {
-  const displayName = user.displayName || "Usuário";
+  const displayName = user.displayName || "Carregando...";
   document.getElementById("user-name").textContent = displayName; // Mantém no botão do dropdown
   document.getElementById("user-greeting").textContent = displayName // Adiciona a saudação no header
   document.getElementById("user-modal").textContent = displayName;
@@ -419,17 +470,40 @@ function animarContador(id, valorFinal, duracao = 1000) {
   const elemento = document.getElementById(id);
   if (!elemento || isNaN(valorFinal)) return;
 
+  // Tentar obter o valor atual do elemento
+  let inicio = 0;
+  try {
+    const valorAtual = elemento.textContent.replace(/[^\d,]/g, '').replace(',', '.');
+    inicio = parseFloat(valorAtual) || 0;
+  } catch (e) {
+    inicio = 0;
+  }
+
   const startTime = performance.now();
-  const inicio = 0;
+
+  // Efeito visual inicial
+  elemento.style.opacity = "0.7";
+  elemento.style.transform = "scale(1.1)";
 
   function update(now) {
     const elapsed = now - startTime;
     const progress = Math.min(elapsed / duracao, 1);
     const current = inicio + (valorFinal - inicio) * progress;
+
     elemento.textContent = formatarMoeda(current);
 
     if (progress < 1) {
       requestAnimationFrame(update);
+    } else {
+      // Efeito final
+      elemento.style.transition = "all 0.3s ease";
+      elemento.style.opacity = "1";
+      elemento.style.transform = "scale(1)";
+
+      // Remove a transição após a animação
+      setTimeout(() => {
+        elemento.style.transition = "";
+      }, 300);
     }
   }
 
@@ -440,24 +514,24 @@ function formatarMoeda(valor) {
   return valor.toLocaleString("pt-BR", {
     style: "currency",
     currency: "BRL",
-    minimumFractionDigits: 2,
+    minimumFractionDigits: 2
   });
 }
-
 
 function gerarResumoAnual() {
   const container = document.getElementById("resumoAnual");
   if (!container) return;
 
-if (!transactions.length) {
-  container.innerHTML = `
-    <div class="bg-zinc-800 text-white p-4 rounded-lg text-center">
-      <p class="text-sm">Nenhum dado encontrado para gerar o resumo anual.</p>
-      <p class="text-sm mt-1 text-zinc-400">Adicione transações para começar a visualizar seu desempenho financeiro.</p>
-    </div>
-  `;
-  return;
-}
+  if (!transactions.length) {
+    // Alterado para zinc-800 e zinc-400
+    container.innerHTML = `
+      <div class="bg-zinc-800 text-white p-4 rounded-lg text-center">
+        <p class="text-sm">Nenhum dado encontrado para gerar o resumo anual.</p>
+        <p class="text-sm mt-1 text-zinc-400">Adicione transações para começar a visualizar seu desempenho financeiro.</p>
+      </div>
+    `;
+    return;
+  }
 
   const mesesNomes = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
   const dadosAnuais = Array.from({ length: 12 }, () => ({ receitas: 0, despesas: 0, sobra: 0 }));
@@ -659,20 +733,6 @@ function mostrarRelatorio(tipo) {
   todosBotoes.forEach(btn => btn.classList.remove("bg-zinc-600", "text-white", "border-zinc-500", "shadow-md"));
   botaoClicado.classList.add("bg-zinc-600", "text-white", "border-zinc-500", "shadow-md");
 }
-
-document.addEventListener("click", function (event) {
-  const box = document.getElementById("relatoriosBox");
-  const isInside = box.contains(event.target);
-  const isButton = event.target.classList.contains("btn-tab");
-
-  if (!isInside && !isButton) {
-    // Oculta todas as seções
-    document.querySelectorAll(".tab-content").forEach(el => el.classList.add("hidden"));
-
-    // Remove estilo de botão ativo
-    document.querySelectorAll(".btn-tab").forEach(btn => btn.classList.remove("bg-zinc-600", "text-white", "border-zinc-500", "shadow-md"));
-  }
-});
 
 function showNewUserModal() {
   document.getElementById("newUserModal").classList.remove("hidden");

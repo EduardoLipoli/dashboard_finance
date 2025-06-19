@@ -232,12 +232,49 @@
       <h2 id="detailGoalName" class="text-2xl font-bold"></h2>
       <p id="detailRemaining" class="text-zinc-400"></p>
 
+      <div class="bg-zinc-800 rounded-xl shadow-sm p-4 border border-zinc-700 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm select-none">
+          <div>
+              <p class="text-zinc-300">Valor Total da Meta</p>
+              <p id="miniGoalTotal" class="font-bold text-zinc-50">R$ 0,00</p>
+          </div>
+          <div>
+              <p class="text-zinc-300">Valor Atual Pago</p>
+              <p id="miniCurrentPaid" class="font-bold text-zinc-50">R$ 0,00</p>
+          </div>
+          <div class="col-span-2 md:col-span-1"> <p class="text-zinc-300">Situação</p>
+              <p id="miniSituation" class="font-bold text-zinc-50">R$ 0,00</p>
+          </div>
+          <div>
+              <p class="text-zinc-300">Meses Restantes</p>
+              <p id="miniMonthsLeft" class="font-bold text-zinc-50">0 meses</p>
+          </div>
+      </div>
       <div id="tableWrapper" class="w-full overflow-x-auto overflow-y-auto border border-zinc-700 rounded bg-zinc-900"
         style="max-height: 400px;">
-        <!-- Tabela será injetada aqui -->
-      </div>
+        </div>
     </div>
 
+  </div>
+
+  <div id="confirmDeleteModal"
+    class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+    <div class="bg-zinc-900 rounded-xl shadow-lg w-full max-w-sm mx-4 border border-zinc-700 p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-xl font-bold text-zinc-50">Confirmar Exclusão</h3>
+        <button id="closeConfirmDeleteModalBtn" class="text-zinc-400 hover:text-zinc-200">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <p class="text-zinc-300 mb-6">Tem certeza que deseja excluir esta meta? Todas as contribuições também serão excluídas.</p>
+      <div class="flex justify-end space-x-4">
+        <button id="cancelDeleteBtn" class="px-4 py-2 bg-zinc-700 hover:bg-zinc-600 text-white rounded-lg transition-colors">
+          Não
+        </button>
+        <button id="confirmDeleteBtn" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors">
+          Sim, Excluir
+        </button>
+      </div>
+    </div>
   </div>
 
   <!-- Add Goal Modal -->
