@@ -1,462 +1,540 @@
-const db   = firebase.firestore();
-const auth = firebase.auth();
-
-// Listener para garantir que a autenticação está concluída
-document.addEventListener("DOMContentLoaded", function () {
-  auth.onAuthStateChanged(async (user) => {
-    if (user) {
-      try {
-        await user.reload();
-
-        const userPhoto = document.getElementById("user-photo");
-        const photoURL = user.photoURL;
-        const userEmail = document.getElementById("user-email");
-
-        const email = user.email || "E-mail não disponível";
-        userEmail.textContent = email;
-
-        if (photoURL && userPhoto) {
-          userPhoto.src = photoURL;
-          userPhoto.classList.remove("hidden");
-        } else if (userPhoto) {
-          userPhoto.classList.add("hidden");
-        }
-
-        loadUserName(user);
-      } catch (error) {
-        console.error("Erro ao atualizar dados do usuário:", error);
-      }
-    } else {
-      console.error("Usuário não autenticado.");
-      window.location.href = "/index.html";
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    
+    // Funções de apoio
+    function formatCurrency(value) {
+      return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     }
-  });
-});
 
-// Função para deslogar o usuário
-function logout() {
-  firebase
-    .auth()
-    .signOut()
-    .then(() => {
-      window.location.href = "/index.html";
-    })
-    .catch((error) => {
-      showAlert("Erro ao deslogar: " + error.message, "error");
-    });
-}
+    function formatMonthLabel(iso) {
+      const [y, m] = iso.split('-').map(Number);
+      return new Date(y, m - 1).toLocaleString('pt-BR', { month: 'short', year: 'numeric' });
+    }
 
-// Função para exibir o nome do usuário logado
-function loadUserName(user) {
-  const displayName = user.displayName || user.email || "Carregando...";
-  document.getElementById("user-name").textContent = displayName;
-}
+    function getMonthsBetween(start, end) {
+      const meses = [];
+      const cur = new Date(start.getFullYear(), start.getMonth(), 1);
+      while (cur <= end) {
+        const mm = String(cur.getMonth() + 1).padStart(2, '0');
+        meses.push(`${cur.getFullYear()}-${mm}`);
+        cur.setMonth(cur.getMonth() + 1);
+      }
+      return meses;
+    }
 
-const dropdownButton = document.getElementById("dropdownButton");
-const dropdownMenu = document.getElementById("dropdownMenu");
+    function calculatePercentage(value, total) {
+      return total > 0 ? Math.min(100, Math.round((value / total) * 100)) : 0;
+    }
 
-dropdownButton.addEventListener("click", () => {
-  dropdownMenu.classList.toggle("hidden");
-});
+    function showAlert(message, type = "success") {
+      const alertContainer = document.getElementById("alert-container");
+      const alert = document.createElement("div");
+      
+      const typeClasses = {
+        success: "bg-green-500 text-white",
+        error: "bg-red-500 text-white",
+        warning: "bg-yellow-500 text-white",
+        info: "bg-blue-500 text-white"
+      };
+      
+      alert.className = `flex items-center justify-between px-4 py-3 rounded-lg shadow-lg mb-2 ${typeClasses[type] || typeClasses.success}`;
+      alert.innerHTML = `
+        <div class="flex items-center">
+          <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : type === 'warning' ? 'fa-exclamation-triangle' : 'fa-info-circle'} mr-2"></i>
+          <span>${message}</span>
+        </div>
+        <button class="ml-4 text-lg font-bold focus:outline-none">&times;</button>
+      `;
+      
+      alert.querySelector("button").addEventListener("click", () => {
+        alert.remove();
+      });
+      
+      setTimeout(() => {
+        if (alert.parentNode) {
+          alert.remove();
+        }
+      }, 5000);
+      
+      alertContainer.appendChild(alert);
+    }
 
-// Fechar dropdown ao clicar fora
-document.addEventListener("click", (event) => {
-  if (!dropdownButton.contains(event.target)) {
-    dropdownMenu.classList.add("hidden");
-  }
-});
+    // Função para buscar dados
+    async function fetchData(start, end) {
+      const uid = auth.currentUser.uid;
+      
+      // Buscar categorias
+      const catSnap = await db.collection('users').doc(uid).collection('categories').get();
+      const categories = catSnap.docs.map(d => ({
+        id: d.id,
+        name: d.data().name,
+        type: d.data().tipo
+      }));
 
-// Helpers
-function formatMonthLabel(iso) {
-  const [y, m] = iso.split('-').map(Number);
-  return new Date(y, m - 1).toLocaleString('pt-BR', { month: 'short', year: 'numeric' });
-}
+      // Buscar transações
+      const txSnap = await db.collection('users').doc(uid)
+        .collection('transactions')
+        .where('dueDate', '>=', firebase.firestore.Timestamp.fromDate(start))
+        .where('dueDate', '<=', firebase.firestore.Timestamp.fromDate(end))
+        .get();
+      const transactions = txSnap.docs.map(d => {
+        const data = d.data();
+        return {
+          id: d.id,
+          name: data.name,
+          category: data.category,
+          amount: data.amount,
+          dueDate: data.dueDate.toDate(),
+          type: data.type
+        };
+      });
 
-function getMonthsBetween(start, end) {
-  const meses = [];
-  const cur = new Date(start.getFullYear(), start.getMonth(), 1);
-  while (cur <= end) {
-    const mm = String(cur.getMonth() + 1).padStart(2, '0');
-    meses.push(`${cur.getFullYear()}-${mm}`);
-    cur.setMonth(cur.getMonth() + 1);
-  }
-  return meses;
-}
+      // Buscar planos
+      const planSnap = await db.collection('users').doc(uid).collection('categoryPlans').get();
+      const plans = {};
+      planSnap.docs.forEach(d => plans[d.id] = d.data().plannedValue || 0);
 
-// 1) Fetch dados
-async function fetchData(start, end) {
-  const uid = auth.currentUser.uid;
-  // categorias (incluindo tipo)
-  const catSnap = await db.collection('users').doc(uid).collection('categories').get();
-  const categories = catSnap.docs.map(d => ({
-    id:   d.id,
-    name: d.data().name,
-    type: d.data().tipo  // Gasto ou Ganho
-  }));
+      return { categories, transactions, plans };
+    }
 
-  // transações
-  const txSnap = await db.collection('users').doc(uid)
-    .collection('transactions')
-    .where('dueDate', '>=', firebase.firestore.Timestamp.fromDate(start))
-    .where('dueDate', '<=', firebase.firestore.Timestamp.fromDate(end))
-    .get();
-  const transactions = txSnap.docs.map(d => {
-    const data = d.data();
-    return {
-      id:       d.id,
-      name:     data.name,
-      category: data.category,
-      amount:   data.amount,
-      dueDate:  data.dueDate.toDate(),
-      type:     data.type,
-    };
-  });
-
-  // planos
-  const planSnap = await db.collection('users').doc(uid).collection('categoryPlans').get();
-  const plans = {};
-  planSnap.docs.forEach(d => plans[d.id] = d.data().plannedValue || 0);
-
-  return { categories, transactions, plans };
-}
-
-// 1) Agregar - Modificar para incluir comparação do planejado com o real
-function aggregate(categories, transactions, plans, meses) {
+    // Função para agregar dados
+    function aggregate(categories, transactions, plans, meses) {
   const report = {};
+  let totalPlanned = 0;
+  let totalActual = 0;
+
+  // Inicializar estrutura de relatório
   categories.forEach(cat => {
     report[cat.id] = {
-      name:    cat.name,
-      type:    cat.type,
-      plan:    plans[cat.id] || 0,
-      monthly: Object.fromEntries(meses.map(m => [m, { real: 0, withinPlan: false }])),  // Alterado para guardar valores reais e a comparação
-      total:   0
+      name: cat.name,
+      type: cat.type,
+      plan: plans[cat.id] || 0,
+      monthly: Object.fromEntries(meses.map(m => [m, { real: 0 }])),
+      total: 0,
+      transactions: [] // NOVO: Array para guardar as transações da categoria
     };
-  });
 
-  transactions.forEach(tx => {
-    const m = `${tx.dueDate.getFullYear()}-${String(tx.dueDate.getMonth() + 1).padStart(2, '0')}`;
-    if (!report[tx.category]) return;
-    report[tx.category].monthly[m].real += tx.amount;
-    report[tx.category].total          += tx.amount;
-  });
-
-  const totalG = Object.values(report).reduce((s, r) => s + r.total, 0);
-  for (let id in report) {
-    const vals = Object.values(report[id].monthly);
-    report[id].min = Math.min(...vals.map(v => v.real));
-    report[id].max = Math.max(...vals.map(v => v.real));
-    report[id].avg = vals.reduce((a, b) => a + b.real, 0) / vals.length || 0;
-    report[id].pct = totalG > 0 ? report[id].total / totalG * 100 : 0;
-
-    // Comparar real vs planejado para cada mês
-    for (let m in report[id].monthly) {
-      const planned = report[id].plan;
-      const real = report[id].monthly[m].real;
-      report[id].monthly[m].withinPlan = real <= planned;
+    if (cat.type === 'Gasto') {
+      totalPlanned += plans[cat.id] || 0;
     }
-  }
+  });
 
-  return report;
+  // Processar transações
+  transactions.forEach(tx => {
+    const monthKey = `${tx.dueDate.getFullYear()}-${String(tx.dueDate.getMonth() + 1).padStart(2, '0')}`;
+    if (report[tx.category]) {
+      report[tx.category].monthly[monthKey].real += tx.amount;
+      report[tx.category].total += tx.amount;
+      report[tx.category].transactions.push(tx); // NOVO: Adiciona a transação à lista da categoria
+
+      if (report[tx.category].type === 'Gasto') {
+        totalActual += tx.amount;
+      }
+    }
+  });
+
+  return { report, totalPlanned, totalActual };
 }
 
-// 2) Renderizar com Receitas + Subcategorias - Modificar para exibir visualmente a comparação
-function renderTable(report, meses, transactions) {
+    // Função para renderizar cards de resumo
+    function renderSummaryCards(totalPlanned, totalActual) {
+      document.getElementById('total-planned').textContent = formatCurrency(totalPlanned);
+      document.getElementById('total-actual').textContent = formatCurrency(totalActual);
+      document.getElementById('total-variance').textContent = formatCurrency(totalActual - totalPlanned);
+    }
+
+// Função para renderizar meses (VERSÃO COM PORCENTAGEM NA BARRA)
+function renderMonths(report, meses) {
+  const container = document.getElementById('monthsContainer');
+  container.innerHTML = '';
+  container.className = 'flex overflow-x-auto pb-4 gap-6';
+
+  meses.forEach(month => {
+    // Calcular valores totais para o mês
+    let planned = 0;
+    let actual = 0;
+    
+    Object.values(report).forEach(cat => {
+      if (cat.type === 'Gasto') {
+        planned += cat.plan;
+        actual += cat.monthly[month].real;
+      }
+    });
+    
+    const variance = actual - planned;
+    const varianceClass = variance <= 0 ? 'text-green-400' : 'text-red-400';
+    const varianceIcon = variance <= 0 ? 'fa-arrow-down' : 'fa-arrow-up';
+    const percentage = calculatePercentage(actual, planned);
+    const progressColor = percentage < 90 ? 'bg-green-500' : percentage < 100 ? 'bg-yellow-500' : 'bg-red-500';
+    
+    const monthCard = document.createElement('div');
+    monthCard.className = 'dashboard-card month-card w-80 p-6 rounded-xl flex-shrink-0 flex flex-col shadow-lg';
+    
+    monthCard.innerHTML = `
+      <div class="flex justify-between items-start mb-4">
+        <h3 class="text-lg font-bold text-zinc-100">${formatMonthLabel(month)}</h3>
+        <div class="text-base font-semibold ${varianceClass} flex items-center gap-2">
+          <i class="fas ${varianceIcon}"></i>
+          <span>${formatCurrency(Math.abs(variance))}</span>
+        </div>
+      </div>
+
+      <div class="flex-grow">
+        <div class="flex justify-between items-center text-base mb-2">
+          <span class="text-zinc-400">Planejado</span>
+          <span class="font-medium text-zinc-200">${formatCurrency(planned)}</span>
+        </div>
+        <div class="flex justify-between items-center text-base">
+          <span class="text-zinc-400">Realizado</span>
+          <span class="font-medium text-zinc-100">${formatCurrency(actual)}</span>
+        </div>
+      </div>
+
+      <div class="mt-5">
+        <div class="flex justify-between items-center mb-1 text-sm">
+          <span class="text-zinc-400">Progresso</span>
+          <span class="font-bold text-zinc-100">${percentage}%</span>
+        </div>
+        <div class="w-full bg-zinc-700 h-3 rounded-full overflow-hidden">
+          <div class="h-full ${progressColor}" style="width: ${percentage}%"></div>
+        </div>
+      </div>
+    `;
+    
+    container.appendChild(monthCard);
+  });
+}
+
+    // Função para renderizar categorias
+    function renderCategories(report) {
+      const container = document.getElementById('categoriesContainer');
+      container.innerHTML = '';
+      
+      Object.values(report)
+        .filter(cat => cat.type === 'Gasto')
+        .forEach(cat => {
+          const percentage = calculatePercentage(cat.total, cat.plan);
+          const progressColor = percentage > 100 ? 'bg-red-500' : percentage > 90 ? 'bg-yellow-500' : 'bg-green-500';
+          const statusText = percentage > 100 ? 'Acima' : percentage > 90 ? 'Atenção' : 'Dentro';
+          const statusColor = percentage > 100 ? 'text-red-400' : percentage > 90 ? 'text-yellow-400' : 'text-green-400';
+          
+          const categoryItem = document.createElement('div');
+          categoryItem.className = 'dashboard-card p-4 rounded-xl fade-in';
+          categoryItem.innerHTML = `
+            <div class="flex justify-between items-center mb-3">
+              <h3 class="font-semibold">${cat.name}</h3>
+              <div class="flex items-center gap-2">
+                <span class="${statusColor} font-medium">${formatCurrency(cat.total)}</span>
+                <span class="text-xs px-2 py-1 rounded-full ${statusColor} bg-opacity-10">${statusText}</span>
+              </div>
+            </div>
+            <div class="mb-1 flex justify-between text-sm text-zinc-400">
+              <span>Planejado: ${formatCurrency(cat.plan)}</span>
+              <span>${percentage}%</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-value ${progressColor}" style="width: ${Math.min(100, percentage)}%"></div>
+            </div>
+          `;
+          
+          container.appendChild(categoryItem);
+        });
+    }
+
+    // Função para renderizar a tabela
+function renderReportTable(report) {
   const thead = document.getElementById('reportHead');
   const tbody = document.getElementById('reportBody');
-  tbody.innerHTML = '';
 
-  // 1) calcula saldos mensais
-  const monthlyBalances = meses.map(m => {
-    let ganho = 0, gasto = 0;
-    Object.values(report).forEach(r => {
-      const v = r.monthly[m]?.real || 0;
-      if (r.type === 'Ganho') ganho += v;
-      else gasto += v;
-    });
-    return ganho - gasto;
-  });
-
-  // 2) monta o THEAD completo
+  // Cabeçalho da tabela
   thead.innerHTML = `
-
-    <!-- linha de Saldo Total + cards mensais -->
-    <tr class="bg-zinc-800">
-      <th colspan="6" class="px-6 py-2 text-right text-zinc-100 text-xl">Saldo Total:</th>
-      ${monthlyBalances.map((sb, i) => {
-        const color = sb >= 0 ? 'text-green-500' : 'text-red-500';
-        return `
-          <th class="px-2 py-2">
-            <div class="bg-zinc-700 border border-zinc-600 rounded-lg p-2 text-xl text-center">
-              <div class="${color}">${sb.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}</div>
-            </div>
-          </th>
-        `;
-      }).join('')}
-    </tr>
-      <td colspan="99" class="py-2 bg-zinc-900 cursor-default"></td>
-    <!-- linha de rótulos de colunas -->
-    <tr class="bg-zinc-800 text-zinc-100 text-sm uppercase tracking-wider rounded-lg">
-      <th class="px-6 py-3 text-left">Categoria</th>
-      <th class="px-6 py-3 text-center">Planejado</th>
-      <th class="px-6 py-3 text-center">%</th>
-      <th class="px-6 py-3 text-center">Min</th>
-      <th class="px-6 py-3 text-center">Méd</th>
-      <th class="px-6 py-3 text-center">Max</th>
-      ${meses.map(m => `<th class="px-6 py-3 text-center">${formatMonthLabel(m)}</th>`).join('')}
+    <tr class="bg-zinc-800 text-zinc-100 text-sm">
+      <th class="px-4 py-3 text-left w-2/5">Categoria</th>
+      <th class="px-4 py-3 text-center">Planejado</th>
+      <th class="px-4 py-3 text-center">Realizado</th>
+      <th class="px-4 py-3 text-center">Diferença</th>
+      <th class="px-4 py-3 text-center">Status</th>
     </tr>
   `;
 
-  // 3) desenha cada seção (Receitas / Despesas)
-  function drawSection(title, catIds, labelClass) {
-    const cats = catIds.map(id => report[id]).filter(Boolean);
+  // Corpo da tabela
+  tbody.innerHTML = '';
 
-    // totais da seção
-    const planTotal = cats.reduce((sum, r) => sum + r.plan, 0);
-    const actualsByMonth = meses.map(m =>
-      cats.reduce((sum, r) => sum + (r.monthly[m]?.real || 0), 0)
-    );
-    const pctTotal = planTotal ? (actualsByMonth.reduce((a, b) => a + b, 0) / planTotal * 100) : 0;
-    const minTotal = cats.reduce((s, r) => s + r.min, 0);
-    const avgTotal = cats.reduce((s, r) => s + r.avg, 0);
-    const maxTotal = cats.reduce((s, r) => s + r.max, 0);
+  Object.entries(report).forEach(([catId, cat]) => {
+    if (cat.type !== 'Gasto' || cat.total === 0) return; // ALTERADO: Não mostra categorias de gasto sem transações
 
-    // Define a classe de fundo com base no título
-    let bgClass = 'bg-zinc-800'; // padrão
-    if (title.toLowerCase().includes('despesa')) {
-      bgClass = 'border-t border-zinc-700 bg-red-700  hover:bg-red-800 transition cursor-pointer';
-    } else if (title.toLowerCase().includes('receita')) {
-      bgClass = 'border-t border-zinc-700 bg-green-700  hover:bg-green-800 transition cursor-pointer';
-    }
+    const variance = cat.total - cat.plan;
+    const varianceClass = variance < 0 ? 'text-green-400' : variance > 0 ? 'text-red-400' : 'text-zinc-400';
+    const varianceIcon = variance < 0 ? 'fa-arrow-down' : variance > 0 ? 'fa-arrow-up' : 'fa-equals';
+    const status = variance < 0 ? 'Economia' : variance > 0 ? 'Acima' : 'Dentro';
+    const statusClass = variance < 0 ? 'bg-green-900/30 text-green-400' : variance > 0 ? 'bg-red-900/30 text-red-400' : 'bg-zinc-800 text-zinc-400';
 
-    // linha de resumo da seção
-    const summary = document.createElement('tr');
-    summary.className = bgClass;
-    summary.innerHTML = `
-      <td class="px-6 py-3 font-semibold text-white">${title}</td>
-      <td class="px-6 py-3 text-center font-semibold">${planTotal.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}</td>
-      <td class="px-6 py-3 text-center font-semibold">${pctTotal.toFixed(1)}%</td>
-      <td class="px-6 py-3 text-center font-semibold">${minTotal.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}</td>
-      <td class="px-6 py-3 text-center font-semibold">${avgTotal.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}</td>
-      <td class="px-6 py-3 text-center font-semibold">${maxTotal.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}</td>
-      ${actualsByMonth.map(v => `
-        <td class="px-6 py-3 text-center font-semibold">${v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}</td>
-      `).join('')}
-    `;
-    tbody.appendChild(summary);
+    const row = document.createElement('tr');
+    // ALTERADO: Adicionado classes 'category-row' e 'cursor-pointer', e o atributo data-cat-id
+    row.className = 'category-row hover:bg-zinc-800/50 cursor-pointer';
+    row.dataset.catId = catId; // Guarda o ID da categoria na linha
+    row.dataset.expanded = 'false'; // Estado inicial
 
-
-    // linhas de categoria e subcategoria
-    catIds.forEach(catId => {
-      const r = report[catId];
-      if (!r) return;
-
-      // linha de categoria (toggle)
-      const catRow = document.createElement('tr');
-      catRow.className = 'border-t border-zinc-700 bg-zinc-900 hover:bg-zinc-800 transition cursor-pointer';
-      catRow.dataset.cat = catId;
-      catRow.innerHTML = `
-        <td class="px-6 py-2 font-medium text-zinc-100 pl-8">${r.name}</td>
-        <td class="px-6 py-2 text-center">
-          <div class="plan-display relative group" data-cat="${catId}">
-            <span class="plan-value">${r.plan.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}</span>
-            <button class="py-4 -translate-y-2 backdrop-blur-sm rounded-lg border border-zinc-700 edit-plan-btn absolute inset-0 flex items-center justify-center bg-zinc-900/80 text-sm font-bold text-green-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-              Editar
-            </button>
-          </div>
-        </td>
-        <td class="px-6 py-2 text-center text-zinc-400">${r.pct.toFixed(1)}%</td>
-        <td class="px-6 py-2 text-center text-zinc-400">${r.min.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}</td>
-        <td class="px-6 py-2 text-center text-zinc-400">${r.avg.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}</td>
-        <td class="px-6 py-2 text-center text-zinc-400">${r.max.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}</td>
-        ${meses.map(m => {
-          const md = r.monthly[m];
-          const within = md.withinPlan;
-          const cls = within ? 'bg-green-800 bg-opacity-25 text-green-500' : 'bg-red-900 bg-opacity-25 text-red-500';
-          const icn = within ? '' : '<i class="bi bi-exclamation-triangle-fill mr-1 text-yellow-400"></i>';
-          return `<td class="px-6 py-2 text-center ${cls}">${icn} ${md.real.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}</td>`;
-        }).join('')}
-      `;
-      tbody.appendChild(catRow);
-
-      // subcategorias
-      const mapNames = {};
-      transactions.filter(tx => tx.category === catId)
-        .forEach(tx => {
-          if (!mapNames[tx.name]) mapNames[tx.name] = Object.fromEntries(meses.map(m => [m, 0]));
-          const key = `${tx.dueDate.getFullYear()}-${String(tx.dueDate.getMonth()+1).padStart(2,'0')}`;
-          mapNames[tx.name][key] += tx.amount;
-        });
-
-      Object.entries(mapNames).forEach(([name, monthly]) => {
-        const sub = document.createElement('tr');
-        sub.className = `bg-zinc-900/70 text-zinc-300 italic sub-row cat-${catId}`;
-        sub.innerHTML = `
-          <td class="px-6 py-2 pl-16">${name}</td>
-          <td colspan="5"></td>
-          ${meses.map(m => `
-            <td class="px-6 py-2 text-center">${monthly[m].toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}</td>
-          `).join('')}
-        `;
-        tbody.appendChild(sub);
-      });
-    });
-  }
-
-  // 4) renderiza RECEITAS e DESPESAS
-  drawSection('RECEITAS', Object.keys(report).filter(id => report[id].type === 'Ganho'), 'text-green-400');
-  drawSection('DESPESAS', Object.keys(report).filter(id => report[id].type === 'Gasto'), 'text-red-400');
-
-  // 5) adiciona toggle de subcategorias após renderizar tudo
-tbody.querySelectorAll('tr[data-cat]').forEach(row => {
-  row.addEventListener('click', () => {
-    const id = row.dataset.cat;
-    tbody.querySelectorAll(`.sub-row.cat-${id}`)
-      .forEach(r => r.classList.toggle('hidden'));
-  });
-});
-
-
-  // 5) listeners de plan-input
-  document.querySelectorAll('.plan-input').forEach(input => {
-    input.addEventListener('blur', async e => {
-      const catId = e.target.dataset.cat;
-      const val = parseFloat(e.target.value) || 0;
-      await db.collection('users').doc(auth.currentUser.uid)
-        .collection('categoryPlans').doc(catId)
-        .set({ plannedValue: val });
-      e.target.classList.add('ring-2','ring-green-400');
-      setTimeout(() => e.target.classList.remove('ring-2','ring-green-400'), 800);
-    });
-  });
-}
-
-document.addEventListener('click', async (e) => {
-  if (e.target.classList.contains('edit-plan-btn')) {
-    const parent = e.target.closest('.plan-display');
-    const catId = parent.dataset.cat;
-    const valueText = parent.querySelector('.plan-value')
-      .textContent.replace(/[^\d,-]+/g,'').replace(',','.');
-    const value = parseFloat(valueText) || 0;
-
-    // substitui pela input
-    parent.innerHTML = `
-      <input type="number" value="${value}" min="0"
-             data-cat="${catId}"
-             class="plan-input-edit border border-zinc-600 rounded w-24 px-2 py-1 bg-zinc-800 text-zinc-100 text-center" />
-    `;
-    const input = parent.querySelector('input');
-    input.focus();
-
-    input.addEventListener('blur', async () => {
-      const val = parseFloat(input.value) || 0;
-      await db.collection('users').doc(auth.currentUser.uid)
-        .collection('categoryPlans').doc(catId)
-        .set({ plannedValue: val });
-
-      // **reconstroi o mesmo bloco com hover+blur**: 
-      parent.innerHTML = `
+    row.innerHTML = `
+      <td class="px-4 py-3 text-zinc-100">
+        <i class="fas fa-chevron-right mr-3 text-xs text-zinc-500 transition-transform"></i>
+        ${cat.name}
+      </td>
+      <td class="px-4 py-3 text-center">
         <div class="plan-display relative group" data-cat="${catId}">
-          <span class="plan-value">${val.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}</span>
-          <button class="py-4 -translate-y-2 rounded-lg border border-zinc-700 edit-plan-btn absolute inset-0 flex items-center justify-center bg-zinc-900/80 text-sm font-bold text-green-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+          <span class="plan-value">${formatCurrency(cat.plan)}</span>
+          <button class="py-4 -translate-y-2 backdrop-blur-sm rounded-lg border border-zinc-700 edit-plan-btn absolute inset-0 flex items-center justify-center bg-zinc-900/80 text-sm font-bold text-green-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
             Editar
           </button>
         </div>
-      `;
-    });
-
-    input.addEventListener('keydown', ev => {
-      if (ev.key === 'Enter') input.blur();
-    });
-  }
-});
-
-
-
-// 4) Build
-async function buildReport() {
-  document.getElementById('refreshBtn').disabled = true;
-
-  const startInput = document.getElementById('startDate').value;
-  const endInput = document.getElementById('endDate').value;
-
-  if (!startInput || !endInput) {
-    showAlert('Selecione as duas datas.', 'error');
-    document.getElementById('refreshBtn').disabled = false;
-    return;
-  }
-
-  const [startYear, startMonth] = startInput.split('-').map(Number);
-  const [endYear, endMonth] = endInput.split('-').map(Number);
-
-  const start = new Date(startYear, startMonth - 1, 1);
-  const end = new Date(endYear, endMonth - 1, 1);
-
-  const diffMonths = (endYear - startYear) * 12 + (endMonth - startMonth);
-
-  if (diffMonths > 3) {
-    showAlert('Selecione no máximo 4 meses de diferença.', 'warning');
-    document.getElementById('refreshBtn').disabled = false;
-    return;
-  }
-
-  const meses = getMonthsBetween(start, end);
-  const { categories, transactions, plans } = await fetchData(start, end);
-  const report = aggregate(categories, transactions, plans, meses);
-  renderTable(report, meses, transactions);
-
-  document.getElementById('refreshBtn').disabled = false;
-}
-
-// 5) Inicialização e eventos
-auth.onAuthStateChanged(user => {
-  if (!user) return window.location.href = '/index.html';
-
-  const hoje = new Date();
-  const inic = new Date(hoje);
-  inic.setMonth(hoje.getMonth() - 2);
-
-  document.getElementById('startDate').value = inic.toISOString().slice(0, 7); // yyyy-mm
-  document.getElementById('endDate').value = hoje.toISOString().slice(0, 7);
-
-  buildReport();
-});
-
-document.getElementById('refreshBtn').addEventListener('click', buildReport);
-
-function showAlert(message, type = "success") {
-  const alertContainer = document.getElementById("alert-container");
-  const alert = document.createElement("div");
-
-  // Classes base
-  let baseClasses =
-    "flex items-center px-4 py-3 rounded shadow-md transition-opacity duration-300";
-
-  // Classes por tipo
-  let typeClasses = "";
-  if (type === "success") {
-    typeClasses = "bg-green-500 text-white hover:bg-green-600 transition-colors cursor-default select-none";
-  } else if (type === "error") {
-    typeClasses = "bg-red-500 text-white hover:bg-red-600 transition-colors cursor-default select-none";
-  } else if (type === "info") {
-    typeClasses = "bg-blue-500 text-white hover:bg-blue-600 transition-colors cursor-default select-none";
-  } else if (type === "warning") {
-    typeClasses = "bg-yellow-500 text-white hover:bg-yellow-600 transition-colors cursor-default select-none";
-  }
-
-  alert.className = `${baseClasses} ${typeClasses}`;
-  alert.innerHTML = `
-      <span class="flex-grow">${message}</span>
-      <button class="ml-4 text-lg font-bold focus:outline-none">&times;</button>
+      </td>
+      <td class="px-4 py-3 text-center">${formatCurrency(cat.total)}</td>
+      <td class="px-4 py-3 text-center ${varianceClass}">
+        <i class="fas ${varianceIcon} mr-1"></i>${formatCurrency(Math.abs(variance))}
+      </td>
+      <td class="px-4 py-3 text-center">
+        <span class="text-xs px-2 py-1 rounded-full ${statusClass}">${status}</span>
+      </td>
     `;
 
-  // Remover alerta ao clicar no botão ou após 5 segundos
-  alert.querySelector("button").addEventListener("click", () => {
-    alert.remove();
+    tbody.appendChild(row);
   });
-
-  setTimeout(() => {
-    alert.remove();
-  }, 3000);
-
-  alertContainer.appendChild(alert);
 }
+
+function setupExpansionListeners(report) {
+    const tbody = document.getElementById('reportBody');
+    const toggleBtn = document.getElementById('toggleDetails');
+
+    // Função para alternar uma única categoria
+    const toggleCategory = (categoryRow) => {
+        const catId = categoryRow.dataset.catId;
+        const isExpanded = categoryRow.dataset.expanded === 'true';
+        const icon = categoryRow.querySelector('.fa-chevron-right, .fa-chevron-down');
+
+        // Remove detalhes antigos se existirem
+        document.querySelectorAll(`.transaction-detail-${catId}`).forEach(row => row.remove());
+
+        if (!isExpanded) {
+            // Expandir
+            categoryRow.dataset.expanded = 'true';
+            icon.classList.replace('fa-chevron-right', 'fa-chevron-down');
+            
+            const transactions = report[catId].transactions.sort((a,b) => a.dueDate - b.dueDate);
+            let detailRowsHtml = '';
+
+            transactions.forEach(tx => {
+                detailRowsHtml += `
+                    <tr class="transaction-detail-row transaction-detail-${catId} bg-zinc-800/30">
+                        <td class="pl-12 pr-4 py-2 text-zinc-400 text-sm">${tx.name}</td>
+                        <td class="px-4 py-2 text-center text-zinc-400 text-sm">${tx.dueDate.toLocaleDateString('pt-BR')}</td>
+                        <td class="px-4 py-2 text-center text-zinc-300 font-mono">${formatCurrency(tx.amount)}</td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                `;
+            });
+            categoryRow.insertAdjacentHTML('afterend', detailRowsHtml);
+
+        } else {
+            // Recolher
+            categoryRow.dataset.expanded = 'false';
+            icon.classList.replace('fa-chevron-down', 'fa-chevron-right');
+        }
+    };
+
+    // Listener para cliques nas linhas da categoria
+    tbody.addEventListener('click', (e) => {
+        const categoryRow = e.target.closest('.category-row');
+        // Impede que o clique no botão "Editar" expanda a linha
+        if (categoryRow && !e.target.closest('.edit-plan-btn')) {
+            toggleCategory(categoryRow);
+        }
+    });
+
+    // Listener para o botão "Expandir/Recolher Tudo"
+    toggleBtn.addEventListener('click', () => {
+        const isExpandAll = toggleBtn.textContent.includes('Expandir');
+        const allCategoryRows = tbody.querySelectorAll('.category-row');
+        
+        allCategoryRows.forEach(row => {
+            const isExpanded = row.dataset.expanded === 'true';
+            if ((isExpandAll && !isExpanded) || (!isExpandAll && isExpanded)) {
+                toggleCategory(row);
+            }
+        });
+
+        toggleBtn.innerHTML = isExpandAll ? 
+            '<i class="fas fa-compress"></i> Recolher Tudo' : 
+            '<i class="fas fa-expand"></i> Expandir Tudo';
+    });
+}
+
+    // Função para editar valores planejados
+    function setupPlanEditors() {
+      document.addEventListener('click', async (e) => {
+        if (e.target.classList.contains('edit-plan-btn')) {
+          const parent = e.target.closest('.plan-display');
+          const catId = parent.dataset.cat;
+          const valueText = parent.querySelector('.plan-value').textContent.replace(/[^\d,.-]+/g, '').replace(',', '.');
+          const value = parseFloat(valueText) || 0;
+          
+          // Substituir pelo campo de edição
+          parent.innerHTML = `
+            <input type="number" value="${value}" min="0" step="0.01" 
+                   data-cat="${catId}"
+                   class="plan-input" />
+          `;
+          
+          const input = parent.querySelector('input');
+          input.focus();
+          
+          input.addEventListener('blur', async () => {
+            const val = parseFloat(input.value) || 0;
+            const uid = auth.currentUser.uid;
+            
+            try {
+              await db.collection('users').doc(uid)
+                .collection('categoryPlans').doc(catId)
+                .set({ plannedValue: val });
+              
+              // Atualizar visualmente
+              parent.innerHTML = `
+                <div class="plan-display relative group" data-cat="${catId}">
+                  <span class="plan-value">${formatCurrency(val)}</span>
+                  <button class="py-4 -translate-y-2 backdrop-blur-sm rounded-lg border border-zinc-700 edit-plan-btn absolute inset-0 flex items-center justify-center bg-zinc-900/80 text-sm font-bold text-green-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    Editar
+                  </button>
+                </div>
+              `;
+              
+              showAlert('Valor planejado atualizado com sucesso!', 'success');
+              
+              // Recarregar dados
+              buildReport();
+            } catch (error) {
+              console.error('Erro ao atualizar valor planejado:', error);
+              showAlert('Erro ao atualizar valor planejado', 'error');
+            }
+          });
+          
+          input.addEventListener('keydown', ev => {
+            if (ev.key === 'Enter') input.blur();
+          });
+        }
+      });
+    }
+
+    // Função principal para construir o relatório
+    async function buildReport() {
+      showLoading();
+      try {
+        document.getElementById('refreshBtn').innerHTML = '<i class="fas fa-spinner animate-spin"></i>';
+        document.getElementById('refreshBtn').disabled = true;
+        
+        const startInput = document.getElementById('startDate').value;
+        const endInput = document.getElementById('endDate').value;
+        
+        if (!startInput || !endInput) {
+          showAlert('Selecione as duas datas.', 'error');
+          return;
+        }
+        
+        const [startYear, startMonth] = startInput.split('-').map(Number);
+        const [endYear, endMonth] = endInput.split('-').map(Number);
+        
+        const start = new Date(startYear, startMonth - 1, 1);
+        const end = new Date(endYear, endMonth - 1, 1);
+        
+        const diffMonths = (endYear - startYear) * 12 + (endMonth - startMonth);
+        if (diffMonths > 3) {
+          showAlert('Selecione no máximo 4 meses de diferença.', 'warning');
+          return;
+        }
+        
+        const meses = getMonthsBetween(start, end);
+        const { categories, transactions, plans } = await fetchData(start, end);
+        const { report, totalPlanned, totalActual } = aggregate(categories, transactions, plans, meses);
+        
+        renderSummaryCards(totalPlanned, totalActual);
+        renderMonths(report, meses);
+        renderCategories(report);
+        renderReportTable(report);
+        setupExpansionListeners(report);
+        
+      } catch (error) {
+        console.error('Erro ao gerar relatório:', error);
+        showAlert('Erro ao carregar dados. Tente novamente.', 'error');
+      } finally {
+        document.getElementById('refreshBtn').innerHTML = '<i class="fas fa-sync"></i>';
+        document.getElementById('refreshBtn').disabled = false;
+        hideLoading();
+      }
+    }
+
+    // Funções de autenticação e inicialização
+    function loadUserData(user) {
+      document.getElementById('user-name').textContent = user.displayName || user.email || 'Usuário';
+      document.getElementById('user-email').textContent = user.email || '';
+      
+      if (user.photoURL) {
+        document.getElementById('user-photo').src = user.photoURL;
+        document.getElementById('user-photo').classList.remove('hidden');
+      }
+    }
+
+    function logout() {
+      auth.signOut().then(() => {
+        window.location.href = '/index.html';
+      }).catch(error => {
+        showAlert('Erro ao sair: ' + error.message, 'error');
+      });
+    }
+
+    // Função auxiliar para formatar data para input month
+    function formatDateForInput(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      return `${year}-${month}`;
+    }
+
+    // Inicialização
+    document.addEventListener('DOMContentLoaded', function() {
+      // Preencher datas iniciais
+      const hoje = new Date();
+      const inic = new Date(hoje);
+      inic.setMonth(hoje.getMonth() - 2);
+      
+      document.getElementById('startDate').value = formatDateForInput(inic);
+      document.getElementById('endDate').value = formatDateForInput(hoje);
+      
+      // Event listeners
+      document.getElementById('refreshBtn').addEventListener('click', buildReport);
+      
+
+      
+      // Dropdown do usuário
+      const dropdownButton = document.getElementById('dropdownButton');
+      const dropdownMenu = document.getElementById('dropdownMenu');
+      
+      dropdownButton.addEventListener('click', () => {
+        dropdownMenu.classList.toggle('hidden');
+      });
+      
+      // Fechar dropdown ao clicar fora
+      document.addEventListener('click', (event) => {
+        if (!dropdownButton.contains(event.target)) {
+          dropdownMenu.classList.add('hidden');
+        }
+      });
+      
+      // Verificar autenticação
+      auth.onAuthStateChanged(user => {
+        if (user) {
+          loadUserData(user);
+          buildReport();
+          setupPlanEditors();
+        } else {
+          window.location.href = '/index.html';
+        }
+      });
+    });

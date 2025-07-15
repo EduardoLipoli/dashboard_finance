@@ -1,4 +1,5 @@
 let transactions = [];
+let investments = [];
 let filteredTransactions = [];
 const auth = firebase.auth();
 
@@ -7,41 +8,110 @@ document.addEventListener("DOMContentLoaded", function () {
   auth.onAuthStateChanged(async (user) => {
     if (user) {
       try {
-        await user.reload();
+        await user.reload(); // Garante que os dados do usuário (como displayName) estão atualizados
 
-        loadUserName(user);
+        // AGORA, APENAS CHAMAMOS AS FUNÇÕES PRINCIPAIS
+        loadUserName(user); // Única função responsável pelo nome e avatar
+        
+        await Promise.all([
+          loadTransactionsFromFirestore(),
+          loadInvestmentsFromFirestore()
+        ]);
 
-        const userPhoto = document.getElementById("user-photo");
-        const photoURL = user.photoURL;
-        const userEmail = document.getElementById("user-email");
-        const email = user.email || "E-mail não disponível";
-
-        userEmail.textContent = email;
-
-        if (photoURL && userPhoto) {
-          userPhoto.src = photoURL;
-          userPhoto.classList.remove("hidden");
-        } else if (userPhoto) {
-          userPhoto.classList.add("hidden");
-        }
-
-        // CHAME loadTransactionsFromFirestore() PRIMEIRO
-        await loadTransactionsFromFirestore(); // Adicione 'await' aqui
-
-        // AGORA QUE AS TRANSAÇÕES ESTÃO CARREGADAS, DEFINA O MÊS PADRÃO E FILTRE
-        setDefaultMonth(); // Esta chamada agora garantirá que 'transactions' já está preenchido
-        checkIfUserIsNew(); // Mova para depois que as transações são carregadas, para verificar corretamente se há transações
+        calculateTotals();
+        calculateInvestmentTotals();
+        updateCharts();
+        updateInvestmentCharts();
+        
+        setDefaultMonth();
+        checkIfUserIsNew();
 
       } catch (error) {
-        console.error("Erro ao atualizar dados do usuário:", error);
+        console.error("Erro ao inicializar o dashboard:", error);
       }
     } else {
       console.error("Usuário não autenticado.");
-      window.location.href = "/index.html";
+      window.location.href = "/index.html"; // Redireciona se não estiver logado
     }
   });
 });
 
+/**
+ * Gera as iniciais a partir de um nome completo.
+ * Pega a primeira letra do primeiro e do último nome.
+ * @param {string} name - O nome do usuário.
+ * @returns {string} - As iniciais (ex: "AM" para "Admin Master").
+ */
+function getInitials(name) {
+  if (!name) {
+    return "?";
+  }
+
+  // Remove espaços extras e divide o nome em partes
+  const nameParts = name.trim().split(' ').filter(part => part.length > 0);
+
+  // Se não houver partes válidas, retorna "?"
+  if (nameParts.length === 0) {
+    return "?";
+  }
+
+  // Se for um nome único (ex: "Admin"), retorna só a primeira letra
+  if (nameParts.length === 1) {
+    return nameParts[0].charAt(0).toUpperCase();
+  }
+
+  // Pega a primeira letra do primeiro nome
+  const firstInitial = nameParts[0].charAt(0);
+  // Pega a primeira letra do último nome
+  const lastInitial = nameParts[nameParts.length - 1].charAt(0);
+
+  return `${firstInitial}${lastInitial}`.toUpperCase();
+}
+
+/**
+ * Gera uma cor de fundo consistente a partir de uma lista pré-definida,
+ * baseando-se no nome do usuário para que a cor seja sempre a mesma para ele.
+ * @param {string} name - O nome para gerar a cor.
+ * @returns {string} Um código de cor hexadecimal.
+ */
+function generateColorForName(name) {
+  const colors = ['#ef4444', '#f97316', '#eab308', '#84cc16', '#22c55e', '#10b981', '#14b8a6', '#06b6d4', '#3b82f6', '#8b5cf6', '#d946ef', '#ec4899'];
+  if (!name) return colors[0];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % colors.length;
+  return colors[index];
+}
+
+
+  // Função para exibir badge
+  function renderBadge(id, pct) {
+    const span = document.getElementById(id);
+    if (!span) return;
+
+    if (pct === null || isNaN(pct)) {
+      span.classList.add("hidden");
+      return;
+    }
+
+    const valorFormatado = `${pct > 0 ? "+" : ""}${pct.toFixed(1)}% `;
+    span.textContent = valorFormatado;
+    span.classList.remove("hidden");
+
+    // Reset classes
+    span.className = "text-xs font-semibold px-2 py-1 rounded-full";
+
+    if (pct > 0) {
+      span.classList.add("bg-green-800/25", "text-green-400", "badge-positive");
+    } else if (pct < 0) {
+      span.classList.add("bg-red-800/25", "text-red-400", "badge-negative");
+    } else {
+      // Alterado para zinc-700 e zinc-300
+      span.classList.add("bg-zinc-700", "text-zinc-300");
+    }
+  }
 
 // Função para carregar transações do Firestore
 async function loadTransactionsFromFirestore() {
@@ -90,34 +160,6 @@ async function loadTransactionsFromFirestore() {
   }
 }
 
-// Function to load user name (unified and corrected)
-function loadUserName(user) {
-  const displayName = user.displayName || "Carregando...";
-  const email = user.email || "E-mail não disponível";
-  const photoURL = user.photoURL;
-
-  const nameEl = document.getElementById("user-name");
-  const emailEl = document.getElementById("user-email");
-  const photoEl = document.getElementById("user-photo");
-  const userGreetingEl = document.getElementById("user-greeting");
-  const userModalEl = document.getElementById("user-modal");
-
-  if (nameEl) nameEl.textContent = displayName;
-  if (emailEl) emailEl.textContent = email;
-  if (userGreetingEl) userGreetingEl.textContent = displayName; // Update user greeting
-  if (userModalEl) userModalEl.textContent = displayName; // Update user modal
-
-  if (photoURL && photoEl) {
-    photoEl.src = photoURL;
-    photoEl.classList.remove("hidden");
-  } else if (photoEl) {
-    photoEl.classList.add("hidden");
-  }
-
-  console.log("Nome:", displayName);
-  console.log("Email:", email);
-}
-
 // Função para calcular os totais de receitas, despesas e transações dos dias 01 e 15
 function calculateTotals() {
   let totalReceitas = 0;
@@ -139,38 +181,15 @@ function calculateTotals() {
       if (transaction.datepay === "01") totalGastoDia01 += transaction.amount;
       else if (transaction.datepay === "15") totalGastoDia15 += transaction.amount;
     }
+
+    renderBadge("badgeReceitas");
   });
 
   const totalSobra = totalReceitas - totalDespesas;
   const sobraDia01 = totalGanhoDia01 - totalGastoDia01;
   const sobraDia15 = totalGanhoDia15 - totalGastoDia15;
 
-  // Função para exibir badge
-  function renderBadge(id, pct) {
-    const span = document.getElementById(id);
-    if (!span) return;
 
-    if (pct === null || isNaN(pct)) {
-      span.classList.add("hidden");
-      return;
-    }
-
-    const valorFormatado = `${pct > 0 ? "+" : ""}${pct.toFixed(1)}% `;
-    span.textContent = valorFormatado;
-    span.classList.remove("hidden");
-
-    // Reset classes
-    span.className = "text-xs font-semibold px-2 py-1 rounded-full";
-
-    if (pct > 0) {
-      span.classList.add("bg-green-800/25", "text-green-400", "badge-positive");
-    } else if (pct < 0) {
-      span.classList.add("bg-red-800/25", "text-red-400", "badge-negative");
-    } else {
-      // Alterado para zinc-700 e zinc-300
-      span.classList.add("bg-zinc-700", "text-zinc-300");
-    }
-  }
 
 
   function renderDiferencaTexto(id, diffValor) {
@@ -457,13 +476,46 @@ function showAlert(message, type = 'success') {
 }
 
 // Carregar nome do usuário ao iniciar a página
-document.addEventListener("DOMContentLoaded", loadUserName);
-
 function loadUserName(user) {
-  const displayName = user.displayName || "Carregando...";
-  document.getElementById("user-name").textContent = displayName; // Mantém no botão do dropdown
-  document.getElementById("user-greeting").textContent = displayName // Adiciona a saudação no header
-  document.getElementById("user-modal").textContent = displayName;
+  // Define o nome de exibição, com fallback para o início do e-mail
+  const nameFromEmail = user.email ? user.email.split('@')[0] : "Usuário";
+  const displayName = user.displayName || nameFromEmail;
+  
+  const email = user.email || "E-mail não disponível";
+  const photoURL = user.photoURL;
+
+  // Pega todos os elementos da interface que precisam ser atualizados
+  const nameEl = document.getElementById("user-name");
+  const emailEl = document.getElementById("user-email");
+  const userGreetingEl = document.getElementById("user-greeting");
+  const userModalEl = document.getElementById("user-modal");
+  
+  const photoEl = document.getElementById("user-photo");
+  const initialsEl = document.getElementById("user-initials");
+
+  // Atualiza todos os textos com o nome do usuário
+  if (nameEl) nameEl.textContent = displayName;
+  if (emailEl) emailEl.textContent = email;
+  if (userGreetingEl) userGreetingEl.textContent = displayName;
+  if (userModalEl) userModalEl.textContent = displayName;
+
+  // LÓGICA CORRETA PARA MOSTRAR FOTO OU INICIAIS
+  if (photoURL) {
+    // Se TEM foto, mostra o elemento da imagem e esconde as iniciais
+    photoEl.src = photoURL;
+    photoEl.classList.remove('hidden');
+    initialsEl.classList.add('hidden');
+  } else {
+    // Se NÃO TEM foto, calcula e exibe as iniciais
+    const initial = getInitials(displayName);
+    const color = generateColorForName(displayName);
+
+    initialsEl.textContent = initial;
+    initialsEl.style.backgroundColor = color;
+    
+    photoEl.classList.add('hidden');
+    initialsEl.classList.remove('hidden');
+  }
 }
 
 function animarContador(id, valorFinal, duracao = 1000) {
@@ -748,3 +800,84 @@ function checkIfUserIsNew() {
   }
 }
 
+// Função para carregar investimentos do Firestore
+async function loadInvestmentsFromFirestore() {
+  const user = auth.currentUser;
+  if (!user) return;
+
+  const db = firebase.firestore();
+  const investRef = db.collection("users").doc(user.uid).collection("investiments");
+
+  try {
+    const snapshot = await investRef.get();
+    investments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error("Erro ao carregar investimentos:", error);
+  }
+}
+
+function calculateInvestmentTotals() {
+  if (!investments || investments.length === 0) return;
+
+  let totalInvestido = 0;
+  let patrimonioAtual = 0;
+
+  investments.forEach(inv => {
+    const price = parseFloat(inv.price) || 0;
+    const quantity = parseFloat(inv.quantity) || 0;
+    const currentValue = parseFloat(inv.currentValue) || 0;
+
+    totalInvestido += price * quantity;
+    patrimonioAtual += currentValue * quantity;
+
+    renderBadge("badgeInvestimentos");
+  });
+
+  const rendimento = patrimonioAtual - totalInvestido;
+  const rendimentoPct = totalInvestido > 0 ? (rendimento / totalInvestido) * 100 : 0;
+
+  // --- Preenchendo os elementos do Card de forma segura ---
+  
+  const totalPatrimonioEl = document.getElementById("totalPatrimonio");
+  if (totalPatrimonioEl) animarContador("totalPatrimonio", patrimonioAtual);
+
+  const rendimentoTotalEl = document.getElementById("rendimentoTotalInvestimentos");
+  if (rendimentoTotalEl) rendimentoTotalEl.textContent = `Rendimento total de ${formatarMoeda(rendimento)}`;
+  
+  // A função renderBadge já deve verificar se o elemento existe
+  renderBadge("badgeInvestimentos", rendimentoPct); 
+  
+  const totalAportadoEl = document.getElementById("totalAportadoCard");
+  if (totalAportadoEl) animarContador("totalAportadoCard", totalInvestido);
+  
+  const rendimentoCardEl = document.getElementById("rendimentoCard");
+  if (rendimentoCardEl) {
+    rendimentoCardEl.textContent = formatarMoeda(rendimento);
+    rendimentoCardEl.className = `text-sm font-medium ${rendimento >= 0 ? 'text-green-400' : 'text-red-400'}`;
+  }
+}
+
+function updateInvestmentCharts() {
+  // Dados para o Gráfico de Alocação
+  const allocationData = investments.reduce((acc, inv) => {
+    const valor = inv.currentValue * inv.quantity;
+    acc[inv.type] = (acc[inv.type] || 0) + valor;
+    return acc;
+  }, {});
+  
+  investmentAllocationChart.data.labels = Object.keys(allocationData).map(k => k.charAt(0).toUpperCase() + k.slice(1));
+  investmentAllocationChart.data.datasets[0].data = Object.values(allocationData);
+  investmentAllocationChart.update();
+
+  // Dados para o Gráfico de Evolução dos Aportes
+  const evolutionData = Array(12).fill(0);
+  investments.forEach(inv => {
+    const month = new Date(inv.date).getMonth();
+    if (month >= 0 && month < 12) {
+      evolutionData[month] += inv.price * inv.quantity;
+    }
+  });
+
+  portfolioEvolutionChart.data.datasets[0].data = evolutionData;
+  portfolioEvolutionChart.update();
+}

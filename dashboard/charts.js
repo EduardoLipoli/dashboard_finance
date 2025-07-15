@@ -4,6 +4,8 @@ let categoriesChart;
 let paidVsPendingChart;
 let monthlyIncomeChart;
 let monthlyExpensesChart;
+let investmentAllocationChart; // <<< ADICIONE ESTA LINHA
+let portfolioEvolutionChart;   // <<< ADICIONE ESTA LINHA
 
 // --- FUNÇÕES AUXILIARES ---
 
@@ -103,6 +105,117 @@ function createGradientForDoughnutSlice(ctx, colorsArray) {
 
 // --- INICIALIZAÇÃO DOS GRÁFICOS ---
 document.addEventListener("DOMContentLoaded", function() {
+
+      const investmentAllocationCtx = document.getElementById("investmentAllocationChart")?.getContext("2d");
+    if (investmentAllocationCtx) {
+        const investmentColors = ['#facc15', '#3b82f6', '#22c55e', '#a855f7', '#6366f1']; // Amarelo, Azul, Verde, Roxo, Indigo
+        investmentAllocationChart = new Chart(investmentAllocationCtx, {
+            type: 'doughnut',
+            data: {
+                labels: [], // Ex: 'Ações', 'FIIs'
+                datasets: [{
+                    data: [],
+                    borderColor: investmentColors,
+                    // Usando a mesma função de gradiente dos seus outros gráficos de doughnut
+                    backgroundColor: createGradientForDoughnutSlice(investmentAllocationCtx, investmentColors),
+                }]
+            },
+            // <<< OPÇÕES COPIADAS DOS SEUS GRÁFICOS EXISTENTES PARA MANTER O ESTILO >>>
+            options: {
+                plugins: {
+                    legend: { position: "top", labels: { color: '#a1a1aa' } },
+                    tooltip: {
+                        callbacks: {
+                            label: (ctx) => `${ctx.label}: ${formatarMoeda(ctx.raw)}`
+                        },
+                        backgroundColor: 'rgba(24, 24, 27, 0.9)',
+                        borderColor: 'rgba(255, 255, 255, 0.1)',
+                        borderWidth: 1,
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                    },
+                    datalabels: {
+                        formatter: (value, ctx) => {
+                            // Calcula a porcentagem do total
+                            const total = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                            const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                            return `${percentage}%`; // Mostra apenas a porcentagem
+                        },
+                        color: "#fff",
+                        font: { size: 14, weight: 'bold' },
+                        anchor: "center",
+                        align: "center",
+                    },
+                },
+            },
+            plugins: [ChartDataLabels], // Habilita os rótulos de dados
+        });
+    }
+
+    // Gráfico de Evolução dos Aportes (Barra) - ESTILO ATUALIZADO
+    const portfolioEvolutionCtx = document.getElementById("portfolioEvolutionChart")?.getContext("2d");
+    if (portfolioEvolutionCtx) {
+        portfolioEvolutionChart = new Chart(portfolioEvolutionCtx, {
+            type: 'bar',
+            data: {
+                labels: ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"],
+                datasets: [{
+                    label: 'Valor Aportado no Mês',
+                    data: [],
+                    borderWidth: 0,
+                    borderRadius: 6,
+                    backgroundColor: createGradient(portfolioEvolutionCtx, 'blue'), // Usando o gradiente azul
+                    hoverBackgroundColor: 'rgba(59, 130, 246, 0.8)',
+                }]
+            },
+            // <<< OPÇÕES COPIADAS DOS SEUS GRÁFICOS EXISTENTES PARA MANTER O ESTILO >>>
+            options: {
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => `R$ ${ctx.raw.toFixed(2)}`
+                        },
+                        backgroundColor: 'rgba(24, 24, 27, 0.9)',
+                        padding: 12,
+                        displayColors: false,
+                        borderColor: 'rgba(59, 130, 246, 0.5)',
+                        borderWidth: 1,
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                    },
+                    datalabels: {
+                        anchor: "end",
+                        align: "end",
+                        formatter: val => val > 0 ? formatarMoeda(val) : '', // Usa a função formatarMoeda
+                        color: "#fff",
+                        font: { size: 9, weight: 'bold' },
+                        textStrokeColor: '#000',
+                        textStrokeWidth: 2,
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#a1a1aa' }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: "rgba(255,255,255,0.05)" },
+                        ticks: {
+                            color: '#a1a1aa',
+                            callback: (value) => formatarMoeda(value) // Usa a função formatarMoeda
+                        }
+                    }
+                },
+                animation: {
+                    duration: 2000,
+                    easing: 'easeOutQuart'
+                }
+            },
+            plugins: [ChartDataLabels], // Habilita os rótulos de dados
+        });
+    }
 
   // Gráfico de Dívidas do dia 01 vs dia 15 (Doughnut com Gradiente Suave)
   const debtsByDayCtx = document.getElementById("fixedVsInstallmentsChart")?.getContext("2d");

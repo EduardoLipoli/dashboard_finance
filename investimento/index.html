@@ -62,41 +62,36 @@
 
 <body class="bg-zinc-900 text-zinc-200 h-screen grid grid-cols-[auto,1fr]">
 
-  <!-- Alert Container para exibir mensagens -->
   <div id="alert-container" class="fixed top-20 right-4 z-50"></div>
 
-  <!--SideBar-->
-  <div id="sidebar"
-    class="flex flex-col items-center bg-zinc-800 h-full w-16 group hover:w-48 transition-all duration-300">
-    <div class="p-4">
-      <i class="fas fa-coins text-green-500 text-2xl"></i>
+  <div id="sidebar" class="sidebar flex flex-col items-center h-full w-16 group hover:w-52 transition-all duration-300">
+    <div class="p-4 mt-2">
+      <i class="fas fa-coins text-green-400 text-2xl animate-float"></i>
     </div>
 
     <ul class="mt-4 w-full">
-      <!-- Seção: Dashboard -->
       <li class="w-full px-4 py-2 hidden group-hover:block text-zinc-500 text-xs uppercase font-semibold">
         Dashboard
       </li>
       <a href="/dashboard/index.html">
-        <li class="flex items-center gap-4 p-4 hover:bg-zinc-700 w-full text-zinc-400 text-sm">
+        <li class="flex items-center gap-4 p-4 hover:bg-zinc-700/50 w-full text-zinc-400 text-sm">
           <i class="fas fa-chart-pie text-lg"></i>
           <span class="hidden group-hover:block">Dashboard</span>
         </li>
       </a>
 
-      <!-- Seção: Financeiro -->
       <li class="w-full px-4 py-2 mt-2 hidden group-hover:block text-zinc-500 text-xs uppercase font-semibold">
         Organização
       </li>
       <a href="/planejamento/index.html">
-        <li class="flex items-center gap-4 p-4 hover:bg-zinc-700 w-full text-zinc-400 text-sm">
+        <li class="flex items-center gap-4 p-4 hover:bg-zinc-700/50 w-full text-zinc-400 text-sm">
           <i class="fas fa-bullseye text-lg"></i>
           <span class="hidden group-hover:block">Planejamento</span>
         </li>
       </a>
 
       <a href="/metas/index.html">
-        <li class="flex items-center gap-4 p-4 hover:bg-zinc-700 w-full text-zinc-400 text-sm">
+        <li class="flex items-center gap-4 p-4 hover:bg-zinc-700/50 w-full text-zinc-400 text-sm">
           <i class="fas fa-flag text-lg"></i>
           <span class="hidden group-hover:block">Metas</span>
         </li>
@@ -106,33 +101,31 @@
         Financeiro
       </li>
       <a href="/receitas/transaction.html">
-        <li class="flex items-center gap-4 p-4 hover:bg-zinc-700 w-full text-zinc-400 text-sm">
+        <li class="flex items-center gap-4 p-4 hover:bg-zinc-700/50 w-full text-zinc-400 text-sm">
           <i class="fas fa-wallet text-lg"></i>
           <span class="hidden group-hover:block">Carteira</span>
         </li>
       </a>
 
       <a href="/despesas/transaction.html">
-        <li class="flex items-center gap-4 p-4 hover:bg-zinc-700 w-full text-zinc-400 text-sm">
+        <li class="flex items-center gap-4 p-4 hover:bg-zinc-700/50 w-full text-zinc-400 text-sm">
           <i class="fas fa-money-check-alt text-lg"></i>
           <span class="hidden group-hover:block">Despesas</span>
         </li>
       </a>
 
-      <!-- Novo item: Investimentos -->
       <a href="/investimento/index.html">
-        <li class="flex items-center gap-4 p-4 hover:bg-zinc-700 w-full text-green-400 text-sm">
+        <li class="flex items-center gap-4 p-4 hover:bg-zinc-700/50 w-full text-green-400 text-sm">
           <i class="fas fa-chart-line text-lg"></i>
           <span class="hidden group-hover:block">Investimentos</span>
         </li>
       </a>
 
-      <!-- Seção: Configuração -->
       <li class="w-full px-4 py-2 mt-2 hidden group-hover:block text-zinc-500 text-xs uppercase font-semibold">
         Configuração
       </li>
       <a href="/configuration/config.html">
-        <li class="flex items-center gap-4 p-4 hover:bg-zinc-700 w-full text-zinc-500 text-sm">
+        <li class="flex items-center gap-4 p-4 hover:bg-zinc-700/50 w-full text-zinc-500 text-sm">
           <i class="fas fa-cog text-lg"></i>
           <span class="hidden group-hover:block">Configuração</span>
         </li>
@@ -140,39 +133,37 @@
     </ul>
   </div>
 
-
-  <!-- Header fixo -->
-  <div class="flex-1 flex flex-col">
-    <header class="bg-zinc-800 flex items-center justify-between px-6 py-4">
-      <h1 class="text-lg font-bold text-green-500 flex-grow">
-        <a href="/dashboard/index.html"> Dashboard Financeiro </a>
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <header
+      class="dashboard-header flex flex-col md:flex-row items-start md:items-center justify-between px-4 md:px-6 py-4">
+      <h1 class="text-2xl font-bold text-green-500 flex-grow">
+        <a href="/dashboard/index.html">Gerenciar Investimentos</a>
       </h1>
 
-      <!-- Botão do Dropdown -->
-      <div class="relative inline-block text-left">
-        <button id="dropdownButton"
-          class="bg-zinc-900 text-white font-medium py-2 px-4 border border-zinc-700 hover:bg-zinc-800 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 flex items-center space-x-2">
+      <div class="flex flex-col md:flex-row items-center gap-3 w-full md:w-auto">
 
-          <img id="user-photo" src="" alt="Foto de Perfil" class="w-8 h-8 rounded-full hidden" />
+        <div class="relative inline-block text-left w-full md:w-auto">
+          <button id="dropdownButton"
+            class="bg-zinc-800 text-white font-medium py-2 px-4 border border-zinc-700 hover:bg-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 flex items-center justify-center md:justify-start space-x-2 w-full">
+            <img id="user-photo" src="" alt="Foto de Perfil" class="w-8 h-8 rounded-full hidden md:block" />
+            <div class="text-left md:block">
+              <div id="user-name" class="text-sm font-medium">Carregando...</div>
+              <div id="user-email" class="text-xs text-zinc-400">Carregando...</div>
+            </div>
+          </button>
 
-          <div class="text-left">
-            <div id="user-name" class="text-sm font-medium">Carregando...</div>
-            <div id="user-email" class="text-xs text-gray-400">Carregando...</div>
+          <div id="dropdownMenu"
+            class="hidden absolute right-0 mt-2 w-48 bg-zinc-800 border border-zinc-700 rounded-lg shadow-lg z-50 py-2">
+            <a href="#" class="block px-4 py-2 text-zinc-200 hover:bg-zinc-700/50" onclick="logout()">
+              <i class="bi bi-box-arrow-left mr-2"></i> Sair
+            </a>
           </div>
-        </button>
-
-        <div id="dropdownMenu"
-          class="hidden absolute right-0 mt-2 w-48 bg-white border border-gray-300 rounded-md shadow-lg z-50 p-2">
-          <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100" onclick="logout()">
-            <i class="bi bi-box-arrow-left"> </i> Sair
-          </a>
         </div>
-      </div>
+
     </header>
 
-    <main class="flex-1 flex flex-col p-6 gap-6 bg-zinc-900 text-zinc-50">
+    <main class="flex-1 flex flex-col p-6 gap-6 bg-zinc-900 text-zinc-50 overflow-y-auto p-4 md:p-6">
 
-      <!-- Stats Cards -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="bg-zinc-800 p-4 rounded-lg border border-zinc-700">
           <div class="flex justify-between items-start">
@@ -226,16 +217,17 @@
         </div>
       </div>
 
-      <!-- Performance Chart -->
       <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Gráfico de Alocação -->
         <div class="lg:col-span-2 bg-zinc-800 rounded-xl p-6 shadow-lg fade-in">
           <div class="flex justify-between items-center mb-6">
             <h2 class="text-xl font-bold">Alocação de Ativos</h2>
             <div class="flex space-x-2">
-              <button class="px-3 py-1 bg-zinc-700 rounded-lg text-sm hover:bg-zinc-600 transition">Mês</button>
-              <button class="px-3 py-1 bg-green-600 rounded-lg text-sm hover:bg-green-500 transition">Ano</button>
-              <button class="px-3 py-1 bg-zinc-700 rounded-lg text-sm hover:bg-zinc-600 transition">5 Anos</button>
+              <button id="btn-month"
+                class="px-3 py-1 bg-zinc-700 rounded-lg text-sm hover:bg-zinc-600 transition">Mês</button>
+              <button id="btn-year"
+                class="px-3 py-1 bg-green-600 rounded-lg text-sm hover:bg-green-500 transition">Ano</button>
+              <button id="btn-5years" class="px-3 py-1 bg-zinc-700 rounded-lg text-sm hover:bg-zinc-600 transition">5
+                Anos</button>
             </div>
           </div>
           <div class="chart-container">
@@ -243,7 +235,6 @@
           </div>
         </div>
 
-        <!-- Distribuição de Carteira -->
         <div class="bg-zinc-800 rounded-xl p-6 shadow-lg fade-in distribution">
           <h2 class="text-xl font-bold mb-6">Distribuição da Carteira</h2>
           <div class="space-y-4">
@@ -297,7 +288,7 @@
           </div>
         </div>
       </section>
-      <!-- Investments Table -->
+
       <section class="bg-zinc-800 rounded-xl p-6 shadow-lg fade-in">
         <div class="bg-zinc-800 rounded-lg overflow-hidden mb-8">
           <div class="p-4 border-b border-zinc-700 flex justify-between items-center">
@@ -306,6 +297,13 @@
               <input type="text" id="search-input" placeholder="Buscar investimento..."
                 class="bg-zinc-700 text-sm rounded-lg pl-8 pr-4 py-2 w-64 focus:outline-none focus:ring-1 focus:ring-green-500">
               <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+
+              <button id="sync-prices-btn" title="Atualizar cotações de todos os ativos"
+                class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center">
+                <i class="fas fa-sync-alt mr-2"></i>
+                <span>Sincronizar</span>
+              </button>
+
               <button id="add-investment-btn"
                 class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg flex items-center">
                 <i class="fas fa-plus mr-2"></i>
@@ -329,7 +327,6 @@
                 </tr>
               </thead>
               <tbody id="investments-table-body" class="divide-y divide-zinc-700">
-                <!-- Investments will be added here dynamically -->
               </tbody>
             </table>
           </div>
@@ -345,7 +342,6 @@
         </div>
       </section>
 
-      <!-- Add Investment Modal -->
       <div id="add-investment-modal"
         class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
         <div class="bg-zinc-800 rounded-lg w-full max-w-md mx-4 border border-zinc-700">
@@ -374,9 +370,13 @@
 
               <div class="mb-4">
                 <label class="block text-sm font-medium mb-1">Nome do Ativo</label>
+
                 <input type="text" id="asset-name" placeholder="Ex: PETR4, KNRI11, BTC..."
                   class="w-full bg-zinc-700 border border-zinc-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-green-500"
-                  required>
+                  required autocomplete="off">
+                <div id="search-results"
+                  class="absolute z-10 w-full max-w-xs bg-zinc-600 rounded-md shadow-lg mt-1 hidden">
+                </div>
               </div>
 
               <div class="mb-4">
@@ -401,13 +401,6 @@
                 </div>
               </div>
 
-              <div class="mb-4">
-                <label class="block text-sm font-medium mb-1">Valor Atual (R$)</label>
-                <input type="number" id="current-value" step="0.01" placeholder="Ex: 120,00"
-                  class="w-full bg-zinc-700 border border-zinc-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-green-500"
-                  required>
-              </div>
-
               <div class="flex justify-end space-x-3 pt-4 border-t border-zinc-700">
                 <button type="button" id="cancel-add-investment"
                   class="px-4 py-2 bg-zinc-700 hover:bg-zinc-600 rounded-lg">
@@ -424,7 +417,6 @@
         </div>
       </div>
 
-      <!-- Delete Confirmation Modal -->
       <div id="delete-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
         <div class="bg-zinc-800 rounded-lg w-full max-w-md mx-4 border border-zinc-700">
           <div class="p-4 border-b border-zinc-700">
@@ -448,18 +440,14 @@
       </div>
     </main>
 
-
-
-
-    <!-- Firebase e seus scripts -->
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
     <script src="/firebase-init.js"></script>
 
     <script src="/loading.js"></script>
+    <script src="/investimento/api-service.js"></script>
     <script src="/investimento/script.js"></script>
-
 
 </body>
 
