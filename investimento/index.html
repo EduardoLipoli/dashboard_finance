@@ -64,6 +64,7 @@
 
   <div id="alert-container" class="fixed top-20 right-4 z-50"></div>
 
+  <!--SideBar-->
   <div id="sidebar" class="sidebar flex flex-col items-center h-full w-16 group hover:w-52 transition-all duration-300">
     <div class="p-4 mt-2">
       <i class="fas fa-coins text-green-400 text-2xl animate-float"></i>
@@ -89,7 +90,12 @@
           <span class="hidden group-hover:block">Planejamento</span>
         </li>
       </a>
-
+      <a href="/aposentadoria/retirement.html">
+        <li class="flex items-center gap-4 p-4 hover:bg-zinc-700/50 w-full text-zinc-400 text-sm">
+          <i class="fas fa-umbrella-beach text-lg"></i>
+          <span class="hidden group-hover:block">Aposentadoria</span>
+        </li>
+      </a>
       <a href="/metas/index.html">
         <li class="flex items-center gap-4 p-4 hover:bg-zinc-700/50 w-full text-zinc-400 text-sm">
           <i class="fas fa-flag text-lg"></i>
@@ -106,16 +112,14 @@
           <span class="hidden group-hover:block">Carteira</span>
         </li>
       </a>
-
       <a href="/despesas/transaction.html">
         <li class="flex items-center gap-4 p-4 hover:bg-zinc-700/50 w-full text-zinc-400 text-sm">
           <i class="fas fa-money-check-alt text-lg"></i>
           <span class="hidden group-hover:block">Despesas</span>
         </li>
       </a>
-
       <a href="/investimento/index.html">
-        <li class="flex items-center gap-4 p-4 hover:bg-zinc-700/50 w-full text-green-400 text-sm">
+        <li class="flex items-center gap-4 p-4 hover:bg-zinc-700/50 w-full text-zinc-400 text-sm">
           <i class="fas fa-chart-line text-lg"></i>
           <span class="hidden group-hover:block">Investimentos</span>
         </li>
@@ -446,6 +450,7 @@
     <script src="/firebase-init.js"></script>
 
     <script src="/loading.js"></script>
+    <script src="/sidebar.js" defer"></script>
     <script src="/investimento/api-service.js"></script>
     <script src="/investimento/script.js"></script>
 
