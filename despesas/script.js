@@ -149,13 +149,24 @@ function loadTransactionsFromFirestore() {
     });
 }
 
+// Função auxiliar para garantir a conversão correta para Date
 function convertToDate(value) {
-  if (value instanceof firebase.firestore.Timestamp) {
-    return value.toDate();
-  } else if (typeof value === "string" || typeof value === "number") {
-    return new Date(value);
-  }
-  return value;
+    if (value instanceof firebase.firestore.Timestamp) {
+        return value.toDate();
+    } else if (value && typeof value.toDate === 'function') {
+        // Trata o caso em que o objeto é um Timestamp, mas não uma instância direta
+        return value.toDate();
+    } else if (typeof value === "string" || typeof value === "number") {
+        return new Date(value);
+    } else if (value && typeof value === 'object' && value.hasOwnProperty('seconds') && value.hasOwnProperty('nanoseconds')) {
+        // Adiciona tratamento para o formato de objeto do Timestamp do Firestore
+        // Note que o JSON exportado usa "seconds" e "nanoseconds"
+        return new firebase.firestore.Timestamp(value.seconds, value.nanoseconds).toDate();
+    } else if (value instanceof Date) {
+        return value;
+    }
+    // Se não for nenhum dos tipos esperados, retorna uma data inválida para evitar erros
+    return new Date(NaN);
 }
 
 form.addEventListener("submit", function (e) {
@@ -618,26 +629,31 @@ selectStatus.addEventListener("change", displayTransactionsForCurrentMonth);
 selectDatepay.addEventListener("change", displayTransactionsForCurrentMonth);
 
 function displayTransactionsForCurrentMonth() {
-  const statusFilter  = selectStatus.value;
+  const statusFilter = selectStatus.value;
   const datepayFilter = selectDatepay.value;
-  const searchTerm    = searchInput.value.trim().toLowerCase();
-
+  const searchTerm = searchInput.value.trim().toLowerCase();
 
   tableBody.innerHTML = "";
 
   transactions.forEach((transaction, index) => {
+    // Adiciona uma verificação para garantir que dueDate é um objeto Date
+    if (!(transaction.dueDate instanceof Date)) {
+      console.error("Data de vencimento inválida para a transação:", transaction);
+      return;
+    }
+
     const transactionMonth = transaction.dueDate.getMonth();
-    const transactionYear  = transaction.dueDate.getFullYear();
+    const transactionYear = transaction.dueDate.getFullYear();
 
     if (
       transaction.type !== "Gasto" ||
-      transactionMonth  !== currentMonth ||
-      transactionYear   !== currentYear
+      transactionMonth !== currentMonth ||
+      transactionYear !== currentYear
     ) return;
 
     if (
-      (statusFilter === "paid"   && !transaction.isPaid) ||
-      (statusFilter === "unpaid" &&  transaction.isPaid)
+      (statusFilter === "paid" && !transaction.isPaid) ||
+      (statusFilter === "unpaid" && transaction.isPaid)
     ) return;
 
     if (
@@ -647,14 +663,15 @@ function displayTransactionsForCurrentMonth() {
 
     if (searchTerm && !transaction.name.toLowerCase().includes(searchTerm)) return;
 
-
-    const formattedName   = capitalizeName(transaction.name);
+    const formattedName = capitalizeName(transaction.name);
     const formattedAmount = new Intl.NumberFormat("pt-BR", {
-      style: "currency", currency: "BRL", minimumFractionDigits: 2
+      style: "currency",
+      currency: "BRL",
+      minimumFractionDigits: 2
     }).format(transaction.amount);
-    const categoryName    = categoryMap[transaction.category] || "Categoria desconhecida";
+    const categoryName = categoryMap[transaction.category] || "Categoria desconhecida";
 
-  const nameCell = `
+    const nameCell = `
       <div class="relative group inline-block">
         <span class="font-medium cursor-pointer">${formattedName}</span>
         <div class="absolute left-1/2 top-full mt-2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300
@@ -666,7 +683,7 @@ function displayTransactionsForCurrentMonth() {
       </div>
   `;
 
-  const nameCellSel = `
+    const nameCellSel = `
   <div class="relative group inline-block">
     <span class="font-medium cursor-pointer">${formattedName}</span>
     <div class="absolute left-1/2 top-full mt-2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300
@@ -694,7 +711,9 @@ function displayTransactionsForCurrentMonth() {
       </td>
       <td class="py-3 px-6">${categoryName}</td>
       <td class="py-3 px-6">${transaction.dueDate.toLocaleDateString("pt-BR", {
-        day: "2-digit", month: "2-digit", year: "numeric"
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric"
       })}</td>
       <td class="py-3 px-6">Dia ${transaction.datepay}</td>
       <td class="py-3 px-6 font-medium">${formattedAmount}</td>
@@ -721,29 +740,41 @@ function displayTransactionsForCurrentMonth() {
     tableBody.appendChild(emptyRow);
   }
 
-  const valorDia01Element  = document.getElementById("valor-dia-01");
-  const valorDia15Element  = document.getElementById("valor-dia-15");
-  const qtdDia01Element    = document.getElementById("quantidade-dia-01");
-  const qtdDia15Element    = document.getElementById("quantidade-dia-15");
+  const valorDia01Element = document.getElementById("valor-dia-01");
+  const valorDia15Element = document.getElementById("valor-dia-15");
+  const qtdDia01Element = document.getElementById("quantidade-dia-01");
+  const qtdDia15Element = document.getElementById("quantidade-dia-15");
 
   if (valorDia01Element && valorDia15Element) {
-    let totalDia01 = 0, totalDia15 = 0;
-    let countDia01 = 0, countDia15 = 0;
+    let totalDia01 = 0,
+      totalDia15 = 0;
+    let countDia01 = 0,
+      countDia15 = 0;
 
     transactions.forEach(tx => {
-      const m = tx.dueDate.getMonth(), y = tx.dueDate.getFullYear();
-      if (tx.type === "Gasto" && m === currentMonth && y === currentYear && !tx.isPaid) {
-        if (tx.datepay === "01") { totalDia01 += tx.amount; countDia01++; }
-        if (tx.datepay === "15") { totalDia15 += tx.amount; countDia15++; }
-      }
+        // Adiciona a mesma verificação aqui
+        if (!(tx.dueDate instanceof Date)) return;
+
+        const m = tx.dueDate.getMonth(),
+            y = tx.dueDate.getFullYear();
+        if (tx.type === "Gasto" && m === currentMonth && y === currentYear && !tx.isPaid) {
+            if (tx.datepay === "01") {
+                totalDia01 += tx.amount;
+                countDia01++;
+            }
+            if (tx.datepay === "15") {
+                totalDia15 += tx.amount;
+                countDia15++;
+            }
+        }
     });
 
-    const valorAtual01 = parseFloat(valorDia01Element.textContent.replace(/[R$\s.]/g,"").replace(",", ".")) || 0;
-    const valorAtual15 = parseFloat(valorDia15Element.textContent.replace(/[R$\s.]/g,"").replace(",", ".")) || 0;
+    const valorAtual01 = parseFloat(valorDia01Element.textContent.replace(/[R$\s.]/g, "").replace(",", ".")) || 0;
+    const valorAtual15 = parseFloat(valorDia15Element.textContent.replace(/[R$\s.]/g, "").replace(",", ".")) || 0;
     animateValue(valorDia01Element, valorAtual01, totalDia01, 800);
     animateValue(valorDia15Element, valorAtual15, totalDia15, 800);
-    qtdDia01Element.textContent = `${countDia01} despesa${countDia01!==1?'s':''}`;
-    qtdDia15Element.textContent = `${countDia15} despesa${countDia15!==1?'s':''}`;
+    qtdDia01Element.textContent = `${countDia01} despesa${countDia01 !== 1 ? 's' : ''}`;
+    qtdDia15Element.textContent = `${countDia15} despesa${countDia15 !== 1 ? 's' : ''}`;
   }
 }
 
@@ -1042,18 +1073,6 @@ cancelBtn.addEventListener("click", () => {
   form.reset();
   closeFormSidebar();
 });
-
-// Função para exibir o nome do usuário logado
-function loadUserName() {
-  auth.onAuthStateChanged((user) => {
-    if (user) {
-      document.getElementById("user-name").textContent =
-        user.displayName || user.email || "Carregando...";
-    } else {
-      window.location.href = "/index.html";
-    }
-  });
-}
 
 function logout() {
   showLoading();

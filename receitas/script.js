@@ -147,13 +147,24 @@ function loadTransactionsFromFirestore() {
     });
 }
 
+// Função auxiliar para garantir a conversão correta para Date
 function convertToDate(value) {
-  if (value instanceof firebase.firestore.Timestamp) {
-    return value.toDate();
-  } else if (typeof value === "string" || typeof value === "number") {
-    return new Date(value);
-  }
-  return value; // já é Date
+    if (value instanceof firebase.firestore.Timestamp) {
+        return value.toDate();
+    } else if (value && typeof value.toDate === 'function') {
+        // Trata o caso em que o objeto é um Timestamp, mas não uma instância direta
+        return value.toDate();
+    } else if (typeof value === "string" || typeof value === "number") {
+        return new Date(value);
+    } else if (value && typeof value === 'object' && value.hasOwnProperty('seconds') && value.hasOwnProperty('nanoseconds')) {
+        // Adiciona tratamento para o formato de objeto do Timestamp do Firestore
+        // Note que o JSON exportado usa "seconds" e "nanoseconds"
+        return new firebase.firestore.Timestamp(value.seconds, value.nanoseconds).toDate();
+    } else if (value instanceof Date) {
+        return value;
+    }
+    // Se não for nenhum dos tipos esperados, retorna uma data inválida para evitar erros
+    return new Date(NaN);
 }
 
 
@@ -924,20 +935,6 @@ cancelBtn.addEventListener("click", () => {
   form.reset();
   closeFormSidebar();
 });
-
-// Função para exibir o nome do usuário logado
-function loadUserName() {
-  auth.onAuthStateChanged((user) => {
-    if (user) {
-      // Use o displayName se disponível, senão exiba o email
-      document.getElementById("user-name").textContent =
-        user.displayName || user.email || "Carregando...";
-    } else {
-      // Redireciona para login caso não esteja logado
-      window.location.href = "/index.html";
-    }
-  });
-}
 
 function logout() {
   showLoading();

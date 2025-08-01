@@ -10,6 +10,132 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
   <link rel="icon" type="image/x-icon" href="/images/money.ico" />
   <link rel="stylesheet" href="/style-global.css" />
+    <style>
+    /* Estilos adicionais para melhorias visuais */
+    .section-card {
+      background: linear-gradient(145deg, #1f2937, #1a202c);
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(74, 85, 104, 0.3);
+    }
+    
+    .form-field {
+      background: #2d3748;
+      border: 1px solid #4a5568;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+    }
+    
+    .form-field:focus {
+      border-color: #48bb78;
+      box-shadow: 0 0 0 3px rgba(72, 187, 120, 0.2);
+    }
+    
+    .btn-primary {
+      background: linear-gradient(to right, #38a169, #48bb78);
+      border-radius: 8px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(72, 187, 120, 0.3);
+    }
+    
+    .btn-secondary {
+      background: #2d3748;
+      border: 1px solid #4a5568;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+    }
+    
+    .btn-secondary:hover {
+      background: #374151;
+      border-color: #4a5568;
+    }
+    
+    .active-tab {
+      background: #38a169 !important;
+      color: white !important;
+      font-weight: 500;
+    }
+    
+    .category-item {
+      background: #2d3748;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+      border: 1px solid rgba(74, 85, 104, 0.3);
+    }
+    
+    .category-item:hover {
+      background: #374151;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+    
+    .badge {
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+    
+    .badge-income {
+      background: rgba(72, 187, 120, 0.15);
+      color: #48bb78;
+    }
+    
+    .badge-expense {
+      background: rgba(245, 101, 101, 0.15);
+      color: #f56565;
+    }
+    
+    .action-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+    
+    .action-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+    
+    .upload-area {
+      border: 2px dashed #4a5568;
+      border-radius: 12px;
+      padding: 2rem;
+      text-align: center;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    
+    .upload-area:hover, .upload-area.dragover {
+      border-color: #48bb78;
+      background: rgba(72, 187, 120, 0.05);
+    }
+    
+    .section-title {
+      position: relative;
+      padding-bottom: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .section-title::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 50px;
+      height: 3px;
+      background: linear-gradient(to right, #38a169, #48bb78);
+      border-radius: 3px;
+    }
+  </style>
 </head>
 
 <body class="bg-zinc-900 text-zinc-200 h-screen grid grid-cols-[auto,1fr]">
@@ -95,6 +221,28 @@
           <span class="hidden group-hover:block">Dashboard</span>
         </li>
       </a>
+      
+      <li class="w-full px-4 py-2 mt-2 hidden group-hover:block text-zinc-500 text-xs uppercase font-semibold">
+        Financeiro
+      </li>
+      <a href="/receitas/transaction.html">
+        <li class="flex items-center gap-4 p-4 hover:bg-zinc-700/50 w-full text-zinc-400 text-sm">
+          <i class="fas fa-wallet text-lg"></i>
+          <span class="hidden group-hover:block">Carteira</span>
+        </li>
+      </a>
+      <a href="/despesas/transaction.html">
+        <li class="flex items-center gap-4 p-4 hover:bg-zinc-700/50 w-full text-zinc-400 text-sm">
+          <i class="fas fa-money-check-alt text-lg"></i>
+          <span class="hidden group-hover:block">Despesas</span>
+        </li>
+      </a>
+      <a href="/investimento/index.html">
+        <li class="flex items-center gap-4 p-4 hover:bg-zinc-700/50 w-full text-zinc-400 text-sm">
+          <i class="fas fa-chart-line text-lg"></i>
+          <span class="hidden group-hover:block">Investimentos</span>
+        </li>
+      </a>
 
       <li class="w-full px-4 py-2 mt-2 hidden group-hover:block text-zinc-500 text-xs uppercase font-semibold">
         Organização
@@ -119,28 +267,6 @@
       </a>
 
       <li class="w-full px-4 py-2 mt-2 hidden group-hover:block text-zinc-500 text-xs uppercase font-semibold">
-        Financeiro
-      </li>
-      <a href="/receitas/transaction.html">
-        <li class="flex items-center gap-4 p-4 hover:bg-zinc-700/50 w-full text-zinc-400 text-sm">
-          <i class="fas fa-wallet text-lg"></i>
-          <span class="hidden group-hover:block">Carteira</span>
-        </li>
-      </a>
-      <a href="/despesas/transaction.html">
-        <li class="flex items-center gap-4 p-4 hover:bg-zinc-700/50 w-full text-zinc-400 text-sm">
-          <i class="fas fa-money-check-alt text-lg"></i>
-          <span class="hidden group-hover:block">Despesas</span>
-        </li>
-      </a>
-      <a href="/investimento/index.html">
-        <li class="flex items-center gap-4 p-4 hover:bg-zinc-700/50 w-full text-zinc-400 text-sm">
-          <i class="fas fa-chart-line text-lg"></i>
-          <span class="hidden group-hover:block">Investimentos</span>
-        </li>
-      </a>
-
-      <li class="w-full px-4 py-2 mt-2 hidden group-hover:block text-zinc-500 text-xs uppercase font-semibold">
         Configuração
       </li>
       <a href="/configuration/config.html">
@@ -160,25 +286,34 @@
       </h1>
 
       <!-- Botão do Dropdown -->
-      <div class="relative inline-block text-left">
-        <button id="dropdownButton"
-          class="bg-zinc-900 text-white font-medium py-2 px-4 border border-zinc-700 hover:bg-zinc-800 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 flex items-center space-x-2">
+      <div class="flex flex-col md:flex-row items-center gap-3 w-full md:w-auto">
 
-          <img id="user-photo" src="" alt="Foto de Perfil" class="w-8 h-8 rounded-full hidden" />
+        <div class="relative inline-block text-left w-full md:w-auto">
+          <button id="dropdownButton"
+            class="bg-zinc-800 text-white font-medium py-2 px-4 border border-zinc-700 hover:bg-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 flex items-center justify-center md:justify-start space-x-2 w-full">
 
-          <div class="text-left">
-            <div id="user-name" class="text-sm font-medium">Carregando...</div>
-            <div id="user-email" class="text-xs text-gray-400">Carregando...</div>
+            <div id="avatar-container" class="relative w-8 h-8 flex-shrink-0">
+              <div id="user-initials"
+                class="w-full h-full rounded-full flex items-center justify-center text-white font-bold text-sm bg-gray-500">
+                ?</div>
+              <img id="user-photo" src="" alt="Foto de Perfil"
+                class="w-full h-full rounded-full absolute top-0 left-0 hidden object-cover" />
+            </div>
+
+            <div class="text-left hidden md:block">
+              <div id="user-name" class="text-sm font-medium">Carregando...</div>
+              <div id="user-email" class="text-xs text-zinc-400">Carregando...</div>
+            </div>
+          </button>
+
+
+          <div id="dropdownMenu"
+            class="hidden absolute right-0 mt-2 w-48 bg-zinc-800 border border-zinc-700 rounded-lg shadow-lg z-50 py-2">
+            <a href="#" class="block px-4 py-2 text-zinc-200 hover:bg-zinc-700/50" onclick="logout()">
+              <i class="bi bi-box-arrow-left mr-2"></i> Sair
+            </a>
           </div>
-        </button>
-
-        <div id="dropdownMenu"
-          class="hidden absolute right-0 mt-2 w-48 bg-white border border-gray-300 rounded-md shadow-lg z-50 p-2">
-          <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100" onclick="logout()">
-            <i class="bi bi-box-arrow-left"> </i> Sair
-          </a>
         </div>
-      </div>
     </header>
 
     <!-- Main Content -->
@@ -197,6 +332,12 @@
               <button onclick="showSection('categorySettings', event)"
                 class="w-full text-left p-3 rounded-md hover:bg-zinc-700 transition">
                 Categorias
+              </button>
+            </li>
+            <li>
+              <button onclick="showSection('exportImportSection', event)"
+                class="w-full text-left p-3 rounded-md hover:bg-zinc-700 transition">
+                Exportar/Importar Dados
               </button>
             </li>
           </ul>
@@ -264,6 +405,41 @@
               <!-- As categorias serão carregadas aqui -->
             </ul>
           </section>
+
+          <!-- Adicione isso na seção de Configurações -->
+          <section id="exportImportSection" class="hidden bg-zinc-800 p-6 rounded-lg shadow-lg">
+            <h1 class="text-2xl font-bold mb-6">Exportar/Importar Dados</h1>
+
+            <!-- Exportação -->
+            <div class="mb-8">
+              <h2 class="text-xl font-semibold mb-4">Exportar Dados</h2>
+              <p class="mb-4">Exporte todas as suas transações e categorias para um arquivo JSON.</p>
+              <button id="exportDataBtn" class="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded">
+                Exportar Dados
+              </button>
+            </div>
+
+            <!-- Importação -->
+            <div>
+              <h2 class="text-xl font-semibold mb-4">Importar Dados</h2>
+              <p class="mb-4">Importe dados de outra conta (arquivo JSON exportado).</p>
+
+              <div class="mb-4">
+                <input type="file" id="importFileInput" accept=".json" class="hidden">
+                <button id="chooseFileBtn" class="bg-zinc-700 hover:bg-zinc-600 text-white py-2 px-4 rounded mr-2">
+                  Escolher Arquivo
+                </button>
+                <span id="fileNameDisplay">Nenhum arquivo selecionado</span>
+              </div>
+
+              <button id="importDataBtn"
+                class="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded disabled:opacity-50" disabled>
+                Importar Dados
+              </button>
+
+              <div id="importStatus" class="mt-4"></div>
+            </div>
+          </section>
         </main>
       </div>
     </div>
@@ -275,6 +451,7 @@
     <script src="/firebase-init.js"></script>
 
     <script src="/loading.js"></script>
+    <script src="/user-profile.js"></script>
     <script src="/sidebar.js" defer></script>
     <script src="config.js"></script>
 

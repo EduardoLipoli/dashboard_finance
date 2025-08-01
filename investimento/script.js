@@ -49,12 +49,6 @@ function logout() {
     });
 }
 
-// Função para exibir o nome do usuário logado
-function loadUserName(user) {
-  const displayName = user.displayName || user.email || "Carregando...";
-  document.getElementById("user-name").textContent = displayName;
-}
-
 const dropdownButton = document.getElementById("dropdownButton");
 const dropdownMenu = document.getElementById("dropdownMenu");
 

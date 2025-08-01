@@ -471,17 +471,6 @@ function setupExpansionListeners(report) {
       }
     }
 
-    // Funções de autenticação e inicialização
-    function loadUserData(user) {
-      document.getElementById('user-name').textContent = user.displayName || user.email || 'Usuário';
-      document.getElementById('user-email').textContent = user.email || '';
-      
-      if (user.photoURL) {
-        document.getElementById('user-photo').src = user.photoURL;
-        document.getElementById('user-photo').classList.remove('hidden');
-      }
-    }
-
     function logout() {
       auth.signOut().then(() => {
         window.location.href = '/index.html';
@@ -497,44 +486,44 @@ function setupExpansionListeners(report) {
       return `${year}-${month}`;
     }
 
-    // Inicialização
-    document.addEventListener('DOMContentLoaded', function() {
-      // Preencher datas iniciais
-      const hoje = new Date();
-      const inic = new Date(hoje);
-      inic.setMonth(hoje.getMonth() - 2);
-      
-      document.getElementById('startDate').value = formatDateForInput(inic);
-      document.getElementById('endDate').value = formatDateForInput(hoje);
-      
-      // Event listeners
-      document.getElementById('refreshBtn').addEventListener('click', buildReport);
-      
+// Inicialização
+document.addEventListener('DOMContentLoaded', function() {
+    // Preencher datas iniciais
+    const hoje = new Date();
+    const inic = new Date(hoje);
+    inic.setMonth(hoje.getMonth() - 2);
 
-      
-      // Dropdown do usuário
-      const dropdownButton = document.getElementById('dropdownButton');
-      const dropdownMenu = document.getElementById('dropdownMenu');
-      
-      dropdownButton.addEventListener('click', () => {
+    document.getElementById('startDate').value = formatDateForInput(inic);
+    document.getElementById('endDate').value = formatDateForInput(hoje);
+
+    // Event listeners
+    document.getElementById('refreshBtn').addEventListener('click', buildReport);
+
+    // Dropdown do usuário
+    const dropdownButton = document.getElementById('dropdownButton');
+    const dropdownMenu = document.getElementById('dropdownMenu');
+
+    dropdownButton.addEventListener('click', () => {
         dropdownMenu.classList.toggle('hidden');
-      });
-      
-      // Fechar dropdown ao clicar fora
-      document.addEventListener('click', (event) => {
-        if (!dropdownButton.contains(event.target)) {
-          dropdownMenu.classList.add('hidden');
-        }
-      });
-      
-      // Verificar autenticação
-      auth.onAuthStateChanged(user => {
-        if (user) {
-          loadUserData(user);
-          buildReport();
-          setupPlanEditors();
-        } else {
-          window.location.href = '/index.html';
-        }
-      });
     });
+
+    // Fechar dropdown ao clicar fora
+    document.addEventListener('click', (event) => {
+        if (!dropdownButton.contains(event.target)) {
+            dropdownMenu.classList.add('hidden');
+        }
+    });
+    
+    // Verificar autenticação
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            // Chama a função global para carregar o nome e foto do usuário
+            // A função `loadUserName` está definida no `user-profile.js`
+            loadUserName(user);
+            buildReport();
+            setupPlanEditors();
+        } else {
+            window.location.href = '/index.html';
+        }
+    });
+});

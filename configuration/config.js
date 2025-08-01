@@ -93,12 +93,6 @@ function logout() {
     });
 }
 
-// Função para exibir o nome do usuário logado
-function loadUserName(user) {
-  const displayName = user.displayName || user.email || "Carregando...";
-  document.getElementById("user-name").textContent = displayName;
-}
-
 const dropdownButton = document.getElementById("dropdownButton");
 const dropdownMenu = document.getElementById("dropdownMenu");
 
@@ -760,4 +754,196 @@ function showSection(sectionId, e = null) {
 
 document.addEventListener("DOMContentLoaded", () => {
   showSection('userSettings');
+});
+
+// Função para exportar dados
+async function exportUserData() {
+  showLoading();
+  
+  const user = firebase.auth().currentUser;
+  if (!user) {
+    showAlert("Usuário não autenticado.", "error");
+    hideLoading();
+    return;
+  }
+
+  try {
+    const db = firebase.firestore();
+    const userId = user.uid;
+
+    // Buscar todas as categorias
+    const categoriesSnapshot = await db.collection("users").doc(userId).collection("categories").get();
+    const categories = categoriesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    // Buscar todas as transações
+    const transactionsSnapshot = await db.collection("users").doc(userId).collection("transactions").get();
+    const transactions = transactionsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    // Criar objeto com todos os dados
+    const userData = {
+      meta: {
+        exportedAt: new Date().toISOString(),
+        userId: userId,
+        version: "1.0"
+      },
+      categories,
+      transactions
+    };
+
+    // Criar blob e link para download
+    const blob = new Blob([JSON.stringify(userData, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `financas_backup_${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    showAlert("Dados exportados com sucesso!", "success");
+  } catch (error) {
+    showAlert("Erro ao exportar dados: " + error.message, "error");
+    console.error("Erro na exportação:", error);
+  } finally {
+    hideLoading();
+  }
+}
+
+// Função para importar dados
+async function importUserData() {
+  showLoading();
+  
+  const fileInput = document.getElementById("importFileInput");
+  const statusDisplay = document.getElementById("importStatus");
+  
+  if (!fileInput.files || fileInput.files.length === 0) {
+    showAlert("Selecione um arquivo para importar", "error");
+    hideLoading();
+    return;
+  }
+
+  const file = fileInput.files[0];
+  const user = firebase.auth().currentUser;
+  
+  if (!user) {
+    showAlert("Usuário não autenticado.", "error");
+    hideLoading();
+    return;
+  }
+
+  try {
+    statusDisplay.innerHTML = "<p class='text-yellow-500'>Processando arquivo...</p>";
+    
+    // Ler conteúdo do arquivo
+    const fileContent = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = e => resolve(e.target.result);
+      reader.onerror = e => reject(new Error("Falha ao ler arquivo"));
+      reader.readAsText(file);
+    });
+
+    const importedData = JSON.parse(fileContent);
+    
+    // Validar estrutura do arquivo
+    if (!importedData.categories || !importedData.transactions) {
+      throw new Error("Arquivo inválido ou corrompido");
+    }
+
+    const db = firebase.firestore();
+    const userId = user.uid;
+    const batch = db.batch();
+    const categoryMap = {};
+
+    statusDisplay.innerHTML = "<p class='text-yellow-500'>Importando categorias...</p>";
+    
+    // Importar categorias
+    const categoriesRef = db.collection("users").doc(userId).collection("categories");
+    for (const category of importedData.categories) {
+      // Usar o ID da categoria do arquivo para verificar a existência
+      const existing = await categoriesRef.doc(category.id).get();
+
+      if (!existing.exists) {
+        // Criar nova categoria
+        const newCategoryRef = categoriesRef.doc(category.id);
+        batch.set(newCategoryRef, {
+          name: category.name,
+          tipo: category.tipo
+        });
+        categoryMap[category.id] = category.id;
+      } else {
+        // Usar categoria existente
+        categoryMap[category.id] = category.id;
+      }
+    }
+
+    statusDisplay.innerHTML = "<p class='text-yellow-500'>Importando transações...</p>";
+    
+    // Importar transações
+    const transactionsRef = db.collection("users").doc(userId).collection("transactions");
+    for (const transaction of importedData.transactions) {
+      // Usar o ID da transação do arquivo para verificar a existência
+      const existing = await transactionsRef.doc(transaction.id).get();
+
+      if (!existing.exists) {
+        // Criar nova transação com o ID original
+        const newTransactionRef = transactionsRef.doc(transaction.id);
+        
+        // Converte a data de vencimento e a data de adição para objetos Date, se necessário.
+        const newDueDate = new Date(transaction.dueDate.seconds * 1000);
+        const newAddedOn = new Date(transaction.addedOn.seconds * 1000);
+
+        batch.set(newTransactionRef, {
+          ...transaction,
+          category: categoryMap[transaction.category] || transaction.category,
+          dueDate: firebase.firestore.Timestamp.fromDate(newDueDate),
+          addedOn: firebase.firestore.Timestamp.fromDate(newAddedOn),
+        });
+      }
+    }
+
+    // Executar todas as operações em batch
+    await batch.commit();
+    
+    statusDisplay.innerHTML = "<p class='text-green-500'>Importação concluída com sucesso!</p>";
+    showAlert("Dados importados com sucesso!", "success");
+    
+    // Recarregar dados na interface
+    loadCategories();
+  } catch (error) {
+    statusDisplay.innerHTML = `<p class='text-red-500'>Erro: ${error.message}</p>`;
+    showAlert("Erro na importação: " + error.message, "error");
+    console.error("Erro na importação:", error);
+  } finally {
+    hideLoading();
+  }
+}
+
+// Configurar eventos
+document.addEventListener("DOMContentLoaded", () => {
+  // Botão de exportação
+  document.getElementById("exportDataBtn")?.addEventListener("click", exportUserData);
+  
+  // Botão para escolher arquivo
+  document.getElementById("chooseFileBtn")?.addEventListener("click", () => {
+    document.getElementById("importFileInput").click();
+  });
+  
+  // Quando um arquivo é selecionado
+  document.getElementById("importFileInput")?.addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    const fileNameDisplay = document.getElementById("fileNameDisplay");
+    const importBtn = document.getElementById("importDataBtn");
+    
+    if (file) {
+      fileNameDisplay.textContent = file.name;
+      importBtn.disabled = false;
+    } else {
+      fileNameDisplay.textContent = "Nenhum arquivo selecionado";
+      importBtn.disabled = true;
+    }
+  });
+  
+  // Botão de importação
+  document.getElementById("importDataBtn")?.addEventListener("click", importUserData);
 });
