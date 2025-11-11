@@ -1,30 +1,49 @@
 let transactions = [];
 let investments = [];
 let filteredTransactions = [];
+let categoryPlans = {};
+let categoriesMap = {};
 const auth = firebase.auth();
+
+// --- Variáveis globais de data ---
+let currentMonth = new Date().getMonth();
+let currentYear = new Date().getFullYear();
+const months = [
+  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
+];
+// ---------------------------------
+
 
 // Listener para garantir que a autenticação está concluída
 document.addEventListener("DOMContentLoaded", function () {
   auth.onAuthStateChanged(async (user) => {
     if (user) {
       try {
-        await user.reload(); // Garante que os dados do usuário (como displayName) estão atualizados
+        await user.reload(); 
 
-        // AGORA, APENAS CHAMAMOS AS FUNÇÕES PRINCIPAIS
-        loadUserName(user); // Única função responsável pelo nome e avatar
+        loadUserName(user);
         
+        // 1. Carrega todos os dados primeiro
         await Promise.all([
           loadTransactionsFromFirestore(),
-          loadInvestmentsFromFirestore()
+          loadInvestmentsFromFirestore(),
+          loadCategoryPlansFromFirestore()
         ]);
-
-        calculateTotals();
-        calculateInvestmentTotals();
-        updateCharts();
-        updateInvestmentCharts();
         
-        setDefaultMonth();
+        // 2. Define os filtros de data customizados
+        setDefaultFilters(); 
+        
+        // 3. Roda o filtro inicial
+        applyFilters(); 
+        
         checkIfUserIsNew();
+
+        // 4. Adiciona os listeners para o seletor de data
+        setupDateNavigatorListeners();
+
+        // 5. [NOVO] Aplica as melhorias nos gráficos (padding e clique)
+        applyChartModifications();
 
       } catch (error) {
         console.error("Erro ao inicializar o dashboard:", error);
@@ -38,41 +57,25 @@ document.addEventListener("DOMContentLoaded", function () {
 
 /**
  * Gera as iniciais a partir de um nome completo.
- * Pega a primeira letra do primeiro e do último nome.
- * @param {string} name - O nome do usuário.
- * @returns {string} - As iniciais (ex: "AM" para "Admin Master").
  */
 function getInitials(name) {
   if (!name) {
     return "?";
   }
-
-  // Remove espaços extras e divide o nome em partes
   const nameParts = name.trim().split(' ').filter(part => part.length > 0);
-
-  // Se não houver partes válidas, retorna "?"
   if (nameParts.length === 0) {
     return "?";
   }
-
-  // Se for um nome único (ex: "Admin"), retorna só a primeira letra
   if (nameParts.length === 1) {
     return nameParts[0].charAt(0).toUpperCase();
   }
-
-  // Pega a primeira letra do primeiro nome
   const firstInitial = nameParts[0].charAt(0);
-  // Pega a primeira letra do último nome
   const lastInitial = nameParts[nameParts.length - 1].charAt(0);
-
   return `${firstInitial}${lastInitial}`.toUpperCase();
 }
 
 /**
- * Gera uma cor de fundo consistente a partir de uma lista pré-definida,
- * baseando-se no nome do usuário para que a cor seja sempre a mesma para ele.
- * @param {string} name - O nome para gerar a cor.
- * @returns {string} Um código de cor hexadecimal.
+ * Gera uma cor de fundo consistente para o avatar de iniciais.
  */
 function generateColorForName(name) {
   const colors = ['#ef4444', '#f97316', '#eab308', '#84cc16', '#22c55e', '#10b981', '#14b8a6', '#06b6d4', '#3b82f6', '#8b5cf6', '#d946ef', '#ec4899'];
@@ -108,7 +111,6 @@ function generateColorForName(name) {
     } else if (pct < 0) {
       span.classList.add("bg-red-800/25", "text-red-400", "badge-negative");
     } else {
-      // Alterado para zinc-700 e zinc-300
       span.classList.add("bg-zinc-700", "text-zinc-300");
     }
   }
@@ -127,7 +129,6 @@ async function loadTransactionsFromFirestore() {
 
   try {
     const categoriesSnapshot = await userRef.collection("categories").get();
-    const categoriesMap = {};
     categoriesSnapshot.forEach((doc) => {
       categoriesMap[doc.id] = doc.data().name;
     });
@@ -139,21 +140,23 @@ async function loadTransactionsFromFirestore() {
     transactionsSnapshot.forEach((doc) => {
       const transaction = doc.data();
       transaction.id = doc.id;
-      transaction.dueDate = new Date(transaction.dueDate.seconds * 1000);
-      transaction.addedOn = new Date(transaction.addedOn.seconds * 1000);
-
-      if (transaction.category in categoriesMap) {
-        transaction.category = categoriesMap[transaction.category];
+      // Garante que a data seja um objeto Date
+      if (transaction.dueDate && typeof transaction.dueDate.seconds === 'number') {
+        transaction.dueDate = new Date(transaction.dueDate.seconds * 1000);
+      } else if (typeof transaction.dueDate === 'string') {
+        transaction.dueDate = new Date(transaction.dueDate);
       }
-
+      
+      if (transaction.addedOn && typeof transaction.addedOn.seconds === 'number') {
+        transaction.addedOn = new Date(transaction.addedOn.seconds * 1000);
+      } else if (typeof transaction.addedOn === 'string') {
+        transaction.addedOn = new Date(transaction.addedOn);
+      }
+      
       transactions.push(transaction);
     });
 
     filteredTransactions = [...transactions];
-    calculateTotals();
-    updateCharts();
-    setDefaultMonth();
-    checkIfUserIsNew();
   } catch (error) {
     hideLoading();
     console.error("Erro ao carregar transações ou categorias:", error);
@@ -181,23 +184,18 @@ function calculateTotals() {
       if (transaction.datepay === "01") totalGastoDia01 += transaction.amount;
       else if (transaction.datepay === "15") totalGastoDia15 += transaction.amount;
     }
-
-    renderBadge("badgeReceitas");
   });
 
   const totalSobra = totalReceitas - totalDespesas;
   const sobraDia01 = totalGanhoDia01 - totalGastoDia01;
   const sobraDia15 = totalGanhoDia15 - totalGastoDia15;
 
-
-
-
   function renderDiferencaTexto(id, diffValor) {
     const el = document.getElementById(id);
     if (!el) return;
   
-    if (diffValor === null || isNaN(diffValor)) {
-      el.textContent = "";
+    if (diffValor === null || isNaN(diffValor) || diffValor === 0) {
+      el.textContent = ""; 
       return;
     }
   
@@ -205,63 +203,66 @@ function calculateTotals() {
     const texto = `${prefixo}${formatarMoeda(Math.abs(diffValor))} vs mês anterior`;
 
     el.textContent = texto;
-
   }
   
-
   // Calcular variações mensais
-  const selectedMonth = document.getElementById("monthFilter").value;
-  const mesAtual = selectedMonth === "all" ? null : parseInt(selectedMonth);
-  const mesAnterior = mesAtual !== null ? (mesAtual + 11) % 12 : null;
+  const mesAtual = currentMonth; 
+  const anoAtual = currentYear;
+  let mesAnterior, anoAnterior;
 
-  function somaPorTipoEMês(tipo, mes) {
+  if (mesAtual === "all") {
+      mesAnterior = null; // Não há "mês anterior" para o ano inteiro
+      anoAnterior = null;
+  } else {
+      mesAnterior = (mesAtual + 11) % 12;
+      anoAnterior = (mesAtual === 0) ? anoAtual - 1 : anoAtual;
+  }
+
+  function somaPorTipoEMês(tipo, mes, ano) {
+    if (mes === "all") {
+        return transactions.filter(t => 
+            t.type === tipo && t.dueDate instanceof Date && 
+            t.dueDate.getFullYear() === ano
+        ).reduce((s, t) => s + t.amount, 0);
+    }
     return transactions.filter(t => 
-      t.type === tipo && t.dueDate instanceof Date && t.dueDate.getMonth() === mes
+      t.type === tipo && t.dueDate instanceof Date && 
+      t.dueDate.getMonth() === mes && t.dueDate.getFullYear() === ano
     ).reduce((s, t) => s + t.amount, 0);
   }
-
-  const receitasAtual = mesAtual !== null ? somaPorTipoEMês("Ganho", mesAtual) : null;
-  const receitasAnterior = mesAnterior !== null ? somaPorTipoEMês("Ganho", mesAnterior) : null;
-  const despesasAtual = mesAtual !== null ? somaPorTipoEMês("Gasto", mesAtual) : null;
-  const despesasAnterior = mesAnterior !== null ? somaPorTipoEMês("Gasto", mesAnterior) : null;
-
-  const sobraAtual = receitasAtual !== null && despesasAtual !== null ? receitasAtual - despesasAtual : null;
-  const sobraAnterior = receitasAnterior !== null && despesasAnterior !== null ? receitasAnterior - despesasAnterior : null;
-
-// Para receitas e sobra: quanto mais, melhor
-function variacaoPositiva(atual, anterior) {
-  return anterior > 0 ? ((atual - anterior) / anterior) * 100 : null;
-}
-
-// Para despesas: quanto menos, melhor (inverter o sinal)
-function variacaoNegativa(atual, anterior) {
-  return anterior > 0 ? ((anterior - atual) / anterior) * 100 : null;
-}
-
-  const diffReceitas = receitasAtual - receitasAnterior;
-  const diffDespesas = despesasAtual - despesasAnterior;
-  const diffSobra = sobraAtual - sobraAnterior;
   
-    renderBadge("badgeReceitas", variacaoPositiva(receitasAtual, receitasAnterior));
+  const receitasAtual = somaPorTipoEMês("Ganho", mesAtual, anoAtual);
+  const receitasAnterior = (mesAnterior !== null) ? somaPorTipoEMês("Ganho", mesAnterior, anoAnterior) : null;
+  const despesasAtual = somaPorTipoEMês("Gasto", mesAtual, anoAtual);
+  const despesasAnterior = (mesAnterior !== null) ? somaPorTipoEMês("Gasto", mesAnterior, anoAnterior) : null;
+
+  const sobraAtual = receitasAtual - despesasAtual;
+  const sobraAnterior = (receitasAnterior !== null && despesasAnterior !== null) ? receitasAnterior - despesasAnterior : null;
+
+  function variacaoPositiva(atual, anterior) {
+    if (anterior === null || atual === null) return null;
+    if (anterior === 0) return (atual > 0) ? 100 : 0;
+    return ((atual - anterior) / Math.abs(anterior)) * 100;
+  }
+
+  function variacaoNegativa(atual, anterior) {
+    if (anterior === null || atual === null) return null;
+    if (anterior === 0) return (atual > 0) ? -100 : 0;
+    return ((anterior - atual) / Math.abs(anterior)) * 100;
+  }
+
+  const diffReceitas = (receitasAtual !== null && receitasAnterior !== null) ? receitasAtual - receitasAnterior : null;
+  const diffDespesas = (despesasAtual !== null && despesasAnterior !== null) ? despesasAtual - despesasAnterior : null;
+  const diffSobra = (sobraAtual !== null && sobraAnterior !== null) ? sobraAtual - sobraAnterior : null;
+  
+  renderBadge("badgeReceitas", variacaoPositiva(receitasAtual, receitasAnterior));
   renderBadge("badgeDespesas", variacaoNegativa(despesasAtual, despesasAnterior));
   renderBadge("badgeSobra", variacaoPositiva(sobraAtual, sobraAnterior));
-  
   
   renderDiferencaTexto("diffReceitas", diffReceitas);
   renderDiferencaTexto("diffDespesas", diffDespesas);
   renderDiferencaTexto("diffSobra", diffSobra);
 
- // Animação de valores
-  animarContador("totalReceitas", totalReceitas);
-  animarContador("totalDespesas", totalDespesas);
-  animarContador("totalSobra", totalSobra);
-
-  animarContador("totalGanhoDia01", totalGanhoDia01);
-  animarContador("totalGastoDia01", totalGastoDia01);
-  animarContador("sobraDia01", sobraDia01);
-  animarContador("totalGanhoDia15", totalGanhoDia15);
-  animarContador("totalGastoDia15", totalGastoDia15);
-  animarContador("sobraDia15", sobraDia15);// Animação de valores
   animarContador("totalReceitas", totalReceitas);
   animarContador("totalDespesas", totalDespesas);
   animarContador("totalSobra", totalSobra);
@@ -272,26 +273,11 @@ function variacaoNegativa(atual, anterior) {
   animarContador("totalGanhoDia15", totalGanhoDia15);
   animarContador("totalGastoDia15", totalGastoDia15);
   animarContador("sobraDia15", sobraDia15);
-
-  // Texto final nos elementos
-  document.getElementById("totalReceitas").textContent = formatarMoeda(totalReceitas);
-  document.getElementById("totalDespesas").textContent = formatarMoeda(totalDespesas);
-  document.getElementById("totalSobra").textContent = formatarMoeda(totalSobra);
-
-  document.getElementById("totalGanhoDia01").textContent = formatarMoeda(totalGanhoDia01);
-  document.getElementById("totalGastoDia01").textContent = formatarMoeda(totalGastoDia01);
-  document.getElementById("sobraDia01").textContent = formatarMoeda(sobraDia01);
-
-  document.getElementById("totalGanhoDia15").textContent = formatarMoeda(totalGanhoDia15);
-  document.getElementById("totalGastoDia15").textContent = formatarMoeda(totalGastoDia15);
-  document.getElementById("sobraDia15").textContent = formatarMoeda(sobraDia15);
-
-  gerarResumoAnual();
-  gerarPlanoFinanceiroPessoal();
 }
 
 // Função para atualizar os gráficos após o filtro
 function updateCharts() {
+  // --- Gráfico de Dívidas por Dia ---
   debtsByDayChart.data.datasets[0].data = [
     filteredTransactions
       .filter((t) => t.type === "Gasto" && t.datepay === "01")
@@ -302,75 +288,144 @@ function updateCharts() {
   ];
   debtsByDayChart.update();
 
+  // --- Gráfico de Categorias ---
   const categoriesData = filteredTransactions
     .filter((t) => t.type === "Gasto")
     .reduce((acc, t) => {
-      acc[t.category] = (acc[t.category] || 0) + t.amount;
+      const categoryName = categoriesMap[t.category] || "Sem Categoria";
+      acc[categoryName] = (acc[categoryName] || 0) + t.amount;
       return acc;
     }, {});
 
-  // Atualiza o gráfico de categorias com as transações de "Gasto"
   categoriesChart.data.labels = Object.keys(categoriesData);
   categoriesChart.data.datasets[0].data = Object.values(categoriesData);
   categoriesChart.update();
 
-  // Atualizar gráfico de Pagas vs Pendentes para transações do tipo "Gasto"
+  // --- Gráfico de Pagas vs Pendentes ---
   const paidTransactions = filteredTransactions.filter(
     (t) => t.type === "Gasto" && t.isPaid
   ).length;
-
   const pendingTransactions = filteredTransactions.filter(
     (t) => t.type === "Gasto" && !t.isPaid
   ).length;
-
   paidVsPendingChart.data.datasets[0].data = [
     paidTransactions,
     pendingTransactions,
   ];
   paidVsPendingChart.update();
 
-  // Atualizar gráfico de Receitas por Mês
-  const monthlyIncomeData = Array.from({ length: 12 }, (_, i) => {
-    return filteredTransactions
-      .filter((t) => t.type === "Ganho" && t.dueDate.getMonth() === i)
-      .reduce((sum, t) => sum + t.amount, 0);
+  // --- Gráficos de Receita e Despesa Mensal ---
+  const yearForMonthlyCharts = currentYear; 
+
+  const monthlyIncomeData = Array(12).fill(0);
+  const monthlyExpensesData = Array(12).fill(0);
+
+  transactions.forEach(t => {
+      if (t.dueDate instanceof Date && t.dueDate.getFullYear() === yearForMonthlyCharts) {
+          const month = t.dueDate.getMonth();
+          if (t.type === "Ganho") {
+              monthlyIncomeData[month] += t.amount;
+          } else if (t.type === "Gasto") {
+              monthlyExpensesData[month] += t.amount;
+          }
+      }
   });
 
-  const monthlyExpensesData = Array.from({ length: 12 }, (_, i) => {
-    return filteredTransactions
-      .filter((t) => t.type === "Gasto" && t.dueDate.getMonth() === i)
-      .reduce((sum, t) => sum + t.amount, 0);
-  });
+  // [INÍCIO DA MELHORIA 1: Barras Cinzas]
+  const activeGreen = '#10B981';
+  const activeRed = '#ef4444';
+  const inactiveColor = '#52525b'; // zinc-600
+
+  const incomeColors = Array(12).fill(inactiveColor);
+  const expenseColors = Array(12).fill(inactiveColor);
+
+  if (currentMonth === "all") {
+      // Ano inteiro: todas as barras ativas
+      monthlyIncomeChart.data.datasets[0].backgroundColor = activeGreen;
+      monthlyExpensesChart.data.datasets[0].backgroundColor = activeRed;
+  } else {
+      // Mês específico: só uma barra ativa
+      if (currentMonth >= 0 && currentMonth < 12) {
+        incomeColors[currentMonth] = activeGreen;
+        expenseColors[currentMonth] = activeRed;
+      }
+      monthlyIncomeChart.data.datasets[0].backgroundColor = incomeColors;
+      monthlyExpensesChart.data.datasets[0].backgroundColor = expenseColors;
+  }
+  // [FIM DA MELHORIA 1]
 
   monthlyIncomeChart.data.datasets[0].data = monthlyIncomeData;
   monthlyExpensesChart.data.datasets[0].data = monthlyExpensesData;
   monthlyIncomeChart.update();
   monthlyExpensesChart.update();
-}
 
-// Função para definir o mês atual no filtro
-function setDefaultMonth() {
-  const currentMonth = new Date().getMonth();
-  document.getElementById("monthFilter").value = currentMonth;
-  filterByMonth();
-}
+  // --- Gráfico de Planejamento ---
+  if (window.planningChart) { 
+    const actualDataById = filteredTransactions
+      .filter(t => t.type === "Gasto")
+      .reduce((acc, t) => {
+        acc[t.category] = (acc[t.category] || 0) + t.amount;
+        return acc;
+      }, {});
 
-window.onload = setDefaultMonth;
+    const chartLabels = [];
+    const chartPlannedData = [];
+    const chartActualData = [];
 
-// Função para filtrar as transações por mês
-function filterByMonth() {
-  const selectedMonth = document.getElementById("monthFilter").value;
+    for (const catId in categoryPlans) {
+      const catName = categoriesMap[catId] || "Categoria (ID: " + catId + ")";
+      const planned = categoryPlans[catId] || 0;
+      const actual = actualDataById[catId] || 0;
 
-  if (selectedMonth === "all") {
-    filteredTransactions = [...transactions];
-  } else {
-    filteredTransactions = transactions.filter((transaction) => {
-      return transaction.dueDate.getMonth() === parseInt(selectedMonth);
-    });
+      if (planned > 0 || actual > 0) {
+        chartLabels.push(catName);
+        chartPlannedData.push(planned);
+        chartActualData.push(actual);
+      }
+    }
+    
+    window.planningChart.data.labels = chartLabels;
+    window.planningChart.data.datasets[0].data = chartPlannedData;
+    window.planningChart.data.datasets[1].data = chartActualData;
+    window.planningChart.update();
   }
+}
 
-  calculateTotals();
-  updateCharts();
+// Define o mês/ano atual nas variáveis globais
+function setDefaultFilters() {
+  currentYear = new Date().getFullYear();
+  currentMonth = new Date().getMonth(); // Mês atual (número 0-11)
+  updateMonthDisplay(); 
+}
+
+// Filtra transações com base nas variáveis globais
+function applyFilters() {
+  const year = currentYear;
+  const month = currentMonth; // 'all' ou um número (0-11)
+
+  // 1. Filtra as Transações
+  filteredTransactions = transactions.filter(t => {
+    if (!(t.dueDate instanceof Date) || isNaN(t.dueDate.getTime())) return false; // Ignora transações com data inválida
+    
+    const tDate = t.dueDate;
+    const yearMatch = tDate.getFullYear() === year;
+    const monthMatch = (month === "all") || (tDate.getMonth() === month);
+    return yearMatch && monthMatch;
+  });
+
+  // 2. Filtra os Investimentos (sempre pelo ano inteiro)
+  const filteredInvestments = investments.filter(inv => {
+     const invDate = new Date(inv.date); 
+     if (isNaN(invDate.getTime())) return false; 
+     const yearMatch = invDate.getFullYear() === year;
+     return yearMatch;
+  });
+
+  // 3. Recalcula todos os totais e gráficos
+  calculateTotals(); 
+  calculateInvestmentTotals(filteredInvestments); 
+  updateCharts(); 
+  updateInvestmentCharts(filteredInvestments); 
 }
 
 function logout() {
@@ -385,13 +440,13 @@ function logout() {
     });
 }
 
-  // Listener para fechar o dropdown ao clicar fora
+  // Listener para fechar o dropdown do usuário
   const dropdownButton = document.getElementById("dropdownButton");
   const dropdownMenu = document.getElementById("dropdownMenu");
 
   if (dropdownButton) {
     dropdownButton.addEventListener("click", (event) => {
-      event.stopPropagation(); // Evita que o clique no botão feche o menu imediatamente
+      event.stopPropagation(); 
       dropdownMenu.classList.toggle("hidden");
     });
   }
@@ -402,89 +457,14 @@ function logout() {
     }
   });
 
-  // Listener para o botão de hambúrguer e botão de fechar a sidebar móvel
-  const hamburgerBtn = document.getElementById("hamburgerBtn");
-  const closeSidebarBtn = document.getElementById("closeSidebarBtn");
-  const mobileSidebar = document.getElementById("sidebar"); // A própria sidebar
-  const mobileOverlay = document.getElementById("mobile-sidebar-overlay");
-
-  if (hamburgerBtn) {
-      hamburgerBtn.addEventListener("click", toggleMobileSidebar);
-  }
-  if (closeSidebarBtn) {
-      closeSidebarBtn.addEventListener("click", toggleMobileSidebar);
-  }
-  if (mobileOverlay) {
-      mobileOverlay.addEventListener("click", toggleMobileSidebar);
-  }
-
-// Função para abrir/fechar a sidebar móvel (GLOBALMENTE ACESSÍVEL)
-function toggleMobileSidebar() {
-    const mobileSidebar = document.getElementById("sidebar");
-    const mobileOverlay = document.getElementById("mobile-sidebar-overlay");
-    const closeSidebarBtn = document.getElementById("closeSidebarBtn");
-
-    if (mobileSidebar && mobileOverlay && closeSidebarBtn) {
-        mobileSidebar.classList.toggle("is-open");
-        mobileOverlay.classList.toggle("hidden");
-        closeSidebarBtn.classList.toggle("hidden"); // Mostra/esconde o botão de fechar
-    }
-}
-
-function closeModal() {
-  const modal = document.getElementById("no-transactions-popup");
-  const overlay = document.getElementById("overlay");
-
-  modal.classList.add("hidden");
-  overlay.classList.add("hidden");
-}
-
-function showAlert(message, type = 'success') {
-  const alertContainer = document.getElementById('alert-container');
-  const alert = document.createElement('div');
-
-  let baseClasses =
-    'flex items-center px-4 py-3 rounded shadow-md transition-opacity duration-300';
-    
-  let typeClasses = "";
-  if (type === "success") {
-    typeClasses = "bg-green-500 text-white hover:bg-green-600 transition-colors cursor-default select-none";
-  } else if (type === "error") {
-    typeClasses = "bg-red-500 text-white hover:bg-red-600 transition-colors cursor-default select-none";
-  } else if (type === "info") {
-    typeClasses = "bg-blue-500 text-white hover:bg-blue-600 transition-colors cursor-default select-none";
-  } else if (type === "warning") {
-    typeClasses = "bg-yellow-500 text-black hover:bg-yellow-600 transition-colors cursor-default select-none";
-  }
-
-  alert.className = `${baseClasses} ${typeClasses}`;
-  alert.innerHTML = `
-    <span class="flex-grow">${message}</span>
-    <button class="ml-4 text-lg font-bold focus:outline-none">&times;</button>
-  `;
-
-  // Remover alerta ao clicar no botão ou após 5 segundos
-  alert.querySelector('button').addEventListener('click', () => {
-    alert.remove();
-  });
-
-  setTimeout(() => {
-    alert.remove();
-  }, 3000);
-
-  alertContainer.appendChild(alert);
-}
-
-// Carregar nome do usuário ao iniciar a página
+// Função para carregar nome do usuário ao iniciar a página
 function loadUserName(user) {
-  // Define o nome de exibição, com fallback para o início do e-mail
   const nameFromEmail = user.email ? user.email.split('@')[0] : "Usuário";
   const displayName = user.displayName || nameFromEmail;
   
   const email = user.email || "E-mail não disponível";
   const photoURL = user.photoURL;
 
-  // Pega todos os elementos da interface que precisam ser atualizados
   const nameEl = document.getElementById("user-name");
   const emailEl = document.getElementById("user-email");
   const userGreetingEl = document.getElementById("user-greeting");
@@ -493,28 +473,24 @@ function loadUserName(user) {
   const photoEl = document.getElementById("user-photo");
   const initialsEl = document.getElementById("user-initials");
 
-  // Atualiza todos os textos com o nome do usuário
   if (nameEl) nameEl.textContent = displayName;
   if (emailEl) emailEl.textContent = email;
   if (userGreetingEl) userGreetingEl.textContent = displayName;
   if (userModalEl) userModalEl.textContent = displayName;
 
-  // LÓGICA CORRETA PARA MOSTRAR FOTO OU INICIAIS
   if (photoURL) {
-    // Se TEM foto, mostra o elemento da imagem e esconde as iniciais
-    photoEl.src = photoURL;
-    photoEl.classList.remove('hidden');
-    initialsEl.classList.add('hidden');
+    if (photoEl) photoEl.src = photoURL;
+    if (photoEl) photoEl.classList.remove('hidden');
+    if (initialsEl) initialsEl.classList.add('hidden');
   } else {
-    // Se NÃO TEM foto, calcula e exibe as iniciais
     const initial = getInitials(displayName);
     const color = generateColorForName(displayName);
 
-    initialsEl.textContent = initial;
-    initialsEl.style.backgroundColor = color;
+    if (initialsEl) initialsEl.textContent = initial;
+    if (initialsEl) initialsEl.style.backgroundColor = color;
     
-    photoEl.classList.add('hidden');
-    initialsEl.classList.remove('hidden');
+    if (photoEl) photoEl.classList.add('hidden');
+    if (initialsEl) initialsEl.classList.remove('hidden');
   }
 }
 
@@ -522,7 +498,6 @@ function animarContador(id, valorFinal, duracao = 1000) {
   const elemento = document.getElementById(id);
   if (!elemento || isNaN(valorFinal)) return;
 
-  // Tentar obter o valor atual do elemento
   let inicio = 0;
   try {
     const valorAtual = elemento.textContent.replace(/[^\d,]/g, '').replace(',', '.');
@@ -532,8 +507,6 @@ function animarContador(id, valorFinal, duracao = 1000) {
   }
 
   const startTime = performance.now();
-
-  // Efeito visual inicial
   elemento.style.opacity = "0.7";
   elemento.style.transform = "scale(1.1)";
 
@@ -547,18 +520,14 @@ function animarContador(id, valorFinal, duracao = 1000) {
     if (progress < 1) {
       requestAnimationFrame(update);
     } else {
-      // Efeito final
       elemento.style.transition = "all 0.3s ease";
       elemento.style.opacity = "1";
       elemento.style.transform = "scale(1)";
-
-      // Remove a transição após a animação
       setTimeout(() => {
         elemento.style.transition = "";
       }, 300);
     }
   }
-
   requestAnimationFrame(update);
 }
 
@@ -568,222 +537,6 @@ function formatarMoeda(valor) {
     currency: "BRL",
     minimumFractionDigits: 2
   });
-}
-
-function gerarResumoAnual() {
-  const container = document.getElementById("resumoAnual");
-  if (!container) return;
-
-  if (!transactions.length) {
-    // Alterado para zinc-800 e zinc-400
-    container.innerHTML = `
-      <div class="bg-zinc-800 text-white p-4 rounded-lg text-center">
-        <p class="text-sm">Nenhum dado encontrado para gerar o resumo anual.</p>
-        <p class="text-sm mt-1 text-zinc-400">Adicione transações para começar a visualizar seu desempenho financeiro.</p>
-      </div>
-    `;
-    return;
-  }
-
-  const mesesNomes = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-  const dadosAnuais = Array.from({ length: 12 }, () => ({ receitas: 0, despesas: 0, sobra: 0 }));
-  const anoAtual = new Date().getFullYear();
-
-  transactions.forEach((t) => {
-    if (!t.dueDate || !(t.dueDate instanceof Date)) t.dueDate = new Date(t.dueDate);
-
-    const data = t.dueDate;
-    const mes = data.getMonth();
-    const ano = data.getFullYear();
-
-    if (ano === anoAtual) {
-      if (t.type === "Ganho") dadosAnuais[mes].receitas += t.amount;
-      else if (t.type === "Gasto") dadosAnuais[mes].despesas += t.amount;
-    }
-  });
-
-  let maiorGasto = { mes: null, valor: 0 };
-  let maiorSobra = { mes: null, valor: -Infinity };
-  let acumulado = 0;
-
-  let resumoHTML = `<h2 class="text-lg font-bold text-white">📆 Resumo Anual (2024)</h2>`;
-  resumoHTML += `<div class="grid grid-cols-2 md:grid-cols-4 gap-4">`;
-
-  dadosAnuais.forEach((dado, i) => {
-    dado.sobra = dado.receitas - dado.despesas;
-    if (dado.despesas > maiorGasto.valor) maiorGasto = { mes: mesesNomes[i], valor: dado.despesas };
-    if (dado.sobra > maiorSobra.valor) maiorSobra = { mes: mesesNomes[i], valor: dado.sobra };
-    if (dado.sobra > 0) acumulado += dado.sobra;
-
-    resumoHTML += `
-      <div class="bg-zinc-900 p-4 rounded-lg shadow flex flex-col gap-1">
-        <h3 class="text-sm font-semibold text-zinc-400">${mesesNomes[i]}</h3>
-        <p>Receitas: <span class="text-green-400">${formatarMoeda(dado.receitas)}</span></p>
-        <p>Despesas: <span class="text-red-400">${formatarMoeda(dado.despesas)}</span></p>
-        <p>Sobra: <span class="${dado.sobra >= 0 ? 'text-green-500' : 'text-red-500'}">${formatarMoeda(dado.sobra)}</span></p>
-      </div>
-    `;
-  });
-
-  resumoHTML += `</div><div class="mt-4">`;
-
-  // Insights
-  resumoHTML += `<h3 class="text-md font-semibold text-white mt-4">📌 Insights do Ano:</h3><ul class="list-disc ml-5 mt-2 space-y-1">`;
-  resumoHTML += `<li>📉 Mês com mais despesas: <strong>${maiorGasto.mes}</strong> (${formatarMoeda(maiorGasto.valor)})</li>`;
-  resumoHTML += `<li>💹 Mês com maior economia: <strong>${maiorSobra.mes}</strong> (${formatarMoeda(maiorSobra.valor)})</li>`;
-  resumoHTML += `<li>🏦 Economia acumulada no ano: <strong class="text-green-400">${formatarMoeda(acumulado)}</strong></li>`;
-
-  const jan = dadosAnuais[0].despesas;
-  const dez = dadosAnuais[11].despesas;
-  if (jan > 0) {
-    const variacao = ((dez - jan) / jan) * 100;
-    resumoHTML += `<li>📈 Despesas ${variacao >= 0 ? "aumentaram" : "diminuíram"} ${Math.abs(variacao).toFixed(1)}% de Jan para Dezembro.</li>`;
-  }
-
-  resumoHTML += `</ul></div>`;
-  container.innerHTML = resumoHTML;
-}
-
-function gerarPlanoFinanceiroPessoal() {
-  const container = document.getElementById("planoFinanceiro");
-  if (!container) return;
-
-  if (!transactions.length) {
-    container.innerHTML = `
-      <div class="bg-zinc-800 text-white p-4 rounded-lg text-center">
-        <p class="text-sm">Nenhum dado encontrado para gerar o plano financeiro.</p>
-        <p class="text-sm mt-1 text-zinc-400">Adicione transações para começar a visualizar seu desempenho financeiro.</p>
-      </div>
-    `;
-    return;
-  }
-
-  const anoAtual = new Date().getFullYear();
-  const transacoesAno = transactions.filter(t => {
-    if (!t.dueDate || !(t.dueDate instanceof Date)) t.dueDate = new Date(t.dueDate);
-    return t.dueDate.getFullYear() === anoAtual;
-  });
-
-  const receitas = transacoesAno.filter(t => t.type === "Ganho");
-  const despesas = transacoesAno.filter(t => t.type === "Gasto");
-
-  // Ajuste correto com base no seu sistema
-  const fixas = despesas.filter(t => t.isFixed);
-  const parceladas = despesas.filter(t => !t.isFixed && t.installments > 1);
-  const variaveis = despesas.filter(t => !t.isFixed && (!t.installments || t.installments <= 1));
-  const pendentes = despesas.filter(t => !t.isPaid);
-
-  const totalReceitas = receitas.reduce((sum, t) => sum + t.amount, 0);
-  const totalDespesas = despesas.reduce((sum, t) => sum + t.amount, 0);
-  const totalFixas = fixas.reduce((sum, t) => sum + t.amount, 0);
-  const totalVariaveis = variaveis.reduce((sum, t) => sum + t.amount, 0);
-  const totalParcelado = parceladas.reduce((sum, t) => sum + t.amount, 0);
-  const totalPendentes = pendentes.reduce((sum, t) => sum + t.amount, 0);
-  const sobra = totalReceitas - totalDespesas;
-
-  const receitasPorMes = [...Array(12).keys()].map(mes =>
-    receitas.filter(t => t.dueDate.getMonth() === mes).reduce((s, t) => s + t.amount, 0)
-  );
-  const despesasPorMes = [...Array(12).keys()].map(mes =>
-    despesas.filter(t => t.dueDate.getMonth() === mes).reduce((s, t) => s + t.amount, 0)
-  );
-  const mediaReceita = receitasPorMes.reduce((a, b) => a + b, 0) / 12;
-  const mediaDespesa = despesasPorMes.reduce((a, b) => a + b, 0) / 12;
-  const mediaSobra = mediaReceita - mediaDespesa;
-
-  const metaEconomia = mediaSobra > 0 ? mediaSobra * 0.5 : 0;
-  const perfil = totalReceitas === 0
-    ? "Indefinido"
-    : (totalDespesas / totalReceitas > 0.9
-      ? "Gastador"
-      : totalDespesas / totalReceitas > 0.7
-      ? "Equilibrado"
-      : "Poupador");
-
-  const categorias = {};
-  despesas.forEach(t => categorias[t.category] = (categorias[t.category] || 0) + t.amount);
-  const topCategorias = Object.entries(categorias).sort((a, b) => b[1] - a[1]).slice(0, 3);
-  const frequencia = {};
-  despesas.forEach(t => frequencia[t.category] = (frequencia[t.category] || 0) + 1);
-  const maisFrequente = Object.entries(frequencia).sort((a, b) => b[1] - a[1])[0];
-  const percFixos = totalDespesas > 0 ? (totalFixas / totalDespesas) * 100 : 0;
-  const economiaCategoria = topCategorias[0] ? topCategorias[0][1] * 0.2 : 0;
-
-  container.innerHTML = `
-    <h2 class="text-xl font-bold text-white">📘 Plano Financeiro Pessoal - ${anoAtual}</h2>
-    <div class="space-y-6 mt-4">
-
-      <!-- Receita e Despesas -->
-      <div class="bg-zinc-900 p-4 rounded-xl shadow space-y-2">
-        <h3 class="text-md font-semibold text-white mb-2">💰 Receitas e Despesas</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-          <p>Receita anual: <strong class="text-green-400">${formatarMoeda(totalReceitas)}</strong></p>
-          <p>Despesas anuais: <strong class="text-red-400">${formatarMoeda(totalDespesas)}</strong></p>
-          <p>Despesas fixas: <strong>${formatarMoeda(totalFixas)}</strong></p>
-          <p>Despesas variáveis: <strong>${formatarMoeda(totalVariaveis)}</strong></p>
-          <p>Parcelamentos: <strong>${parceladas.length}</strong> (${formatarMoeda(totalParcelado)})</p>
-          <p>Contas pendentes: <strong>${pendentes.length}</strong> (${formatarMoeda(totalPendentes)})</p>
-        </div>
-        <div class="mt-2 border-t border-zinc-700 pt-2 text-sm">
-          <p>Sobra anual: <strong class="${sobra >= 0 ? 'text-green-400' : 'text-red-400'}">${formatarMoeda(sobra)}</strong></p>
-          <p>Proporção despesas/receita: <strong>${(totalDespesas / totalReceitas * 100).toFixed(1)}%</strong></p>
-        </div>
-      </div>
-
-      <!-- Diagnóstico -->
-      <div class="bg-zinc-900 p-4 rounded-xl shadow space-y-2">
-        <h3 class="text-md font-semibold text-white mb-2">🧠 Diagnóstico</h3>
-        <p>Perfil financeiro: <strong class="text-yellow-300">${perfil}</strong></p>
-        <p>${percFixos.toFixed(1)}% das despesas são fixas${percFixos > 80 ? " — ⚠️ alto comprometimento!" : ""}</p>
-        ${maisFrequente ? `<p>🔁 Categoria mais frequente: <strong>${maisFrequente[0]}</strong> (${maisFrequente[1]} vezes)</p>` : ""}
-        ${topCategorias.length ? `
-          <div>
-            🔻 <strong>Top 3 categorias de gasto:</strong>
-            <ul class="list-disc ml-6 text-sm mt-1">
-              ${topCategorias.map(([cat, val], i) => `<li>${i + 1}. ${cat} — ${formatarMoeda(val)}</li>`).join("")}
-            </ul>
-          </div>` : ""}
-        ${economiaCategoria ? `<p>💡 Reduzindo 20% em <strong>${topCategorias[0][0]}</strong>, você economizaria ${formatarMoeda(economiaCategoria)}.</p>` : ""}
-      </div>
-
-      <!-- Projeção -->
-      <div class="bg-zinc-900 p-4 rounded-xl shadow space-y-2">
-        <h3 class="text-md font-semibold text-white mb-2">📈 Projeção Mensal (base média)</h3>
-        <ul class="list-disc ml-6 text-sm">
-          <li>Receita média: <strong class="text-green-400">${formatarMoeda(mediaReceita)}</strong></li>
-          <li>Despesa média: <strong class="text-red-400">${formatarMoeda(mediaDespesa)}</strong></li>
-          <li>Sobra média: <strong class="${mediaSobra >= 0 ? 'text-green-400' : 'text-red-400'}">${formatarMoeda(mediaSobra)}</strong></li>
-        </ul>
-        <p class="mt-2">🎯 Meta sugerida de economia mensal: <strong>${formatarMoeda(metaEconomia)}</strong></p>
-      </div>
-    </div>
-  `;
-}
-
-function mostrarRelatorio(tipo) {
-  const seções = {
-    anual: document.getElementById("resumoAnual"),
-    plano: document.getElementById("planoFinanceiro")
-  };
-
-  const seçõesDOM = Object.values(seções);
-  const botaoClicado = event.target;
-  const todosBotoes = document.querySelectorAll(".btn-tab");
-
-  // Se o botão já está ativo, clique novamente para fechar (toggle)
-  if (botaoClicado.classList.contains("bg-zinc-600")) {
-    seçõesDOM.forEach(el => el.classList.add("hidden"));
-    todosBotoes.forEach(btn => btn.classList.remove("bg-zinc-600", "text-white", "border-zinc-500", "shadow-md"));
-    return;
-  }
-
-  // Ativa o botão e exibe a aba
-  for (let chave in seções) {
-    seções[chave].classList.toggle("hidden", chave !== tipo);
-  }
-
-  todosBotoes.forEach(btn => btn.classList.remove("bg-zinc-600", "text-white", "border-zinc-500", "shadow-md"));
-  botaoClicado.classList.add("bg-zinc-600", "text-white", "border-zinc-500", "shadow-md");
 }
 
 function showNewUserModal() {
@@ -816,27 +569,30 @@ async function loadInvestmentsFromFirestore() {
   }
 }
 
-function calculateInvestmentTotals() {
-  if (!investments || investments.length === 0) return;
+function calculateInvestmentTotals(investmentsToCalculate) {
+  if (!investmentsToCalculate || investmentsToCalculate.length === 0) {
+    document.getElementById("totalPatrimonio").textContent = formatarMoeda(0);
+    document.getElementById("rendimentoTotalInvestimentos").textContent = "Rendimento total de " + formatarMoeda(0);
+    renderBadge("badgeInvestimentos", 0);
+    document.getElementById("totalAportadoCard").textContent = formatarMoeda(0);
+    document.getElementById("rendimentoCard").textContent = formatarMoeda(0);
+    return;
+  }
 
   let totalInvestido = 0;
   let patrimonioAtual = 0;
 
-  investments.forEach(inv => {
+  investmentsToCalculate.forEach(inv => {
     const price = parseFloat(inv.price) || 0;
     const quantity = parseFloat(inv.quantity) || 0;
     const currentValue = parseFloat(inv.currentValue) || 0;
 
     totalInvestido += price * quantity;
     patrimonioAtual += currentValue * quantity;
-
-    renderBadge("badgeInvestimentos");
   });
 
   const rendimento = patrimonioAtual - totalInvestido;
   const rendimentoPct = totalInvestido > 0 ? (rendimento / totalInvestido) * 100 : 0;
-
-  // --- Preenchendo os elementos do Card de forma segura ---
   
   const totalPatrimonioEl = document.getElementById("totalPatrimonio");
   if (totalPatrimonioEl) animarContador("totalPatrimonio", patrimonioAtual);
@@ -844,7 +600,6 @@ function calculateInvestmentTotals() {
   const rendimentoTotalEl = document.getElementById("rendimentoTotalInvestimentos");
   if (rendimentoTotalEl) rendimentoTotalEl.textContent = `Rendimento total de ${formatarMoeda(rendimento)}`;
   
-  // A função renderBadge já deve verificar se o elemento existe
   renderBadge("badgeInvestimentos", rendimentoPct); 
   
   const totalAportadoEl = document.getElementById("totalAportadoCard");
@@ -857,10 +612,10 @@ function calculateInvestmentTotals() {
   }
 }
 
-function updateInvestmentCharts() {
+function updateInvestmentCharts(investmentsToUpdate) {
   // Dados para o Gráfico de Alocação
-  const allocationData = investments.reduce((acc, inv) => {
-    const valor = inv.currentValue * inv.quantity;
+  const allocationData = investmentsToUpdate.reduce((acc, inv) => {
+    const valor = (inv.currentValue || 0) * (inv.quantity || 0);
     acc[inv.type] = (acc[inv.type] || 0) + valor;
     return acc;
   }, {});
@@ -871,13 +626,252 @@ function updateInvestmentCharts() {
 
   // Dados para o Gráfico de Evolução dos Aportes
   const evolutionData = Array(12).fill(0);
-  investments.forEach(inv => {
-    const month = new Date(inv.date).getMonth();
+  investmentsToUpdate.forEach(inv => {
+    const invDate = new Date(inv.date);
+    if (isNaN(invDate.getTime())) return; 
+
+    const month = invDate.getMonth();
     if (month >= 0 && month < 12) {
-      evolutionData[month] += inv.price * inv.quantity;
+      evolutionData[month] += (inv.price || 0) * (inv.quantity || 0);
     }
   });
 
   portfolioEvolutionChart.data.datasets[0].data = evolutionData;
   portfolioEvolutionChart.update();
 }
+
+// Carrega os valores planejados para as categorias
+async function loadCategoryPlansFromFirestore() {
+  const user = auth.currentUser;
+  if (!user) return;
+
+  const db = firebase.firestore();
+  const plansRef = db.collection("users").doc(user.uid).collection("categoryPlans");
+  
+  try {
+    const snapshot = await plansRef.get();
+    snapshot.docs.forEach(doc => {
+      categoryPlans[doc.id] = doc.data().plannedValue || 0;
+    });
+  } catch (error) {
+    console.error("Erro ao carregar planejamento:", error);
+  }
+}
+
+// Configura os listeners do novo seletor de data
+function setupDateNavigatorListeners() {
+  const monthNavigator = document.querySelector("span.text-lg.font-semibold");
+
+  // Botão de Mês Anterior
+  document.querySelector(".fa-chevron-left").addEventListener("click", () => {
+    // [BUG 1 CORRIGIDO] Lógica para sair do "Ano Inteiro"
+    if (currentMonth === "all") {
+        currentMonth = 11; // Vai para Dezembro
+        // Não muda o ano, fica no ano atual
+    } else {
+        currentMonth--;
+        if (currentMonth < 0) {
+            currentMonth = 11;
+            currentYear--;
+        }
+    }
+    updateMonthDisplay();
+    applyFilters(); 
+  });
+
+  // Botão de Próximo Mês
+  document.querySelector(".fa-chevron-right").addEventListener("click", () => {
+    // [BUG 1 CORRIGIDO] Lógica para sair do "Ano Inteiro"
+    if (currentMonth === "all") {
+        currentMonth = 0; // Vai para Janeiro
+        // Não muda o ano, fica no ano atual
+    } else {
+        currentMonth++;
+        if (currentMonth > 11) {
+            currentMonth = 0;
+            currentYear++;
+        }
+    }
+    updateMonthDisplay();
+    applyFilters();
+  });
+
+  // Abre o "Calendário" customizado
+  if (monthNavigator) {
+    monthNavigator.addEventListener("click", (event) => {
+      const existingDropdown = document.getElementById("dropdownContainer");
+      if (existingDropdown) {
+        existingDropdown.remove();
+        return;
+      }
+
+      const dropdownContainer = document.createElement("div");
+      dropdownContainer.id = "dropdownContainer";
+      dropdownContainer.className =
+        "absolute bg-zinc-800 text-white rounded-xl shadow-2xl p-4 mt-2 z-10";
+
+      const navigatorRect = monthNavigator.getBoundingClientRect();
+      dropdownContainer.style.position = "absolute";
+      const dropdownWidth = 240;
+      dropdownContainer.style.width = `${dropdownWidth}px`;
+      dropdownContainer.style.left = `${navigatorRect.left + navigatorRect.width / 2 - dropdownWidth / 2 + window.scrollX}px`;
+      dropdownContainer.style.top = `${navigatorRect.bottom + 6 + window.scrollY}px`;
+
+      let selectedYear = currentYear;
+
+      function updateDropdownContent() {
+        dropdownContainer.innerHTML = `
+          <div class="flex justify-between items-center mb-4">
+            <button id="prevYear" class="bg-green-500 p-2 rounded-lg px-4 py-1"><i class="fas fa-chevron-left"></i></button>
+            <span class="text-lg">${selectedYear}</span>
+            <button id="nextYear" class="bg-green-500 p-2 rounded-lg px-4 py-1"><i class="fas fa-chevron-right"></i></button>
+          </div>
+          <div class="grid grid-cols-4 gap-2">
+            <button 
+              class="bg-zinc-700 p-2 rounded-lg hover:bg-zinc-600 col-span-4 ${
+                currentMonth === "all" && selectedYear === currentYear
+                  ? "ring-2 ring-green-500"
+                  : ""
+              }"
+              data-month="all">
+              Ano Inteiro
+            </button>
+            ${months
+              .map(
+                (month, index) => `
+              <button 
+                class="bg-zinc-700 p-2 rounded-lg hover:bg-zinc-600 ${
+                  index === currentMonth && selectedYear === currentYear
+                    ? "ring-2 ring-green-500"
+                    : ""
+                }"
+                data-month="${index}">
+                ${month.slice(0, 3)}
+              </button>
+            `
+              )
+              .join("")}
+          </div>
+        `;
+
+        // Listeners para os botões DENTRO do dropdown
+        dropdownContainer
+          .querySelector("#prevYear")
+          .addEventListener("click", (e) => {
+            e.stopPropagation();
+            selectedYear--;
+            updateDropdownContent();
+          });
+
+        dropdownContainer
+          .querySelector("#nextYear")
+          .addEventListener("click", (e) => {
+            e.stopPropagation();
+            selectedYear++;
+            updateDropdownContent();
+          });
+
+        dropdownContainer.querySelectorAll("[data-month]").forEach((button) => {
+          button.addEventListener("click", (e) => {
+            currentYear = selectedYear;
+            const monthValue = e.target.dataset.month;
+            currentMonth = (monthValue === "all") ? "all" : parseInt(monthValue);
+            
+            updateMonthDisplay();
+            applyFilters();
+            dropdownContainer.remove();
+          });
+        });
+      }
+
+      updateDropdownContent();
+      document.body.appendChild(dropdownContainer);
+
+      // Fecha o dropdown ao clicar fora
+      document.addEventListener("click", function closeDropdown(e) {
+        if (dropdownContainer && !dropdownContainer.contains(e.target) && e.target !== monthNavigator) {
+          dropdownContainer.remove();
+          document.removeEventListener("click", closeDropdown);
+        }
+      });
+
+      dropdownContainer.addEventListener("click", (e) => e.stopPropagation());
+    });
+  }
+}
+
+// Atualiza o texto para lidar com "Ano Inteiro"
+function updateMonthDisplay() {
+  const monthNavigator = document.querySelector("span.text-lg.font-semibold");
+  if (monthNavigator) {
+    const monthText = (currentMonth === "all") ? "Ano Inteiro" : months[currentMonth];
+    monthNavigator.textContent = `${monthText} ${currentYear}`;
+  }
+}
+
+// [INÍCIO DAS NOVAS FUNÇÕES]
+
+/**
+ * [MELHORIA 2]
+ * Esta é a função que será chamada quando você clicar em um gráfico.
+ */
+function handleChartClick(event, elements) {
+    // Só ativa o filtro se estiver na visão "Ano Inteiro" e se o clique foi em uma barra
+    if (currentMonth !== "all" || elements.length === 0) {
+        return;
+    }
+    
+    // Pega o índice (0-11) do mês clicado
+    const monthIndex = elements[0].index; 
+    
+    // Define o novo mês globalmente
+    currentMonth = monthIndex;
+    
+    // Atualiza o texto do seletor (ex: "Julho 2024")
+    updateMonthDisplay();
+    // Refaz todo o filtro do dashboard (cards, gráficos, etc.)
+    applyFilters();
+}
+
+/**
+ * [BUG 2 & MELHORIA 2]
+ * Esta função aplica as correções de layout e os listeners de clique
+ * nos objetos dos gráficos (que são criados pelo charts.js).
+ */
+function applyChartModifications() {
+    // Espera os gráficos (definidos em charts.js) estarem prontos
+    const checkChartsReady = setInterval(() => {
+        try {
+            // Se esta variável (do charts.js) existir, paramos de verificar
+            if (window.monthlyIncomeChart && window.monthlyExpensesChart) {
+                clearInterval(checkChartsReady);
+
+                // --- Correção do Tooltip (BUG 2) ---
+                const topPadding = { top: 30 }; // Aumenta o espaço no topo
+
+                // Aplica o padding em todos os gráficos
+                window.monthlyIncomeChart.options.layout.padding = topPadding;
+                window.monthlyExpensesChart.options.layout.padding = topPadding;
+                window.categoriesChart.options.layout.padding = topPadding;
+                window.paidVsPendingChart.options.layout.padding = topPadding;
+                window.debtsByDayChart.options.layout.padding = topPadding;
+                window.planningChart.options.layout.padding = topPadding;
+                window.investmentAllocationChart.options.layout.padding = topPadding;
+                window.portfolioEvolutionChart.options.layout.padding = topPadding;
+                
+                // --- Interatividade dos Gráficos (MELHORIA 2) ---
+                window.monthlyIncomeChart.options.onClick = handleChartClick;
+                window.monthlyExpensesChart.options.onClick = handleChartClick;
+
+                // Re-renderiza os gráficos com as novas opções
+                window.monthlyIncomeChart.update();
+                window.monthlyExpensesChart.update();
+                // Os outros serão atualizados pelo applyFilters()
+            }
+        } catch (e) {
+            console.warn("Aguardando 'charts.js' carregar...");
+        }
+    }, 100); // Verifica a cada 100ms
+}
+
+// [FIM DAS NOVAS FUNÇÕES]

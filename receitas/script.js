@@ -243,6 +243,7 @@ function replicateFixedTransaction(transaction) {
   showLoading();
   const user = firebase.auth().currentUser;
   if (!user) {
+    hideLoading();
     console.error(
       "Usuário não autenticado. Não é possível replicar transações fixas no Firestore."
     );
@@ -253,21 +254,26 @@ function replicateFixedTransaction(transaction) {
   const userRef = db.collection("users").doc(user.uid);
   const batch = db.batch();
 
-  const currentMonth = transaction.dueDate.getMonth();
-  const currentYear = transaction.dueDate.getFullYear();
-  const monthsRemaining = 11 - currentMonth; // Número de meses até dezembro (baseado em zero)
+  const REPLICATION_YEARS = 30; // Replicar por 30 anos
+  const totalMonthsToReplicate = REPLICATION_YEARS * 12;
+  const originalDay = transaction.dueDate.getDate(); // Salva o dia original
 
-  for (let i = 1; i <= monthsRemaining; i++) {
+  for (let i = 1; i <= totalMonthsToReplicate; i++) {
     const replicatedTransaction = { ...transaction };
-    replicatedTransaction.id = `${transaction.id}-${i}`;
+    replicatedTransaction.id = `${transaction.id}-${i}`; // ID único para a réplica
     replicatedTransaction.dueDate = new Date(transaction.dueDate);
     replicatedTransaction.dueDate.setMonth(
-      replicatedTransaction.dueDate.getMonth() + i
+      transaction.dueDate.getMonth() + i
     );
 
-    if (replicatedTransaction.dueDate.getFullYear() > currentYear) {
-      break; // Evitar replicações além do ano atual
+    // [IMPORTANTE] Lógica para corrigir "pulos" de mês
+    // ex: 31 de Jan + 1 mês = 31 de Fev -> 2 ou 3 de Março.
+    // Esta lógica força a data para o último dia do mês correto (ex: 28/29 de Fev).
+    if (replicatedTransaction.dueDate.getDate() !== originalDay) {
+        replicatedTransaction.dueDate.setDate(0); // Vai para o último dia do mês anterior (o mês que queremos)
     }
+
+    replicatedTransaction.isPaid = false; // Novas réplicas futuras nunca estão pagas
 
     const docRef = userRef
       .collection("transactions")
@@ -284,7 +290,7 @@ function replicateFixedTransaction(transaction) {
     })
     .catch((error) => {
       hideLoading();
-      console.error("Erro ao replicar transações fixas no Firestore:", error);
+      console.error("Erro ao replicar transações fixas (longo prazo):", error);
     });
 }
 
@@ -403,47 +409,68 @@ function syncReplicatedTransactions(newTx) {
     return;
   }
 
+  // 1. Identifica o grupo de transações (ex: "1712345678")
+  const baseId = newTx.id.split("-")[0];
+
+  // 2. Define o ponto de corte com base no mês da transação que você está EDITANDO.
+  const clickedDueDate = convertToDate(newTx.dueDate);
+  const startOfClickedMonth = new Date(
+    clickedDueDate.getFullYear(),
+    clickedDueDate.getMonth(),
+    1, // Dia 01
+    0, 0, 0, 0 // Início do dia
+  );
+
   const db = firebase.firestore();
   const txRef = db
     .collection("users")
     .doc(user.uid)
     .collection("transactions");
 
-  const baseId = newTx.id.split("-")[0];
-
   txRef
     .get()
     .then((snap) => {
       const batch = db.batch();
 
-      // Apaga todas as réplicas, exceto a principal
+      // 3. Apaga todas as réplicas futuras, EXCETO a principal
       snap.forEach((doc) => {
         const id = doc.id;
-        if (id !== newTx.id && id.startsWith(baseId + "-")) {
-          batch.delete(doc.ref);
+        const [docBaseId] = id.split("-");
+
+        // 4. Verifica se é do mesmo grupo
+        if (docBaseId === baseId) {
+          const docData = doc.data();
+          const docDueDate = convertToDate(docData.dueDate);
+
+          // 5. SÓ apaga se for do mês editado em diante E não for a própria transação (newTx.id).
+          if (id !== newTx.id && docDueDate >= startOfClickedMonth) {
+            batch.delete(doc.ref);
+          }
         }
       });
 
       return batch.commit();
     })
     .then(() => {
-      // Atualiza a lista local
+      // 6. Atualiza a lista local
       transactions = transactions.filter((t) => {
         const [bid] = t.id.split("-");
-        return bid !== baseId || t.id === newTx.id;
+        if (bid !== baseId) return true; // Não é do grupo
+        const txDueDate = convertToDate(t.dueDate);
+        if (txDueDate < startOfClickedMonth) return true; // É do passado
+        if (t.id === newTx.id) return true; // É a que acabamos de salvar
+        return false; // É uma réplica futura que foi apagada
       });
 
-      // Decide o que fazer conforme o tipo da transação
+      // 7. Recria as transações (fixas ou parceladas) para o futuro
       if (newTx.isFixed) {
-        replicateFixedTransaction(newTx);
+        replicateFixedTransaction(newTx); // <<-- Chamará a nova função de 30 anos
         hideLoading();
       } else if (newTx.installments > 1) {
         replicateInstallments(newTx);
       } else {
         // Caso seja transação única
         newTx.installments = 1;
-
-        // Atualiza a transação principal no Firestore
         return txRef.doc(newTx.id).update({ installments: 1 }).then(() => {
           hideLoading();
           displayTransactionsForCurrentMonth();
@@ -533,14 +560,27 @@ function displayTransactionsForCurrentMonth() {
   const searchInput = document.getElementById("searchInput");
   const searchTerm = searchInput.value.trim().toLowerCase(); // Filtro de busca
 
+  const tfoot = document.getElementById("tableFooter");
+  const footerAmountEl = document.getElementById("footerTotalAmount");
+  const footerCountEl = document.getElementById("footerTransactionCount");
+
+  // Variáveis para calcular os totais visíveis
+  let visibleTransactionCount = 0;
+  let visibleTransactionTotal = 0.0;
+
   tableBody.innerHTML = "";
 
   transactions.forEach((transaction, index) => {
+    // Adiciona verificação para garantir que dueDate é um objeto Date
+    if (!(transaction.dueDate instanceof Date)) {
+      console.error("Data de vencimento inválida para a transação:", transaction);
+      return;
+    }
+
     const transactionMonth = transaction.dueDate.getMonth();
     const transactionYear = transaction.dueDate.getFullYear();
     const formattedName = capitalizeName(transaction.name); // Nome formatado para comparação
     const categoryName    = categoryMap[transaction.category] || "Categoria desconhecida";
-
 
     if (
       transaction.type === "Ganho" &&
@@ -549,6 +589,13 @@ function displayTransactionsForCurrentMonth() {
       (filterDatepay === "" || transaction.datepay === filterDatepay) &&
       formattedName.toLowerCase().includes(searchTerm)
     ) {
+
+      // [INÍCIO DA CORREÇÃO]
+      // A soma agora acontece AQUI DENTRO, apenas para transações visíveis.
+      visibleTransactionCount++;
+      visibleTransactionTotal += transaction.amount;
+      // [FIM DA CORREÇÃO]
+
       const formattedAmount = new Intl.NumberFormat("pt-BR", {
         style: "currency",
         currency: "BRL",
@@ -600,12 +647,37 @@ function displayTransactionsForCurrentMonth() {
     }
   });
 
-  if (tableBody.innerHTML === "") {
+  // Atualiza o footer ou esconde se estiver vazio
+  if (visibleTransactionCount === 0) {
     const emptyRow = document.createElement("tr");
-    emptyRow.innerHTML = `<td colspan="8" class="text-center py-4">Nenhuma transação encontrada para este mês.</td>`;
+    emptyRow.innerHTML = `<td colspan="9" class="text-center py-4">Nenhuma transação encontrada para este mês.</td>`;
     tableBody.appendChild(emptyRow);
+    
+    // Esconde o footer
+    tfoot.style.display = 'none';
+  } else {
+    // Mostra o footer e atualiza os valores
+    tfoot.style.display = 'table-footer-group'; // 'table-footer-group' é o display padrão para tfoot
+    
+    footerAmountEl.textContent = new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(visibleTransactionTotal);
+    
+    footerCountEl.textContent = `${visibleTransactionCount} ${visibleTransactionCount === 1 ? 'transação' : 'transações'}`;
   }
 
+  // O bloco de código abaixo (if tableBody.innerHTML === "") é redundante
+  // por causa da lógica "if (visibleTransactionCount === 0)" acima,
+  // mas pode ser mantido ou removido.
+
+  // if (tableBody.innerHTML === "") {
+  //   const emptyRow = document.createElement("tr");
+  //   emptyRow.innerHTML = `<td colspan="8" class="text-center py-4">Nenhuma transação encontrada para este mês.</td>`;
+  //   tableBody.appendChild(emptyRow);
+  // }
+
+  // Atualiza os cards de Resumo (Dia 01 e Dia 15)
   const valorDia01Element = document.getElementById("valor-dia-01");
   const valorDia15Element = document.getElementById("valor-dia-15");
   const qtdDia01Element = document.getElementById("quantidade-dia-01");
@@ -618,6 +690,9 @@ function displayTransactionsForCurrentMonth() {
     let countDia15 = 0;
 
     transactions.forEach(transaction => {
+      // Adiciona verificação de data aqui também
+      if (!(transaction.dueDate instanceof Date)) return;
+
       const transactionMonth = transaction.dueDate.getMonth();
       const transactionYear = transaction.dueDate.getFullYear();
 
@@ -625,7 +700,8 @@ function displayTransactionsForCurrentMonth() {
         transaction.type === "Ganho" &&
         transactionMonth === currentMonth &&
         transactionYear === currentYear &&
-        !transaction.isPaid
+        !transaction.isPaid // [NOTA] Você pode querer que os cards mostrem *tudo*, pago ou não. 
+                           // Se sim, remova esta linha "!transaction.isPaid"
       ) {
         if (transaction.datepay === "01") {
           totalDia01 += transaction.amount;
@@ -670,7 +746,6 @@ function displayTransactionsForCurrentMonth() {
     window.requestAnimationFrame(step);
   }
 }
-
 
 let ordenacaoAtual = { campo: null, asc: true };
 
@@ -834,15 +909,23 @@ function deleteTransactionForCurrentMonth(index) {
 function deleteTransactionForAllMonths(index) {
   showLoading();
   const transactionToRemove = transactions[index];
-  const transactionSignature = `${transactionToRemove.name}_${transactionToRemove.amount}_${transactionToRemove.type}_${transactionToRemove.category}`;
+
+  // 1. Identifica o grupo de transações
+  const baseId = transactionToRemove.id.split("-")[0];
   const user = firebase.auth().currentUser;
 
   if (!user) {
-    console.error(
-      "Usuário não autenticado. Não é possível excluir transações."
-    );
+    hideLoading();
+    console.error("Usuário não autenticado.");
     return;
   }
+
+  // 2. Define o ponto de corte (mês clicado)
+  const clickedDueDate = convertToDate(transactionToRemove.dueDate);
+  const startOfClickedMonth = new Date(
+    clickedDueDate.getFullYear(),
+    clickedDueDate.getMonth(), 1, 0, 0, 0, 0
+  );
 
   const db = firebase.firestore();
   const transactionsRef = db
@@ -850,36 +933,48 @@ function deleteTransactionForAllMonths(index) {
     .doc(user.uid)
     .collection("transactions");
 
-  // Procurar e excluir todas as transações com a mesma assinatura
   transactionsRef
-    .where("name", "==", transactionToRemove.name)
-    .where("amount", "==", transactionToRemove.amount)
-    .where("type", "==", transactionToRemove.type)
-    .where("category", "==", transactionToRemove.category)
     .get()
     .then((querySnapshot) => {
       const batch = db.batch();
+
       querySnapshot.forEach((doc) => {
-        batch.delete(doc.ref);
+        const docId = doc.id;
+        const [docBaseId] = docId.split("-");
+
+        // 3. Encontra todas as transações do mesmo grupo
+        if (docBaseId === baseId) {
+          const transactionData = doc.data();
+          const dueDate = convertToDate(transactionData.dueDate);
+
+          // 4. Apaga APENAS do mês clicado em diante
+          if (dueDate >= startOfClickedMonth) {
+            batch.delete(doc.ref);
+          }
+        }
       });
 
       return batch.commit();
     })
     .then(() => {
       hideLoading();
-      transactions = transactions.filter(
-        (transaction) =>
-          `${transaction.name}_${transaction.amount}_${transaction.type}_${transaction.category}` !==
-          transactionSignature
-      );
+
+      // 5. Atualiza o array local
+      transactions = transactions.filter((transaction) => {
+        const [txBaseId] = transaction.id.split("-");
+        if (txBaseId !== baseId) return true; // Mantém (não é do grupo)
+        const txDueDate = convertToDate(transaction.dueDate);
+        if (txDueDate < startOfClickedMonth) return true; // Mantém (é do passado)
+        return false; // Remove (é do mês clicado ou futuro)
+      });
+
       displayTransactionsForCurrentMonth();
     })
     .catch((error) => {
       hideLoading();
-      console.error("Erro ao excluir transações do Firestore:", error);
+      console.error("Erro ao excluir transações futuras do Firestore:", error);
     });
 }
-
 function openFormSidebar() {
   const formSidebar = document.getElementById("formSidebar");
   const overlay = document.getElementById("overlay");

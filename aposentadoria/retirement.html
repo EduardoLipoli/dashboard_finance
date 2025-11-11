@@ -71,6 +71,23 @@
             transform: scale(1.1);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
         }
+        
+        /* [NOVO] Estilos para campos desabilitados */
+        input:disabled, input[type="range"]:disabled {
+            background: #3f3f46;
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        input[type="range"]:disabled::-webkit-slider-thumb {
+            background: #52525b;
+            cursor: not-allowed;
+        }
+        
+        input[type="range"]:disabled::-moz-range-thumb {
+            background: #52525b;
+            cursor: not-allowed;
+        }
 
         .glass-card {
             background: rgba(39, 39, 42, 0.7);
@@ -130,7 +147,6 @@
 
 <body class="bg-zinc-900 text-zinc-200 h-screen grid grid-cols-[auto,1fr]">
 
-  <!--SideBar-->
   <div id="sidebar" class="sidebar flex flex-col items-center h-full w-16 group hover:w-52 transition-all duration-300">
     <div class="p-4 mt-2">
       <i class="fas fa-coins text-green-400 text-2xl animate-float"></i>
@@ -212,8 +228,16 @@
             <div class="relative inline-block text-left w-full md:w-auto">
                 <button id="dropdownButton"
                     class="bg-zinc-800 text-white font-medium py-2 px-4 border border-zinc-700 hover:bg-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 flex items-center justify-center md:justify-start space-x-2 w-full">
-                    <img id="user-photo" src="" alt="Foto de Perfil" class="w-8 h-8 rounded-full hidden md:block" />
-                    <div class="text-left md:block">
+                    
+                    <div id="avatar-container" class="relative w-8 h-8 flex-shrink-0">
+                        <div id="user-initials"
+                            class="w-full h-full rounded-full flex items-center justify-center text-white font-bold text-sm bg-gray-500">
+                            ?</div>
+                        <img id="user-photo" src="" alt="Foto de Perfil"
+                            class="w-full h-full rounded-full absolute top-0 left-0 hidden object-cover" />
+                    </div>
+
+                    <div class="text-left hidden md:block">
                         <div id="user-name" class="text-sm font-medium">Carregando...</div>
                         <div id="user-email" class="text-xs text-zinc-400">Carregando...</div>
                     </div>
@@ -238,7 +262,7 @@
                         <div class="flex items-center space-x-2">
                             <button id="refresh-data-btn"
                                 class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg transition-colors font-medium text-sm">
-                                <i class="fas fa-sync-alt mr-2"></i>Atualizar Dados
+                                <i class="fas fa-sync-alt mr-2"></i>Atualizar Dados Reais
                             </button>
                             <div class="flex space-x-1">
                                 <button
@@ -265,22 +289,22 @@
                     <form id="retirement-form" class="space-y-6">
 
                         <div class="space-y-3 bg-zinc-700/50 p-4 rounded-lg mb-6 border border-zinc-600">
-                            <h3 class="font-semibold text-white mb-2">Resumo Financeiro Mensal</h3>
+                            <h3 class="font-semibold text-white mb-2">Resumo Financeiro Mensal (Real)</h3>
                             <div class="flex justify-between text-sm">
-                                <span class="text-zinc-300">Ganhos Totais</span>
+                                <span class="text-zinc-300">Ganhos Fixos</span>
                                 <span id="monthly-income-summary" class="font-medium text-green-400">R$ 0,00</span>
                             </div>
                             <div class="flex justify-between text-sm">
-                                <span class="text-zinc-300">Despesas Totais</span>
+                                <span class="text-zinc-300">Despesas Fixas</span>
                                 <span id="monthly-expenses-summary" class="font-medium text-red-400">- R$ 0,00</span>
                             </div>
                             <div class="flex justify-between text-sm">
-                                <span class="text-zinc-300">Poupança para Metas</span>
+                                <span class="text-zinc-300">Poupança p/ Metas</span>
                                 <span id="monthly-goals-summary" class="font-medium text-blue-400">- R$ 0,00</span>
                             </div>
                             <hr class="border-zinc-600 my-2">
                             <div class="flex justify-between text-base">
-                                <span class="font-bold text-white">Disponível para Aposentadoria</span>
+                                <span class="font-bold text-white">Investimento Mensal (Real)</span>
                                 <span id="monthly-investment-value" class="font-bold text-green-400">R$ 0,00</span>
                             </div>
                         </div>
@@ -295,7 +319,7 @@
 
                         <div>
                             <div class="flex justify-between items-center mb-2">
-                                <label class="text-zinc-300">Renda desejada</label>
+                                <label class="text-zinc-300">Renda desejada (na aposentadoria)</label>
                                 <span id="monthly-income-value" class="font-bold text-green-400">R$ 10.000,00</span>
                             </div>
                             <input type="range" id="monthly-income" min="1000" max="30000" step="500" value="10000"
@@ -304,13 +328,17 @@
 
                         <div>
                             <div class="flex justify-between items-center mb-2">
-                                <label class="text-zinc-300">Investimento mensal</label>
-                                <span id="monthly-investment-display" class="font-bold text-green-400">R$
-                                    2.000,00</span>
+                                <label class="text-zinc-300">Investimento mensal (Simulação)</label>
+                                <div>
+                                    <button type="button" id="unlock-investment-btn" class="text-zinc-400 hover:text-white mr-2" title="Desbloquear para simular">
+                                        <i class="fas fa-lock"></i>
+                                    </button>
+                                    <span id="monthly-investment-display" class="font-bold text-green-400">R$
+                                        0,00</span>
+                                </div>
                             </div>
                             <input type="range" id="monthly-investment-input" min="100" max="10000" step="100"
-                                value="2000" class="w-full" disabled>
-                        </div>
+                                value="0" class="w-full" disabled> </div>
 
                         <hr class="border-zinc-700 my-4">
 
@@ -319,17 +347,16 @@
                                 <label class="block text-zinc-300 text-sm mb-1">Idade Atual</label>
                                 <input type="number" id="current-age"
                                     class="w-full bg-zinc-700 border border-zinc-600 rounded-lg p-2 text-sm" min="18"
-                                    max="100" required>
+                                    max="100" value="30" required>
                             </div>
                             <div>
-                                <label class="block text-zinc-300 text-sm mb-1">Valor Acumulado</label>
+                                <label class="block text-zinc-300 text-sm mb-1">Valor Acumulado (Real)</label>
                                 <div class="relative">
                                     <input type="number" id="current-savings"
                                         class="w-full bg-zinc-700 border border-zinc-600 rounded-lg p-2 text-sm pr-10"
-                                        min="0" step="0.01" required>
-                                    <button type="button" id="refresh-savings"
-                                        class="absolute right-2 top-2 text-zinc-400 hover:text-white">
-                                        <i class="fas fa-sync-alt"></i>
+                                        min="0" step="0.01" value="0" required disabled> <button type="button" id="unlock-savings-btn"
+                                        class="absolute right-2 top-2 text-zinc-400 hover:text-white" title="Desbloquear para simular">
+                                        <i class="fas fa-lock"></i>
                                     </button>
                                 </div>
                             </div>
@@ -350,11 +377,11 @@
                         <div class="mt-6 flex gap-3">
                             <button type="submit"
                                 class="flex-1 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg transition-colors font-bold">
-                                <i class="fas fa-save mr-2"></i>Salvar Plano
+                                <i class="fas fa-save mr-2"></i>Salvar Simulação
                             </button>
                             <button type="button" id="recalculate-btn"
-                                class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors font-bold">
-                                <i class="fas fa-calculator mr-2"></i>Recalcular
+                                class="flex-1 bg-zinc-700 hover:bg-zinc-600 text-white px-6 py-3 rounded-lg transition-colors font-bold">
+                                <i class="fas fa-calculator mr-2"></i>Calcular Simulação
                             </button>
                         </div>
                     </form>
@@ -387,7 +414,7 @@
                     <div class="glass-card p-4">
                         <h3 class="text-sm font-semibold text-zinc-400 mb-1">Investimento Mensal Sugerido</h3>
                         <p id="monthly-investment" class="text-2xl font-bold">R$ 0,00</p>
-                        <div class="mt-2 text-xs text-zinc-400">Baseado em seus dados financeiros</div>
+                        <div class="mt-2 text-xs text-zinc-400">Para atingir o valor total necessário</div>
                     </div>
                 </div>
             </section>
@@ -424,65 +451,9 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
     <script src="/firebase-init.js"></script>
-
-    <script src="retirement.js"></script>
-    <script src="/sidebar.js" defer></script>
+    
     <script src="/loading.js"></script>
-    <script>
-        // Script para conectar os sliders aos seus valores de texto
-        const retirementAgeSlider = document.getElementById('retirement-age');
-        const retirementAgeValue = document.getElementById('retirement-age-value');
-        const monthlyIncomeSlider = document.getElementById('monthly-income');
-        const monthlyIncomeValue = document.getElementById('monthly-income-value');
-        const monthlyInvestmentSlider = document.getElementById('monthly-investment-input');
-        const monthlyInvestmentDisplay = document.getElementById('monthly-investment-display');
-
-        retirementAgeSlider.addEventListener('input', (e) => {
-            retirementAgeValue.textContent = `${e.target.value} anos`;
-        });
-
-        monthlyIncomeSlider.addEventListener('input', (e) => {
-            const value = parseFloat(e.target.value);
-            monthlyIncomeValue.textContent = value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-        });
-
-        monthlyInvestmentSlider.addEventListener('input', (e) => {
-            const value = parseFloat(e.target.value);
-            monthlyInvestmentDisplay.textContent = value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-        });
-
-        // Para carregar os dados do usuário no cabeçalho
-        document.addEventListener('DOMContentLoaded', () => {
-            const user = { // Objeto de usuário simulado
-                name: 'Eduardo Lipoli',
-                email: 'eduardo.lipoli@example.com',
-                photoURL: null // 'https://path.to/photo.jpg'
-            };
-
-            document.getElementById('user-name').textContent = user.name;
-            document.getElementById('user-email').textContent = user.email;
-
-            const photoEl = document.getElementById('user-photo');
-            if (user.photoURL) {
-                photoEl.src = user.photoURL;
-                photoEl.classList.remove('hidden');
-            }
-
-            // Lógica do dropdown
-            const dropdownButton = document.getElementById('dropdownButton');
-            const dropdownMenu = document.getElementById('dropdownMenu');
-            dropdownButton.addEventListener('click', () => {
-                dropdownMenu.classList.toggle('hidden');
-            });
-
-            // Fechar o dropdown se clicar fora
-            window.addEventListener('click', function (e) {
-                if (!dropdownButton.contains(e.target) && !dropdownMenu.contains(e.target)) {
-                    dropdownMenu.classList.add('hidden');
-                }
-            });
-        });
-    </script>
-</body>
+    <script src="/sidebar.js" defer></script>
+    <script src="/user-profile.js"></script> <script src="retirement.js"></script> </body>
 
 </html>

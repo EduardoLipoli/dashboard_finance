@@ -294,6 +294,11 @@ function updateStats() {
     totalCurrent += investment.quantity * investment.currentValue;
   });
 
+  // [NOVA FUNÇÃO CHAMADA AQUI]
+  // Salva o total do portfólio para a página de aposentadoria
+  savePortfolioSummary(totalCurrent);
+  // [FIM DA ADIÇÃO]
+
   const totalProfit = totalCurrent - totalInvested;
   const profitPercentage = totalInvested > 0 ? (totalProfit / totalInvested) * 100 : 0;
   const totalPorcProfit = document.getElementById('porc-profit');
@@ -321,10 +326,25 @@ function updateStats() {
   totalValueEl.textContent = `R$ ${totalCurrent.toFixed(2)}`;
   totalInvestedEl.textContent = `R$ ${totalInvested.toFixed(2)}`;
   totalProfitEl.textContent = `R$ ${totalProfit.toFixed(2)}`;
-  totalPorcProfit.innerHTML = `${arrowIcon} (${Math.abs(profitPercentage).toFixed(2)}%)`;
+  // totalPorcProfit.innerHTML = `${arrowIcon} (${Math.abs(profitPercentage).toFixed(2)}%)`; // Removido pois já foi setado acima
   totalAssetsEl.textContent = `${investments.length} ativo${investments.length !== 1 ? 's' : ''}`;
 
   updateChart();
+}
+
+async function savePortfolioSummary(totalValue) {
+    const user = auth.currentUser;
+    if (!user) return;
+    try {
+        const summaryRef = db.collection('users').doc(user.uid)
+                             .collection('portfolioSummary').doc('summary');
+        await summaryRef.set({
+            totalPortfolioValue: totalValue,
+            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+    } catch (error) {
+        console.error("Erro ao salvar sumário do portfólio:", error);
+    }
 }
 
 

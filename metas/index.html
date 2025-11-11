@@ -38,8 +38,28 @@
     .animate-pulse {
       animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
     }
-  </style>
 
+    /* Estilos para o modal lateral */
+    .side-modal {
+      transform: translateX(100%);
+      transition: transform 0.3s ease-out;
+    }
+
+    .side-modal.open {
+      transform: translateX(0);
+    }
+
+    .backdrop {
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+    }
+
+    .backdrop.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+  </style>
 </head>
 
 <body class="bg-zinc-900 text-zinc-200 h-screen grid grid-cols-[auto,1fr]">
@@ -47,7 +67,7 @@
   <!-- Alert Container para exibir mensagens -->
   <div id="alert-container" class="fixed top-20 right-4 z-50"></div>
 
-  <!--SideBar-->
+  <!-- SideBar -->
   <div id="sidebar" class="sidebar flex flex-col items-center h-full w-16 group hover:w-52 transition-all duration-300">
     <div class="p-4 mt-2">
       <i class="fas fa-coins text-green-400 text-2xl animate-float"></i>
@@ -63,7 +83,7 @@
           <span class="hidden group-hover:block">Dashboard</span>
         </li>
       </a>
-      
+
       <li class="w-full px-4 py-2 mt-2 hidden group-hover:block text-zinc-500 text-xs uppercase font-semibold">
         Financeiro
       </li>
@@ -123,7 +143,8 @@
   <!-- Main Content -->
   <div class="flex-1 flex flex-col overflow-hidden">
     <!-- Header -->
-    <header class="dashboard-header flex flex-col md:flex-row items-start md:items-center justify-between px-4 md:px-6 py-4">
+    <header
+      class="dashboard-header flex flex-col md:flex-row items-start md:items-center justify-between px-4 md:px-6 py-4">
       <h1 class="text-2xl font-bold text-green-500 flex-grow">
         <a href="/dashboard/index.html">Metas Financeiras</a>
       </h1>
@@ -149,7 +170,6 @@
             </div>
           </button>
 
-
           <div id="dropdownMenu"
             class="hidden absolute right-0 mt-2 w-48 bg-zinc-800 border border-zinc-700 rounded-lg shadow-lg z-50 py-2">
             <a href="#" class="block px-4 py-2 text-zinc-200 hover:bg-zinc-700/50" onclick="logout()">
@@ -157,7 +177,7 @@
             </a>
           </div>
         </div>
-
+      </div>
     </header>
 
     <!-- Main Content -->
@@ -168,10 +188,9 @@
           <div class="flex justify-between items-start">
             <div>
               <p class="text-zinc-300">Total de Metas</p>
-              <h3 class="text-2xl font-bold text-zinc-50" id="totalGoals">5</h3>
+              <h3 class="text-2xl font-bold text-zinc-50" id="totalGoals">0</h3>
             </div>
             <div class="p- bg-green-900 bg-opacity-25 text-green-500 py-2 px-3 rounded-lg">
-
               <i class="fas fa-bullseye"></i>
             </div>
           </div>
@@ -181,7 +200,7 @@
           <div class="flex justify-between items-start">
             <div>
               <p class="text-zinc-300">Metas Concluídas</p>
-              <h3 class="text-2xl font-bold text-zinc-50" id="completedGoals">2</h3>
+              <h3 class="text-2xl font-bold text-zinc-50" id="completedGoals">0</h3>
             </div>
             <div class="p- bg-green-900 bg-opacity-25 text-green-500 py-2 px-3 rounded-lg">
               <i class="fas fa-check-circle"></i>
@@ -192,12 +211,11 @@
         <div class="bg-zinc-800 rounded-xl shadow-sm p-6 border border-zinc-700 hover:bg-zinc-700/50 transition-colors">
           <div class="flex justify-between items-start">
             <div>
-              <p class="text-zinc-300">Valor Total</p>
-              <h3 class="text-2xl font-bold text-zinc-50"><span id="totalAmount">0,00</span></h3>
+              <p class="text-zinc-300">Total Poupado (Atual)</p>
+              <h3 class="text-2xl font-bold text-zinc-50">R$ <span id="totalCurrentAmount">0,00</span></h3>
             </div>
             <div class="p- bg-green-900 bg-opacity-25 text-green-500 py-2 px-3 rounded-lg">
-              <i class="fas fa-coins"></i>
-            </div>
+              <i class="fas fa-piggy-bank"></i> </div>
           </div>
         </div>
       </div>
@@ -214,13 +232,19 @@
         </div>
 
         <!-- Goals Filter -->
-        <div class="flex space-x-2 mb-6">
-          <button class="filter-btn active px-4 py-2 rounded-lg bg-green-600 text-white"
-            data-filter="all">Todas</button>
-          <button class="filter-btn px-4 py-2 rounded-lg bg-zinc-700 hover:bg-zinc-600 text-zinc-200"
-            data-filter="active">Em Andamento</button>
-          <button class="filter-btn px-4 py-2 rounded-lg bg-zinc-700 hover:bg-zinc-600 text-zinc-200"
-            data-filter="completed">Concluídas</button>
+<div class="flex space-x-2 mb-6">
+          <button class="filter-btn px-4 py-2 rounded-lg border border-zinc-700 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-100 transition-colors"
+            data-filter="all">
+            Todas
+          </button>
+          <button class="filter-btn px-4 py-2 rounded-lg border border-zinc-700 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-100 transition-colors"
+            data-filter="active">
+            Em Andamento
+          </button>
+          <button class="filter-btn px-4 py-2 rounded-lg border border-zinc-700 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-100 transition-colors"
+            data-filter="completed">
+            Concluídas
+          </button>
         </div>
 
         <!-- Goals List -->
@@ -231,48 +255,122 @@
     </main>
 
     <!-- Página de detalhes -->
-    <div id="goalDetailsPage" class="hidden w-full flex flex-col gap-4 p-6 bg-zinc-900 text-zinc-50">
-      <button id="backToList" class="self-start px-4 py-2 bg-zinc-700 text-white rounded hover:bg-zinc-600">
-        ← Voltar
-      </button>
+    <div id="goalDetailsPage" class="hidden w-full p-4 md:p-6 overflow-y-auto ">
 
-      <h2 id="detailGoalName" class="text-2xl font-bold"></h2>
-      <p id="detailRemaining" class="text-zinc-400"></p>
+      <div class="flex items-center mb-6">
+        <button id="backToList" class="px-4 py-2 bg-zinc-700 text-white rounded-lg hover:bg-zinc-600 mr-4">
+          <i class="fas fa-arrow-left"></i>
+        </button>
+        <div>
+          <h2 id="detailGoalName" class="text-2xl font-bold text-zinc-50">Carregando nome...</h2>
+          <p id="detailRemaining" class="text-zinc-400">Calculando...</p>
+        </div>
+      </div>
 
-      <div class="bg-zinc-800 rounded-xl shadow-sm p-4 border border-zinc-700 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm select-none">
-          <div>
-              <p class="text-zinc-300">Valor Total da Meta</p>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <div class="lg:col-span-1 space-y-6">
+
+          <div class="bg-zinc-800 rounded-xl shadow-sm p-6 border border-zinc-700">
+            <h3 class="text-lg font-bold text-zinc-50 mb-4">Progresso Atual</h3>
+            <div class="flex justify-center">
+              <div class="relative w-40 h-40">
+                <svg class="w-full h-full" viewBox="0 0 100 100">
+                  <circle class="text-zinc-700" stroke-width="10" stroke="currentColor" fill="transparent" r="40"
+                    cx="50" cy="50" />
+                  <circle id="detailProgressCircle" class="text-green-500 progress-ring__circle" stroke-width="10"
+                    stroke-linecap="round" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50" />
+                </svg>
+                <div class="absolute inset-0 flex items-center justify-center flex-col">
+                  <span id="detailProgressPercent" class="text-3xl font-bold text-zinc-50">0%</span>
+                  <span class="text-sm text-zinc-300">concluído</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-zinc-800 rounded-xl shadow-sm p-6 border border-zinc-700 space-y-3 text-sm">
+            <div class="flex justify-between">
+              <p class="text-zinc-300">Valor Total</p>
               <p id="miniGoalTotal" class="font-bold text-zinc-50">R$ 0,00</p>
-          </div>
-          <div>
-              <p class="text-zinc-300">Valor Atual Pago</p>
+            </div>
+            <div class="flex justify-between">
+              <p class="text-zinc-300">Valor Atual</p>
               <p id="miniCurrentPaid" class="font-bold text-zinc-50">R$ 0,00</p>
-          </div>
-          <div class="col-span-2 md:col-span-1"> <p class="text-zinc-300">Situação</p>
+            </div>
+            <div class="flex justify-between">
+              <p class="text-zinc-300">Situação</p>
               <p id="miniSituation" class="font-bold text-zinc-50">R$ 0,00</p>
-          </div>
-          <div>
+            </div>
+            <div class="flex justify-between">
               <p class="text-zinc-300">Meses Restantes</p>
               <p id="miniMonthsLeft" class="font-bold text-zinc-50">0 meses</p>
+            </div>
+            <div class="flex justify-between">
+              <p class="text-zinc-300">Meta Mensal (Sugestão)</p>
+              <p id="miniMonthlyGoal" class="font-bold text-yellow-400">R$ 0,00</p>
+            </div>
           </div>
-      </div>
-      <div id="tableWrapper" class="w-full overflow-x-auto overflow-y-auto border border-zinc-700 rounded bg-zinc-900"
-        style="max-height: 400px;">
-        </div>
-    </div>
 
+          <div class="bg-zinc-800 rounded-xl shadow-sm p-6 border border-zinc-700">
+            <label for="addToGoal" class="block text-sm font-medium text-zinc-300 mb-2">
+              Adicionar contribuição
+            </label>
+            <div class="flex space-x-2">
+              <input type="number" id="addToGoal"
+                class="flex-1 px-4 py-2 border border-zinc-700 bg-zinc-900 text-zinc-50 rounded-lg focus:ring-2 focus:ring-green-500"
+                placeholder="0.00" min="0" step="0.01">
+              <button id="addAmountBtn"
+                class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors">
+                Adicionar
+              </button>
+            </div>
+          </div>
+
+          <div class="bg-zinc-800 rounded-xl shadow-sm p-6 border border-zinc-700">
+            <h3 class="text-lg font-bold text-zinc-50 mb-4">Gerenciar Meta</h3>
+            <div class="flex justify-between space-x-2">
+              <button id="editGoalBtn"
+                class="flex-1 px-4 py-2 border border-zinc-700 rounded-lg text-zinc-50 hover:bg-zinc-700 transition-colors">
+                Editar
+              </button>
+              <button id="deleteGoalBtn"
+                class="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors">
+                Excluir
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="lg:col-span-2 space-y-6">
+          <div class="bg-zinc-800 rounded-xl shadow-sm border border-zinc-700">
+            <h3 class="text-lg font-bold text-zinc-50 p-4 border-b border-zinc-700">Histórico de Contribuições</h3>
+            <div id="tableWrapper" class="w-full overflow-x-auto overflow-y-auto" style="max-height: 685px;">
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
   </div>
 
-  <div id="confirmDeleteModal"
-    class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+  <!-- Backdrop para modais -->
+  <div id="modalBackdrop" class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm z-40 hidden"></div>
+
+  <!-- Modal de confirmação de exclusão -->
+<div id="confirmDeleteModal" class="fixed inset-0 flex items-center justify-center z-50 hidden">
     <div class="bg-zinc-900 rounded-xl shadow-lg w-full max-w-sm mx-4 border border-zinc-700 p-6">
+      
       <div class="flex justify-between items-center mb-4">
-        <h3 class="text-xl font-bold text-zinc-50">Confirmar Exclusão</h3>
+        <h3 id="confirmDeleteTitle" class="text-xl font-bold text-zinc-50">Confirmar Exclusão</h3>
         <button id="closeConfirmDeleteModalBtn" class="text-zinc-400 hover:text-zinc-200">
           <i class="fas fa-times"></i>
         </button>
       </div>
-      <p class="text-zinc-300 mb-6">Tem certeza que deseja excluir esta meta? Todas as contribuições também serão excluídas.</p>
+
+      <p id="confirmDeleteText" class="text-zinc-300 mb-6">Tem certeza que deseja excluir esta meta? Todas as contribuições também serão excluídas.</p>
+      
       <div class="flex justify-end space-x-4">
         <button id="cancelDeleteBtn" class="px-4 py-2 bg-zinc-700 hover:bg-zinc-600 text-white rounded-lg transition-colors">
           Não
@@ -281,30 +379,39 @@
           Sim, Excluir
         </button>
       </div>
+      
     </div>
   </div>
 
-  <!-- Add Goal Modal -->
+  <!-- Modal de adicionar meta (lateral) -->
   <div id="addGoalModal"
-    class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 hidden">
-    <div class="bg-zinc-900 rounded-xl shadow-lg w-full max-w-md mx-4 border border-zinc-700">
-      <div class="p-6">
-        <div class="flex justify-between items-center mb-4">
-          <h3 class="text-xl font-bold text-zinc-50">Adicionar Nova Meta</h3>
-          <button id="closeModalBtn" class="text-zinc-400 hover:text-zinc-200">
-            <i class="fas fa-times"></i>
-          </button>
+    class="side-modal fixed top-0 right-0 h-full w-full max-w-md bg-zinc-900 shadow-xl z-50 border-l border-zinc-700 overflow-y-auto">
+    <div class="p-6">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-xl font-bold text-zinc-50">Nova Meta Financeira</h3>
+        <button id="closeModalBtn" class="text-zinc-400 hover:text-zinc-200 text-2xl">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <form id="goalForm" class="space-y-4">
+        <div>
+          <label for="goalName" class="block text-sm font-medium text-zinc-300 mb-1">Nome da Meta *</label>
+          <input type="text" id="goalName" class="w-full px-4 py-2 border border-zinc-700 bg-zinc-800 text-zinc-50 rounded-lg
+                      focus:ring-2 focus:ring-green-500 focus:border-green-500" placeholder="Ex: Comprar um carro"
+            required>
         </div>
-        <form id="goalForm" class="space-y-4">
-          <div>
-            <label for="goalName" class="block text-sm font-medium text-zinc-300 mb-1">Nome da Meta</label>
-            <input type="text" id="goalName" class="w-full px-4 py-2 border border-zinc-700 bg-zinc-800 text-zinc-50 rounded-lg
-                        focus:ring-2 focus:ring-green-500 focus:border-green-500" placeholder="Ex: Comprar um carro"
-              required>
-          </div>
+
+        <div>
+          <label for="goalDescription" class="block text-sm font-medium text-zinc-300 mb-1">Descrição</label>
+          <textarea id="goalDescription" rows="3" class="w-full px-4 py-2 border border-zinc-700 bg-zinc-800 text-zinc-50 rounded-lg
+                      focus:ring-2 focus:ring-green-500 focus:border-green-500"
+            placeholder="Descreva sua meta..."></textarea>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
           <div>
             <label for="goalAmount" class="block text-sm font-medium text-zinc-300 mb-1">
-              Valor da Meta (R$)
+              Valor da Meta (R$) *
             </label>
             <input type="number" id="goalAmount" class="w-full px-4 py-2 border border-zinc-700 bg-zinc-800 text-zinc-50 rounded-lg
                         focus:ring-2 focus:ring-green-500 focus:border-green-500" placeholder="0.00" min="0"
@@ -316,37 +423,66 @@
             </label>
             <input type="number" id="goalCurrentAmount" class="w-full px-4 py-2 border border-zinc-700 bg-zinc-800 text-zinc-50 rounded-lg
                         focus:ring-2 focus:ring-green-500 focus:border-green-500" placeholder="0.00" min="0"
-              step="0.01" required>
+              step="0.01" value="0">
           </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
           <div>
-            <label for="goalDeadline" class="block text-sm font-medium text-zinc-300 mb-1">Data
-              Limite</label>
+            <label for="goalDeadline" class="block text-sm font-medium text-zinc-300 mb-1">Data Limite *</label>
             <input type="date" id="goalDeadline" class="w-full px-4 py-2 border border-zinc-700 bg-zinc-800 text-zinc-50 rounded-lg
                         focus:ring-2 focus:ring-green-500 focus:border-green-500" required>
           </div>
           <div>
-            <label for="goalPriority" class="block text-sm font-medium text-zinc-300 mb-1">Prioridade</label>
+            <label for="goalPriority" class="block text-sm font-medium text-zinc-300 mb-1">Prioridade *</label>
             <select id="goalPriority" class="w-full px-4 py-2 border border-zinc-700 bg-zinc-800 text-zinc-50 rounded-lg
-                         focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                         focus:ring-2 focus:ring-green-500 focus:border-green-500" required>
               <option value="low">Baixa</option>
               <option value="medium" selected>Média</option>
               <option value="high">Alta</option>
             </select>
           </div>
-          <div class="pt-2">
-            <button type="submit"
-              class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors">
-              Adicionar Meta
-            </button>
-          </div>
-        </form>
-      </div>
+        </div>
+
+        <div>
+          <label for="goalCategory" class="block text-sm font-medium text-zinc-300 mb-1">Categoria</label>
+          <select id="goalCategory" class="w-full px-4 py-2 border border-zinc-700 bg-zinc-800 text-zinc-50 rounded-lg
+                       focus:ring-2 focus:ring-green-500 focus:border-green-500">
+            <option value="">Selecione uma categoria</option>
+            <option value="viagem">Viagem</option>
+            <option value="veiculo">Veículo</option>
+            <option value="casa">Casa</option>
+            <option value="educacao">Educação</option>
+            <option value="saude">Saúde</option>
+            <option value="lazer">Lazer</option>
+            <option value="outros">Outros</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="flex items-center">
+            <input type="checkbox" id="goalRecurring"
+              class="rounded bg-zinc-800 border-zinc-700 text-green-500 focus:ring-green-500">
+            <span class="ml-2 text-sm text-zinc-300">Meta recorrente (renova automaticamente)</span>
+          </label>
+        </div>
+
+        <div class="pt-4 flex space-x-4">
+          <button type="button" id="cancelGoalBtn"
+            class="flex-1 px-4 py-2 bg-zinc-700 hover:bg-zinc-600 text-white rounded-lg transition-colors">
+            Cancelar
+          </button>
+          <button type="submit"
+            class="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors">
+            Adicionar Meta
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 
-  <!-- Goal Details Modal -->
-  <div id="goalDetailsModal"
-    class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+  <!-- Modal de detalhes da meta -->
+  <div id="goalDetailsModal" class="fixed inset-0 flex items-center justify-center z-50 hidden">
     <div class="bg-zinc-900 rounded-xl shadow-lg w-full max-w-md mx-4 border border-zinc-700">
       <div class="p-6">
         <div class="flex justify-between items-center mb-4">
@@ -361,11 +497,11 @@
               <svg class="w-full h-full" viewBox="0 0 100 100">
                 <circle class="text-zinc-700" stroke-width="8" stroke="currentColor" fill="transparent" r="40" cx="50"
                   cy="50" />
-                <circle id="detailProgressCircle" class="text-green-500  progress-ring__circle" stroke-width="8"
+                <circle id="detailProgressCircle" class="text-green-500 progress-ring__circle" stroke-width="8"
                   stroke-linecap="round" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50" />
               </svg>
               <div class="absolute inset-0 flex items-center justify-center flex-col">
-                <span id="detailProgressPercent" class="text-2xl font-bold text-zinc-50">75%</span>
+                <span id="detailProgressPercent" class="text-2xl font-bold text-zinc-50">0%</span>
                 <span class="text-xs text-zinc-300">concluído</span>
               </div>
             </div>
@@ -373,15 +509,15 @@
           <div class="grid grid-cols-2 gap-4 text-sm">
             <div>
               <p class="text-sm text-zinc-300">Valor da Meta</p>
-              <p id="detailGoalAmount" class="font-medium text-zinc-50">R$ 15.000,00</p>
+              <p id="detailGoalAmount" class="font-medium text-zinc-50">R$ 0,00</p>
             </div>
             <div>
               <p class="text-sm text-zinc-300">Valor Atual</p>
-              <p id="detailCurrentAmount" class="font-medium text-zinc-50">R$ 11.250,00</p>
+              <p id="detailCurrentAmount" class="font-medium text-zinc-50">R$ 0,00</p>
             </div>
             <div>
               <p class="text-sm text-zinc-300">Data Limite</p>
-              <p id="detailDeadline" class="font-medium text-zinc-50">15/12/2023</p>
+              <p id="detailDeadline" class="font-medium text-zinc-50">--/--/----</p>
             </div>
             <div>
               <p class="text-sm text-zinc-300">Prioridade</p>
@@ -420,12 +556,11 @@
               </button>
             </div>
           </div>
-
         </div>
       </div>
     </div>
   </div>
-  </div>
+
   <!-- Firebase e seus scripts -->
   <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js"></script>
@@ -435,8 +570,7 @@
   <script src="/loading.js"></script>
   <script src="/user-profile.js"></script>
   <script src="/sidebar.js" defer></script>
-  <script src="/metas/script.js"></script>
-
+  <script src="/metas/script.js" defer></script>
 </body>
 
 </html>

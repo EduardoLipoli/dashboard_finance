@@ -6,6 +6,7 @@ let monthlyIncomeChart;
 let monthlyExpensesChart;
 let investmentAllocationChart; // <<< ADICIONE ESTA LINHA
 let portfolioEvolutionChart;   // <<< ADICIONE ESTA LINHA
+let planningChart;
 
 // --- FUNÇÕES AUXILIARES ---
 
@@ -122,6 +123,7 @@ document.addEventListener("DOMContentLoaded", function() {
             },
             // <<< OPÇÕES COPIADAS DOS SEUS GRÁFICOS EXISTENTES PARA MANTER O ESTILO >>>
             options: {
+              
                 plugins: {
                     legend: { position: "top", labels: { color: '#a1a1aa' } },
                     tooltip: {
@@ -597,4 +599,79 @@ document.addEventListener("DOMContentLoaded", function() {
       plugins: [ChartDataLabels]
     });
   }
+
+  // --- [INÍCIO DO NOVO GRÁFICO] ---
+  const planningCtx = document.getElementById("planningChart")?.getContext("2d");
+  if (planningCtx) {
+    // Usamos 'window' para garantir que seja globalmente acessível por dashboard.js
+    window.planningChart = new Chart(planningCtx, {
+      type: 'bar',
+      data: {
+        labels: [], // Ex: 'Alimentação', 'Transporte'
+        datasets: [
+          {
+            label: 'Planejado',
+            data: [],
+            backgroundColor: 'rgba(34, 197, 94, 0.6)', // Verde
+            borderColor: 'rgba(34, 197, 94, 1)',
+            borderWidth: 1,
+            borderRadius: 4
+          },
+          {
+            label: 'Realizado',
+            data: [],
+            backgroundColor: 'rgba(59, 130, 246, 0.6)', // Azul
+            borderColor: 'rgba(59, 130, 246, 1)',
+            borderWidth: 1,
+            borderRadius: 4
+          }
+        ]
+      },
+      options: {
+        maintainAspectRatio: false, // Importante para o wrapper de altura
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              color: '#a1a1aa',
+              callback: (value) => formatarMoeda(value) // Usa sua função global
+            },
+            grid: { color: "rgba(255,255,255,0.05)" }
+          },
+          x: {
+            grid: { display: false },
+            ticks: { color: '#a1a1aa' }
+          }
+        },
+        plugins: {
+          legend: {
+            position: 'top',
+            labels: { color: '#a1a1aa' }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(24, 24, 27, 0.9)',
+            borderColor: 'rgba(255, 255, 255, 0.1)',
+            borderWidth: 1,
+            titleColor: '#fff',
+            bodyColor: '#fff',
+            callbacks: {
+              label: (context) => {
+                let label = context.dataset.label || '';
+                if (label) { label += ': '; }
+                label += formatarMoeda(context.raw);
+                return label;
+              }
+            }
+          },
+          datalabels: { // Desabilitado para não poluir
+            display: false
+          }
+        }
+      },
+      plugins: [ChartDataLabels]
+    });
+  }
+
 });
+

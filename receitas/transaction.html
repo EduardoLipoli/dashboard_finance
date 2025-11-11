@@ -55,7 +55,7 @@
           <span class="hidden group-hover:block">Dashboard</span>
         </li>
       </a>
-      
+
       <li class="w-full px-4 py-2 mt-2 hidden group-hover:block text-zinc-500 text-xs uppercase font-semibold">
         Financeiro
       </li>
@@ -115,7 +115,8 @@
   <!-- Main Content -->
   <div class="flex-1 flex flex-col overflow-hidden">
     <!-- Header -->
-    <header class="dashboard-header flex flex-col md:flex-row items-start md:items-center justify-between px-4 md:px-6 py-4">
+    <header
+      class="dashboard-header flex flex-col md:flex-row items-start md:items-center justify-between px-4 md:px-6 py-4">
       <h1 class="text-2xl font-bold text-green-500 flex-grow">
         <a href="/dashboard/index.html"> Dashboard Financeiro</a>
       </h1>
@@ -407,6 +408,26 @@
 
           </thead>
           <tbody id="tableBody"></tbody>
+          <tfoot id="tableFooter" class="bg-zinc-800 font-semibold sticky bottom-0">
+            <tr>
+              <td class="py-3 px-6 text-left text-sm text-white">
+                Total
+              </td>
+              <td class="py-3 px-6"></td>
+              <td class="py-3 px-6"></td>
+              <td class="py-3 px-6"></td>
+              <td id="footerTransactionCount" class="py-3 px-6 text-left text-sm text-white">
+                0 transações
+              </td>
+              <td id="footerTotalAmount" class="py-3 px-6 text-left text-sm text-white">
+                R$ 0,00
+              </td>
+
+
+              <td class="py-3 px-6"></td>
+              <td class="py-3 px-6"></td>
+            </tr>
+          </tfoot>
         </table>
       </div>
     </div>
