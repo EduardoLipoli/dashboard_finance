@@ -2,6 +2,7 @@ const db = firebase.firestore();
 const auth = firebase.auth();
 
 let allAvailableStocks = [];
+let isGroupedView = false;
 
 
 // Listener para garantir que a autenticação está concluída
@@ -129,6 +130,7 @@ const searchInput = document.getElementById('search-input');
 const deleteModal = document.getElementById('delete-modal');
 const cancelDeleteBtn = document.getElementById('cancel-delete');
 const confirmDeleteBtn = document.getElementById('confirm-delete');
+const viewToggle = document.getElementById('view-toggle');
 
 const syncPricesBtn = document.getElementById('sync-prices-btn'); 
 
@@ -181,17 +183,38 @@ function init() {
 function updateInvestmentsList(filter = '') {
   investmentsTableBody.innerHTML = '';
 
+  // 1. Aplica o filtro de busca
   const filteredInvestments = investments.filter(investment =>
     investment.name.toLowerCase().includes(filter.toLowerCase()) ||
     investment.type.toLowerCase().includes(filter.toLowerCase())
   );
 
-  if (filteredInvestments.length === 0 && filter !== '') {
+  // 2. Decide qual visão renderizar
+  if (isGroupedView) {
+    const groupedData = groupInvestments(filteredInvestments);
+    renderGroupedView(groupedData);
+  } else {
+    renderTransactionView(filteredInvestments);
+  }
+
+  // 3. Oculta/mostra colunas com base na visão
+  document.querySelectorAll('.col-data, .col-acoes').forEach(el => {
+    el.style.display = isGroupedView ? 'none' : 'table-cell';
+  });
+
+  // 4. Lida com o estado vazio (apenas para a visão de transação, se não houver filtro)
+  const shouldShowEmptyState = investments.length === 0 && !isGroupedView;
+  emptyState.style.display = shouldShowEmptyState ? 'block' : 'none';
+}
+
+// Renderiza a tabela como uma lista de transações (visão padrão)
+function renderTransactionView(filteredInvestments) {
+  if (filteredInvestments.length === 0 && searchInput.value !== '') {
     investmentsTableBody.innerHTML = `
-            <tr>
-                <td colspan="8" class="p-4 text-center text-gray-400">Nenhum investimento encontrado</td>
-            </tr>
-        `;
+      <tr>
+        <td colspan="9" class="p-4 text-center text-gray-400">Nenhum investimento encontrado</td>
+      </tr>
+    `;
     return;
   }
 
@@ -205,6 +228,7 @@ function updateInvestmentsList(filter = '') {
     let badgeColor = '';
 
     switch (investment.type) {
+      // ... (seu switch case de 'acao', 'fii', etc. continua igual)
       case 'acao':
         typeBadge = 'Ação';
         badgeColor = 'bg-yellow-500 bg-opacity-20 text-yellow-400';
@@ -230,45 +254,43 @@ function updateInvestmentsList(filter = '') {
     const row = document.createElement('tr');
     row.className = 'investment-row';
     row.innerHTML = `
-            <td class="p-3">
-                <div class="flex items-center">
-                    <div class="w-8 h-8 rounded-full flex items-center justify-center mr-3 ${investment.type === 'acao' ? 'bg-yellow-500' : investment.type === 'fii' ? 'bg-blue-500' : investment.type === 'renda-fixa' ? 'bg-green-500' : investment.type === 'cripto' ? 'bg-purple-500' : 'bg-indigo-500'}">
-                        <i class="fas ${investment.type === 'acao' ? 'fa-chart-line' : investment.type === 'fii' ? 'fa-building' : investment.type === 'renda-fixa' ? 'fa-landmark' : investment.type === 'cripto' ? 'fa-coins' : 'fa-chart-pie'} text-white text-xs"></i>
-                    </div>
-                    <div>
-                        <p class="font-medium">${investment.name}</p>
-                    </div>
-                </div>
-            </td>
-            <td class="p-3">
-                <span class="px-2 py-1 ${badgeColor} rounded-full text-xs">${typeBadge}</span>
-            </td>
-            <td class="p-3">
-              ${(() => new Date(investment.date).toLocaleDateString('pt-BR'))()}
-            </td>
-            <td class="p-3">${investment.quantity}</td>
-            <td class="p-3">R$ ${investment.price.toFixed(2)}</td>
-            <td class="p-3">R$ ${investedValue.toFixed(2)}</td>
-            <td class="p-3 font-medium">R$ ${currentValue.toFixed(2)}</td>
-            <td class="p-3">
-                <span class="${profit >= 0 ? 'text-green-500' : 'text-red-500'} font-medium">${profit >= 0 ? '+' : ''}${profitPercentage.toFixed(2)}%</span>
-            </td>
-            <td class="p-3">
-                <div class="flex space-x-2">
-                    <button class="edit-btn text-gray-400 hover:text-green-500" data-id="${investment.id}">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="delete-btn text-gray-400 hover:text-red-500" data-id="${investment.id}">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
-            </td>
-        `;
+        <td class="p-3">
+          <div class="flex items-center">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center mr-3 ${investment.type === 'acao' ? 'bg-yellow-500' : investment.type === 'fii' ? 'bg-blue-500' : investment.type === 'renda-fixa' ? 'bg-green-500' : investment.type === 'cripto' ? 'bg-purple-500' : 'bg-indigo-500'}">
+              <i class="fas ${investment.type === 'acao' ? 'fa-chart-line' : investment.type === 'fii' ? 'fa-building' : investment.type === 'renda-fixa' ? 'fa-landmark' : investment.type === 'cripto' ? 'fa-coins' : 'fa-chart-pie'} text-white text-xs"></i>
+            </div>
+            <div>
+              <p class="font-medium">${investment.name}</p>
+            </div>
+          </div>
+        </td>
+        <td class="p-3">
+          <span class="px-2 py-1 ${badgeColor} rounded-full text-xs">${typeBadge}</span>
+        </td>
+        <td class="p-3 col-data"> ${(() => new Date(investment.date).toLocaleDateString('pt-BR'))()}
+        </td>
+        <td class="p-3">${investment.quantity}</td>
+        <td class="p-3">R$ ${investment.price.toFixed(2)}</td>
+        <td class="p-3">R$ ${investedValue.toFixed(2)}</td>
+        <td class="p-3 font-medium">R$ ${currentValue.toFixed(2)}</td>
+        <td class="p-3">
+          <span class="${profit >= 0 ? 'text-green-500' : 'text-red-500'} font-medium">${profit >= 0 ? '+' : ''}${profitPercentage.toFixed(2)}%</span>
+        </td>
+        <td class="p-3 col-acoes"> <div class="flex space-x-2">
+            <button class="edit-btn text-gray-400 hover:text-green-500" data-id="${investment.id}">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button class="delete-btn text-gray-400 hover:text-red-500" data-id="${investment.id}">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        </td>
+    `;
 
     investmentsTableBody.appendChild(row);
   });
 
-  // Add event listeners to edit and delete buttons
+  // Adiciona listeners aos botões (como antes)
   document.querySelectorAll('.edit-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       const id = e.currentTarget.getAttribute('data-id');
@@ -281,6 +303,112 @@ function updateInvestmentsList(filter = '') {
       const id = e.currentTarget.getAttribute('data-id');
       showDeleteModal(id);
     });
+  });
+}
+
+// Agrupa os investimentos por nome
+function groupInvestments(filteredList) {
+  // 1. Agrupa usando reduce
+  const groups = filteredList.reduce((acc, inv) => {
+    const key = inv.name; // Agrupa pelo nome do ativo
+
+    if (!acc[key]) {
+      acc[key] = {
+        name: inv.name,
+        type: inv.type,
+        currentValue: inv.currentValue, // Preço atual (o mesmo para todos)
+        totalQuantity: 0,
+        totalInvested: 0,
+      };
+    }
+
+    acc[key].totalQuantity += inv.quantity;
+    acc[key].totalInvested += inv.quantity * inv.price;
+
+    return acc;
+  }, {});
+
+  // 2. Converte o objeto em array e calcula os totais
+  return Object.values(groups).map(g => {
+    const totalCurrent = g.totalQuantity * g.currentValue;
+    const averagePrice = g.totalInvested / g.totalQuantity;
+    const profit = totalCurrent - g.totalInvested;
+    const profitPercentage = (profit / g.totalInvested) * 100;
+
+    return {
+      ...g,
+      totalCurrent,
+      averagePrice,
+      profit,
+      profitPercentage
+    };
+  });
+}
+
+// Renderiza a tabela com os dados agrupados
+function renderGroupedView(groupedData) {
+  if (groupedData.length === 0) {
+    investmentsTableBody.innerHTML = `
+      <tr>
+        <td colspan="9" class="p-4 text-center text-gray-400">Nenhum investimento encontrado</td>
+      </tr>
+    `;
+    return;
+  }
+
+  groupedData.forEach(g => {
+    let typeBadge = '';
+    let badgeColor = '';
+    // (Copiamos o mesmo switch case)
+    switch (g.type) {
+      case 'acao':
+        typeBadge = 'Ação';
+        badgeColor = 'bg-yellow-500 bg-opacity-20 text-yellow-400';
+        break;
+      case 'fii':
+        typeBadge = 'FII';
+        badgeColor = 'bg-blue-500 bg-opacity-20 text-blue-400';
+        break;
+      case 'renda-fixa':
+        typeBadge = 'Renda Fixa';
+        badgeColor = 'bg-green-500 bg-opacity-20 text-green-400';
+        break;
+      case 'cripto':
+        typeBadge = 'Cripto';
+        badgeColor = 'bg-purple-500 bg-opacity-20 text-purple-400';
+        break;
+      case 'etf':
+        typeBadge = 'ETF';
+        badgeColor = 'bg-indigo-500 bg-opacity-20 text-indigo-400';
+        break;
+    }
+
+    const row = document.createElement('tr');
+    row.className = 'investment-row';
+    // Note: As colunas 'Data' e 'Ações' foram removidas
+    row.innerHTML = `
+        <td class="p-3">
+          <div class="flex items-center">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center mr-3 ${g.type === 'acao' ? 'bg-yellow-500' : g.type === 'fii' ? 'bg-blue-500' : g.type === 'renda-fixa' ? 'bg-green-500' : g.type === 'cripto' ? 'bg-purple-500' : 'bg-indigo-500'}">
+              <i class="fas ${g.type === 'acao' ? 'fa-chart-line' : g.type === 'fii' ? 'fa-building' : g.type === 'renda-fixa' ? 'fa-landmark' : g.type === 'cripto' ? 'fa-coins' : 'fa-chart-pie'} text-white text-xs"></i>
+            </div>
+            <div>
+              <p class="font-medium">${g.name}</p>
+            </div>
+          </div>
+        </td>
+        <td class="p-3">
+          <span class="px-2 py-1 ${badgeColor} rounded-full text-xs">${typeBadge}</span>
+        </td>
+        <td class="p-3">${g.totalQuantity.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 8 })}</td>
+        <td class="p-3">R$ ${g.averagePrice.toFixed(2)}</td>
+        <td class="p-3">R$ ${g.totalInvested.toFixed(2)}</td>
+        <td class="p-3 font-medium">R$ ${g.totalCurrent.toFixed(2)}</td>
+        <td class="p-3">
+          <span class="${g.profit >= 0 ? 'text-green-500' : 'text-red-500'} font-medium">${g.profit >= 0 ? '+' : ''}${g.profitPercentage.toFixed(2)}%</span>
+        </td>
+    `;
+    investmentsTableBody.appendChild(row);
   });
 }
 
@@ -648,6 +776,12 @@ cancelDeleteBtn.addEventListener('click', () => deleteModal.classList.add('hidde
 confirmDeleteBtn.addEventListener('click', deleteInvestment);
 
 syncPricesBtn.addEventListener('click', refreshAllPrices);
+
+viewToggle.addEventListener('change', (e) => {
+  isGroupedView = e.target.checked;
+  // Atualiza a lista (o filtro de busca é preservado)
+  updateInvestmentsList(searchInput.value); 
+});
 
 // <<< NOVO: Listeners para os botões de período do gráfico
 btnMonth.addEventListener('click', () => {
