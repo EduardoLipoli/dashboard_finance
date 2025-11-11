@@ -1,11 +1,20 @@
+
+function formatarMoeda(valor) {
+  return valor.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    minimumFractionDigits: 2
+  });
+}
+
 // --- DECLARAÇÃO DE VARIÁVEIS GLOBAIS PARA OS GRÁFICOS ---
 let debtsByDayChart;
 let categoriesChart;
 let paidVsPendingChart;
 let monthlyIncomeChart;
 let monthlyExpensesChart;
-let investmentAllocationChart; // <<< ADICIONE ESTA LINHA
-let portfolioEvolutionChart;   // <<< ADICIONE ESTA LINHA
+let investmentAllocationChart;
+let portfolioEvolutionChart;
 let planningChart;
 
 // --- FUNÇÕES AUXILIARES ---
@@ -105,12 +114,10 @@ function createGradientForDoughnutSlice(ctx, colorsArray) {
 
 
 // --- INICIALIZAÇÃO DOS GRÁFICOS ---
-document.addEventListener("DOMContentLoaded", function() {
-
       const investmentAllocationCtx = document.getElementById("investmentAllocationChart")?.getContext("2d");
     if (investmentAllocationCtx) {
         const investmentColors = ['#facc15', '#3b82f6', '#22c55e', '#a855f7', '#6366f1']; // Amarelo, Azul, Verde, Roxo, Indigo
-        investmentAllocationChart = new Chart(investmentAllocationCtx, {
+        window.investmentAllocationChart = new Chart(investmentAllocationCtx, {
             type: 'doughnut',
             data: {
                 labels: [], // Ex: 'Ações', 'FIIs'
@@ -157,7 +164,7 @@ document.addEventListener("DOMContentLoaded", function() {
     // Gráfico de Evolução dos Aportes (Barra) - ESTILO ATUALIZADO
     const portfolioEvolutionCtx = document.getElementById("portfolioEvolutionChart")?.getContext("2d");
     if (portfolioEvolutionCtx) {
-        portfolioEvolutionChart = new Chart(portfolioEvolutionCtx, {
+        window.portfolioEvolutionChart = new Chart(portfolioEvolutionCtx, {
             type: 'bar',
             data: {
                 labels: ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"],
@@ -223,7 +230,7 @@ document.addEventListener("DOMContentLoaded", function() {
   const debtsByDayCtx = document.getElementById("fixedVsInstallmentsChart")?.getContext("2d");
   if (debtsByDayCtx) {
     const debtsColors = ["#22c55e", "#ef4444"]; // green-500, red-500
-    debtsByDayChart = new Chart(debtsByDayCtx, {
+    window.debtsByDayChart = new Chart(debtsByDayCtx, {
       type: "doughnut",
       data: {
         labels: ["Dívidas do dia 01", "Dívidas do dia 15"],
@@ -276,7 +283,7 @@ document.addEventListener("DOMContentLoaded", function() {
       '#c084fc', '#fde047', '#fbbf24', '#f472b6'
     ];
 
-    categoriesChart = new Chart(categoriesCtx, {
+    window.categoriesChart = new Chart(categoriesCtx, {
       type: "bar",
       data: {
         labels: [],
@@ -373,7 +380,7 @@ document.addEventListener("DOMContentLoaded", function() {
   const paidVsPendingCtx = document.getElementById("paidVsPendingChart")?.getContext("2d");
   if (paidVsPendingCtx) {
     const paidPendingColors = ["#22c55e", "#ef4444"]; // green-500, red-500
-    paidVsPendingChart = new Chart(paidVsPendingCtx, {
+    window.paidVsPendingChart = new Chart(paidVsPendingCtx, {
       type: "doughnut",
       data: {
         labels: ["Pagas", "Pendentes"],
@@ -415,7 +422,7 @@ document.addEventListener("DOMContentLoaded", function() {
   // Gráfico de Receitas por Mês (BARRA com GRADIENTE e FILTRO por CLIQUE no Mês)
   const monthlyIncomeCtx = document.getElementById("monthlyIncomeChart")?.getContext("2d");
   if (monthlyIncomeCtx) {
-    monthlyIncomeChart = new Chart(monthlyIncomeCtx, {
+    window.monthlyIncomeChart = new Chart(monthlyIncomeCtx, {
       type: "bar",
       data: {
         labels: ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"],
@@ -509,7 +516,7 @@ document.addEventListener("DOMContentLoaded", function() {
   // Gráfico de Gastos por Mês (BARRA com GRADIENTE e FILTRO por CLIQUE no Mês)
   const monthlyExpensesCtx = document.getElementById("monthlyExpensesChart")?.getContext("2d");
   if (monthlyExpensesCtx) {
-    monthlyExpensesChart = new Chart(monthlyExpensesCtx, {
+    window.monthlyExpensesChart = new Chart(monthlyExpensesCtx, {
       type: "bar",
       data: {
         labels: ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"],
@@ -672,6 +679,4 @@ document.addEventListener("DOMContentLoaded", function() {
       plugins: [ChartDataLabels]
     });
   }
-
-});
 

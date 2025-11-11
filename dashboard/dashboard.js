@@ -34,16 +34,18 @@ document.addEventListener("DOMContentLoaded", function () {
         // 2. Define os filtros de data customizados
         setDefaultFilters(); 
         
-        // 3. Roda o filtro inicial
+        // 3. [CORREÇÃO DE ORDEM] Aplica as melhorias (padding, clique)
+        //    nos gráficos ANTES da primeira renderização.
+        applyChartModifications();
+
+        // 4. [CORREÇÃO DE ORDEM] Roda o filtro inicial
+        //    (Isso chamará o updateCharts)
         applyFilters(); 
         
         checkIfUserIsNew();
 
-        // 4. Adiciona os listeners para o seletor de data
+        // 5. Adiciona os listeners para o seletor de data
         setupDateNavigatorListeners();
-
-        // 5. [NOVO] Aplica as melhorias nos gráficos (padding e clique)
-        applyChartModifications();
 
       } catch (error) {
         console.error("Erro ao inicializar o dashboard:", error);
@@ -199,6 +201,7 @@ function calculateTotals() {
       return;
     }
   
+    // [CORREÇÃO]: Garantir que 'formatarMoeda' está disponível (deve estar em charts.js)
     const prefixo = diffValor > 0 ? "+" : diffValor < 0 ? "-" : "";
     const texto = `${prefixo}${formatarMoeda(Math.abs(diffValor))} vs mês anterior`;
 
@@ -277,8 +280,8 @@ function calculateTotals() {
 
 // Função para atualizar os gráficos após o filtro
 function updateCharts() {
-  // --- Gráfico de Dívidas por Dia ---
-  debtsByDayChart.data.datasets[0].data = [
+  // --- [CORREÇÃO] Gráfico de Dívidas por Dia ---
+  window.debtsByDayChart.data.datasets[0].data = [
     filteredTransactions
       .filter((t) => t.type === "Gasto" && t.datepay === "01")
       .reduce((sum, t) => sum + t.amount, 0),
@@ -286,9 +289,9 @@ function updateCharts() {
       .filter((t) => t.type === "Gasto" && t.datepay === "15")
       .reduce((sum, t) => sum + t.amount, 0),
   ];
-  debtsByDayChart.update();
+  window.debtsByDayChart.update();
 
-  // --- Gráfico de Categorias ---
+  // --- [CORREÇÃO] Gráfico de Categorias ---
   const categoriesData = filteredTransactions
     .filter((t) => t.type === "Gasto")
     .reduce((acc, t) => {
@@ -297,24 +300,24 @@ function updateCharts() {
       return acc;
     }, {});
 
-  categoriesChart.data.labels = Object.keys(categoriesData);
-  categoriesChart.data.datasets[0].data = Object.values(categoriesData);
-  categoriesChart.update();
+  window.categoriesChart.data.labels = Object.keys(categoriesData);
+  window.categoriesChart.data.datasets[0].data = Object.values(categoriesData);
+  window.categoriesChart.update();
 
-  // --- Gráfico de Pagas vs Pendentes ---
+  // --- [CORREÇÃO] Gráfico de Pagas vs Pendentes ---
   const paidTransactions = filteredTransactions.filter(
     (t) => t.type === "Gasto" && t.isPaid
   ).length;
   const pendingTransactions = filteredTransactions.filter(
     (t) => t.type === "Gasto" && !t.isPaid
   ).length;
-  paidVsPendingChart.data.datasets[0].data = [
+  window.paidVsPendingChart.data.datasets[0].data = [
     paidTransactions,
     pendingTransactions,
   ];
-  paidVsPendingChart.update();
+  window.paidVsPendingChart.update();
 
-  // --- Gráficos de Receita e Despesa Mensal ---
+  // --- [CORREÇÃO] Gráficos de Receita e Despesa Mensal ---
   const yearForMonthlyCharts = currentYear; 
 
   const monthlyIncomeData = Array(12).fill(0);
@@ -341,23 +344,23 @@ function updateCharts() {
 
   if (currentMonth === "all") {
       // Ano inteiro: todas as barras ativas
-      monthlyIncomeChart.data.datasets[0].backgroundColor = activeGreen;
-      monthlyExpensesChart.data.datasets[0].backgroundColor = activeRed;
+      window.monthlyIncomeChart.data.datasets[0].backgroundColor = activeGreen;
+      window.monthlyExpensesChart.data.datasets[0].backgroundColor = activeRed;
   } else {
       // Mês específico: só uma barra ativa
       if (currentMonth >= 0 && currentMonth < 12) {
         incomeColors[currentMonth] = activeGreen;
         expenseColors[currentMonth] = activeRed;
       }
-      monthlyIncomeChart.data.datasets[0].backgroundColor = incomeColors;
-      monthlyExpensesChart.data.datasets[0].backgroundColor = expenseColors;
+      window.monthlyIncomeChart.data.datasets[0].backgroundColor = incomeColors;
+      window.monthlyExpensesChart.data.datasets[0].backgroundColor = expenseColors;
   }
   // [FIM DA MELHORIA 1]
 
-  monthlyIncomeChart.data.datasets[0].data = monthlyIncomeData;
-  monthlyExpensesChart.data.datasets[0].data = monthlyExpensesData;
-  monthlyIncomeChart.update();
-  monthlyExpensesChart.update();
+  window.monthlyIncomeChart.data.datasets[0].data = monthlyIncomeData;
+  window.monthlyExpensesChart.data.datasets[0].data = monthlyExpensesData;
+  window.monthlyIncomeChart.update();
+  window.monthlyExpensesChart.update();
 
   // --- Gráfico de Planejamento ---
   if (window.planningChart) { 
@@ -515,6 +518,7 @@ function animarContador(id, valorFinal, duracao = 1000) {
     const progress = Math.min(elapsed / duracao, 1);
     const current = inicio + (valorFinal - inicio) * progress;
 
+    // [CORREÇÃO]: Garantir que 'formatarMoeda' está disponível (deve estar em charts.js)
     elemento.textContent = formatarMoeda(current);
 
     if (progress < 1) {
@@ -531,13 +535,8 @@ function animarContador(id, valorFinal, duracao = 1000) {
   requestAnimationFrame(update);
 }
 
-function formatarMoeda(valor) {
-  return valor.toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-    minimumFractionDigits: 2
-  });
-}
+// [CORREÇÃO] Removida a função formatarMoeda daqui.
+// Ela deve estar no 'charts.js' para ser carregada primeiro.
 
 function showNewUserModal() {
   document.getElementById("newUserModal").classList.remove("hidden");
@@ -571,6 +570,7 @@ async function loadInvestmentsFromFirestore() {
 
 function calculateInvestmentTotals(investmentsToCalculate) {
   if (!investmentsToCalculate || investmentsToCalculate.length === 0) {
+    // [CORREÇÃO]: Garantir que 'formatarMoeda' está disponível (deve estar em charts.js)
     document.getElementById("totalPatrimonio").textContent = formatarMoeda(0);
     document.getElementById("rendimentoTotalInvestimentos").textContent = "Rendimento total de " + formatarMoeda(0);
     renderBadge("badgeInvestimentos", 0);
@@ -620,9 +620,10 @@ function updateInvestmentCharts(investmentsToUpdate) {
     return acc;
   }, {});
   
-  investmentAllocationChart.data.labels = Object.keys(allocationData).map(k => k.charAt(0).toUpperCase() + k.slice(1));
-  investmentAllocationChart.data.datasets[0].data = Object.values(allocationData);
-  investmentAllocationChart.update();
+  // [CORREÇÃO] Adicionado 'window.'
+  window.investmentAllocationChart.data.labels = Object.keys(allocationData).map(k => k.charAt(0).toUpperCase() + k.slice(1));
+  window.investmentAllocationChart.data.datasets[0].data = Object.values(allocationData);
+  window.investmentAllocationChart.update();
 
   // Dados para o Gráfico de Evolução dos Aportes
   const evolutionData = Array(12).fill(0);
@@ -636,8 +637,9 @@ function updateInvestmentCharts(investmentsToUpdate) {
     }
   });
 
-  portfolioEvolutionChart.data.datasets[0].data = evolutionData;
-  portfolioEvolutionChart.update();
+  // [CORREÇÃO] Adicionado 'window.'
+  window.portfolioEvolutionChart.data.datasets[0].data = evolutionData;
+  window.portfolioEvolutionChart.update();
 }
 
 // Carrega os valores planejados para as categorias
@@ -812,66 +814,67 @@ function updateMonthDisplay() {
 // [INÍCIO DAS NOVAS FUNÇÕES]
 
 /**
- * [MELHORIA 2]
+ * [MELHORIA 2 CORRIGIDA]
  * Esta é a função que será chamada quando você clicar em um gráfico.
  */
 function handleChartClick(event, elements) {
-    // Só ativa o filtro se estiver na visão "Ano Inteiro" e se o clique foi em uma barra
-    if (currentMonth !== "all" || elements.length === 0) {
+    // Se não clicou em uma barra, não faz nada
+    if (elements.length === 0) {
         return;
     }
-    
+
     // Pega o índice (0-11) do mês clicado
-    const monthIndex = elements[0].index; 
-    
-    // Define o novo mês globalmente
-    currentMonth = monthIndex;
-    
-    // Atualiza o texto do seletor (ex: "Julho 2024")
+    const monthIndex = elements[0].index;
+
+    // [LÓGICA DE TOGGLE CORRIGIDA]
+    // Se o usuário clicar no mês que JÁ ESTÁ selecionado,
+    // ele volta para a visão "Ano Inteiro".
+    if (currentMonth === monthIndex) {
+        currentMonth = "all";
+    } else {
+        // Se clicar em qualquer outro mês (ou se estiver em "Ano Inteiro"),
+        // ele seleciona o mês clicado.
+        currentMonth = monthIndex;
+    }
+
+    // Atualiza o texto do seletor (ex: "Novembro 2025" ou "Ano Inteiro 2025")
     updateMonthDisplay();
     // Refaz todo o filtro do dashboard (cards, gráficos, etc.)
     applyFilters();
 }
 
 /**
- * [BUG 2 & MELHORIA 2]
+ * [BUG 2 & MELHORIA 2 CORRIGIDO]
  * Esta função aplica as correções de layout e os listeners de clique
  * nos objetos dos gráficos (que são criados pelo charts.js).
+ * REMOVIDO o setInterval.
  */
 function applyChartModifications() {
-    // Espera os gráficos (definidos em charts.js) estarem prontos
-    const checkChartsReady = setInterval(() => {
-        try {
-            // Se esta variável (do charts.js) existir, paramos de verificar
-            if (window.monthlyIncomeChart && window.monthlyExpensesChart) {
-                clearInterval(checkChartsReady);
+    try {
+        // Verifica se os gráficos esperados existem
+        if (window.monthlyIncomeChart && window.monthlyExpensesChart && window.categoriesChart && window.paidVsPendingChart && window.debtsByDayChart && window.planningChart && window.investmentAllocationChart && window.portfolioEvolutionChart) {
 
-                // --- Correção do Tooltip (BUG 2) ---
-                const topPadding = { top: 30 }; // Aumenta o espaço no topo
+            // --- Correção do Tooltip (BUG 2) ---
+            const topPadding = { top: 30 }; // Aumenta o espaço no topo
 
-                // Aplica o padding em todos os gráficos
-                window.monthlyIncomeChart.options.layout.padding = topPadding;
-                window.monthlyExpensesChart.options.layout.padding = topPadding;
-                window.categoriesChart.options.layout.padding = topPadding;
-                window.paidVsPendingChart.options.layout.padding = topPadding;
-                window.debtsByDayChart.options.layout.padding = topPadding;
-                window.planningChart.options.layout.padding = topPadding;
-                window.investmentAllocationChart.options.layout.padding = topPadding;
-                window.portfolioEvolutionChart.options.layout.padding = topPadding;
-                
-                // --- Interatividade dos Gráficos (MELHORIA 2) ---
-                window.monthlyIncomeChart.options.onClick = handleChartClick;
-                window.monthlyExpensesChart.options.onClick = handleChartClick;
+            // Aplica o padding em todos os gráficos
+            window.monthlyIncomeChart.options.layout.padding = topPadding;
+            window.monthlyExpensesChart.options.layout.padding = topPadding;
+            window.categoriesChart.options.layout.padding = topPadding;
+            window.paidVsPendingChart.options.layout.padding = topPadding;
+            window.debtsByDayChart.options.layout.padding = topPadding;
+            window.planningChart.options.layout.padding = topPadding;
+            window.investmentAllocationChart.options.layout.padding = topPadding;
+            window.portfolioEvolutionChart.options.layout.padding = topPadding;
+            
+            // --- Interatividade dos Gráficos (MELHORIA 2) ---
+            window.monthlyIncomeChart.options.onClick = handleChartClick;
+            window.monthlyExpensesChart.options.onClick = handleChartClick;
 
-                // Re-renderiza os gráficos com as novas opções
-                window.monthlyIncomeChart.update();
-                window.monthlyExpensesChart.update();
-                // Os outros serão atualizados pelo applyFilters()
-            }
-        } catch (e) {
-            console.warn("Aguardando 'charts.js' carregar...");
+        } else {
+            console.error("applyChartModifications: Gráficos do 'charts.js' não encontrados. Verifique a ordem de carregamento e os nomes das variáveis globais (window.*).");
         }
-    }, 100); // Verifica a cada 100ms
+    } catch (e) {
+        console.error("Erro ao aplicar modificações nos gráficos: ", e);
+    }
 }
-
-// [FIM DAS NOVAS FUNÇÕES]
