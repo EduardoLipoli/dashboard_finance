@@ -58,7 +58,7 @@
           <span class="hidden group-hover:block">Dashboard</span>
         </li>
       </a>
-      
+
       <li class="w-full px-4 py-2 mt-2 hidden group-hover:block text-zinc-500 text-xs uppercase font-semibold">
         Financeiro
       </li>
@@ -90,12 +90,7 @@
           <span class="hidden group-hover:block">Planejamento</span>
         </li>
       </a>
-      <a href="/aposentadoria/retirement.html">
-        <li class="flex items-center gap-4 p-4 hover:bg-zinc-700/50 w-full text-zinc-400 text-sm">
-          <i class="fas fa-umbrella-beach text-lg"></i>
-          <span class="hidden group-hover:block">Aposentadoria</span>
-        </li>
-      </a>
+      <!-- Aposentadoria removida do menu -->
       <a href="/metas/index.html">
         <li class="flex items-center gap-4 p-4 hover:bg-zinc-700/50 w-full text-zinc-400 text-sm">
           <i class="fas fa-flag text-lg"></i>
@@ -254,52 +249,59 @@
         <!-- Controles -->
         <div class="flex items-center space-x-4">
           <div class="relative group inline-block">
-      <button id="todayButton" class="text-white hover:text-green-400 transition-colors px-4 py-1 text-lg">
-        <i class="fas fa-calendar-day"></i>  Mês Atual
-      </button>
-      <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3
+            <button id="todayButton" class="text-white hover:text-green-400 transition-colors px-4 py-1 text-lg">
+              <i class="fas fa-calendar-day"></i> Mês Atual
+            </button>
+            <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3
         bg-black text-white text-sm font-semibold px-4 py-2 rounded
         opacity-0 group-hover:opacity-100 transition-opacity duration-300
         whitespace-nowrap z-10
         after:content-[''] after:absolute after:top-full after:left-1/2 
         after:-translate-x-1/2 after:border-8 after:border-transparent 
         after:border-t-black pointer-events-none">
-        Mês Atual
-      </div>
-    </div>
-          <!-- Filtro -->
-<div class="relative inline-block">
-          <button id="filterBtn"
-            class="flex items-center justify-between w-40 px-4 py-2 bg-zinc-900 text-white rounded-lg border border-zinc-700 hover:bg-zinc-800 focus:outline-none">
-            <span class="flex items-center">
-              <i class="fa-solid fa-filter mr-2"></i>
-              Filtros
-            </span>
-            <i id="filterChevron" class="fa-solid fa-chevron-down transform transition-transform duration-200"></i>
-          </button>
-
-          <div id="filterMenu"
-            class="hidden absolute right-0 mt-2 w-44 bg-zinc-800 text-white rounded-lg shadow-xl border border-zinc-700 divide-y divide-zinc-700 z-30"> <div class="px-3 py-2 space-y-1"> <label for="filterStatus" class="block text-sm font-medium">Status</label>
-              <select id="filterStatus"
-                class="w-full px-2 py-1 bg-zinc-700 border border-zinc-500 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"> <option value="">Todos</option>
-                <option value="paid">Pago</option>
-                <option value="unpaid">Pendente</option>
-              </select>
-            </div>
-            <div class="px-3 py-2 space-y-1"> <label for="filterCategory" class="block text-sm font-medium">Categoria</label>
-              <select id="filterCategory"
-                class="w-full px-2 py-1 bg-zinc-700 border border-zinc-500 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"> <option value="">Todas</option>
-                </select>
-            </div>
-            <div class="px-3 py-2 space-y-1"> <label for="filterDatepay" class="block text-sm font-medium">Dia de pagamento</label>
-              <select id="filterDatepay"
-                class="w-full px-2 py-1 bg-zinc-700 border border-zinc-500 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"> <option value="">Todos</option>
-                <option value="01">Dia 01</option>
-                <option value="15">Dia 15</option>
-              </select>
+              Mês Atual
             </div>
           </div>
-        </div>
+          <!-- Filtro -->
+          <div class="relative inline-block">
+            <button id="filterBtn"
+              class="flex items-center justify-between w-40 px-4 py-2 bg-zinc-900 text-white rounded-lg border border-zinc-700 hover:bg-zinc-800 focus:outline-none">
+              <span class="flex items-center">
+                <i class="fa-solid fa-filter mr-2"></i>
+                Filtros
+              </span>
+              <i id="filterChevron" class="fa-solid fa-chevron-down transform transition-transform duration-200"></i>
+            </button>
+
+            <div id="filterMenu"
+              class="hidden absolute right-0 mt-2 w-44 bg-zinc-800 text-white rounded-lg shadow-xl border border-zinc-700 divide-y divide-zinc-700 z-30">
+              <div class="px-3 py-2 space-y-1"> <label for="filterStatus"
+                  class="block text-sm font-medium">Status</label>
+                <select id="filterStatus"
+                  class="w-full px-2 py-1 bg-zinc-700 border border-zinc-500 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm">
+                  <option value="">Todos</option>
+                  <option value="paid">Pago</option>
+                  <option value="unpaid">Pendente</option>
+                </select>
+              </div>
+              <div class="px-3 py-2 space-y-1"> <label for="filterCategory"
+                  class="block text-sm font-medium">Categoria</label>
+                <select id="filterCategory"
+                  class="w-full px-2 py-1 bg-zinc-700 border border-zinc-500 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm">
+                  <option value="">Todas</option>
+                </select>
+              </div>
+              <div class="px-3 py-2 space-y-1"> <label for="filterDatepay" class="block text-sm font-medium">Dia de
+                  pagamento</label>
+                <select id="filterDatepay"
+                  class="w-full px-2 py-1 bg-zinc-700 border border-zinc-500 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-sm">
+                  <option value="">Todos</option>
+                  <option value="01">Dia 01</option>
+                  <option value="15">Dia 15</option>
+                </select>
+              </div>
+            </div>
+          </div>
 
           <!-- Campo de busca -->
           <div class="relative w-64">
@@ -434,7 +436,7 @@
 
           </thead>
           <tbody id="tableBody"></tbody>
-          <tfoot id="tableFooter" class="bg-zinc-800 font-semibold sticky bottom-0">
+          <tfoot id="tableFooter" class="bg-zinc-800 font-semibold">
             <tr>
               <td class="py-3 px-6 text-left text-sm text-white">
                 Total
@@ -443,14 +445,14 @@
               <td class="py-3 px-6"></td>
               <td class="py-3 px-6"></td>
               <td class="py-3 px-6"></td>
-              
+
               <td id="footerTotalAmount" class="py-3 px-6 text-left text-sm text-white">
                 R$ 0,00
               </td>
               <td id="footerTransactionCount" class="py-3 px-6 text-left text-sm text-white">
                 0 transações
               </td>
-              
+
               <td class="py-3 px-6"></td>
               <td class="py-3 px-6"></td>
             </tr>

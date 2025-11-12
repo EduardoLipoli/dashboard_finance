@@ -57,6 +57,22 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 });
 
+function convertToDate(value) {
+    if (value instanceof firebase.firestore.Timestamp) {
+        return value.toDate();
+    } else if (value && typeof value.toDate === 'function') {
+        return value.toDate();
+    } else if (typeof value === "string" || typeof value === "number") {
+        return new Date(value);
+    } else if (value && typeof value === 'object' && value.hasOwnProperty('seconds')) {
+        return new firebase.firestore.Timestamp(value.seconds, value.nanoseconds).toDate();
+    } else if (value instanceof Date) {
+        return value;
+    }
+    return new Date(NaN); // Data inválida
+}
+
+
 /**
  * Gera as iniciais a partir de um nome completo.
  */
@@ -137,34 +153,25 @@ async function loadTransactionsFromFirestore() {
 
     const transactionsSnapshot = await userRef.collection("transactions").get();
     hideLoading();
-    transactions.length = 0;
-
-    transactionsSnapshot.forEach((doc) => {
+    
+    // [MUDANÇA] Armazena as transações "RAW" (base)
+    // A virtualização agora acontece em 'applyFilters'
+    transactions = transactionsSnapshot.docs.map(doc => {
       const transaction = doc.data();
       transaction.id = doc.id;
       // Garante que a data seja um objeto Date
-      if (transaction.dueDate && typeof transaction.dueDate.seconds === 'number') {
-        transaction.dueDate = new Date(transaction.dueDate.seconds * 1000);
-      } else if (typeof transaction.dueDate === 'string') {
-        transaction.dueDate = new Date(transaction.dueDate);
-      }
-      
-      if (transaction.addedOn && typeof transaction.addedOn.seconds === 'number') {
-        transaction.addedOn = new Date(transaction.addedOn.seconds * 1000);
-      } else if (typeof transaction.addedOn === 'string') {
-        transaction.addedOn = new Date(transaction.addedOn);
-      }
-      
-      transactions.push(transaction);
+      transaction.dueDate = convertToDate(transaction.dueDate);
+      transaction.addedOn = convertToDate(transaction.addedOn);
+      return transaction;
     });
+    
+    // Não definimos filteredTransactions aqui. 'applyFilters' fará isso.
 
-    filteredTransactions = [...transactions];
   } catch (error) {
     hideLoading();
     console.error("Erro ao carregar transações ou categorias:", error);
   }
 }
-
 // Função para calcular os totais de receitas, despesas e transações dos dias 01 e 15
 function calculateTotals() {
   let totalReceitas = 0;
@@ -406,22 +413,71 @@ function applyFilters() {
   const year = currentYear;
   const month = currentMonth; // 'all' ou um número (0-11)
 
-  // 1. Filtra as Transações
-  filteredTransactions = transactions.filter(t => {
-    if (!(t.dueDate instanceof Date) || isNaN(t.dueDate.getTime())) return false; // Ignora transações com data inválida
-    
-    const tDate = t.dueDate;
-    const yearMatch = tDate.getFullYear() === year;
-    const monthMatch = (month === "all") || (tDate.getMonth() === month);
-    return yearMatch && monthMatch;
+  // 1. [NOVO] Virtualiza as transações para o período
+  filteredTransactions = []; // Limpa as transações filtradas
+  
+  const monthsToIterate = (month === "all") ? [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] : [month];
+
+  // Para cada transação "base"
+  transactions.forEach(tx => {
+    // Para cada mês que precisamos exibir
+    for (const m of monthsToIterate) {
+      const monthKey = `${year}-${String(m + 1).padStart(2, '0')}`;
+      const startDate = new Date(year, m, 1);
+      const endDate = new Date(year, m + 1, 1);
+      
+      const originalDueDate = tx.dueDate;
+      if (!originalDueDate || isNaN(originalDueDate.getTime())) continue; // Pula data inválida
+
+      // Lógica para ÚNICAS
+      if (!tx.isFixed && tx.installments === 1) {
+        if (originalDueDate.getFullYear() === year && originalDueDate.getMonth() === m) {
+          filteredTransactions.push({ ...tx });
+        }
+        continue; // Já processou, vai para a próxima transação
+      }
+      
+      // Lógica para FIXAS
+      if (tx.isFixed) {
+        if (tx.endDate && convertToDate(tx.endDate) < startDate) continue; // Parou antes deste mês
+        if (tx.skippedMonths && tx.skippedMonths[monthKey]) continue; // Pulou este mês
+        if (originalDueDate >= endDate) continue; // Começa só no futuro
+
+        const virtualTx = { ...tx };
+        virtualTx.dueDate = new Date(year, m, originalDueDate.getDate());
+        virtualTx.isPaid = (tx.paymentsPaid && tx.paymentsPaid[monthKey] === true) || false;
+        filteredTransactions.push(virtualTx);
+        continue;
+      }
+
+      // Lógica para PARCELADAS
+      if (!tx.isFixed && tx.installments > 1) {
+        const diffMonths = (year - originalDueDate.getFullYear()) * 12 + (m - originalDueDate.getMonth());
+        
+        if (diffMonths >= 0 && diffMonths < tx.installments) {
+          if (tx.skippedMonths && tx.skippedMonths[monthKey]) continue; // Pulou
+
+          const virtualTx = { ...tx };
+          virtualTx.dueDate = new Date(year, m, originalDueDate.getDate());
+          virtualTx.isPaid = (tx.paymentsPaid && tx.paymentsPaid[monthKey] === true) || false;
+          virtualTx.name = `${tx.name} (${diffMonths + 1}/${tx.installments})`;
+          virtualTx.currentInstallment = diffMonths + 1;
+          filteredTransactions.push(virtualTx);
+        }
+        continue;
+      }
+    }
   });
+
 
   // 2. Filtra os Investimentos (sempre pelo ano inteiro)
   const filteredInvestments = investments.filter(inv => {
-     const invDate = new Date(inv.date); 
+     const invDate = convertToDate(inv.date); 
      if (isNaN(invDate.getTime())) return false; 
      const yearMatch = invDate.getFullYear() === year;
-     return yearMatch;
+     // [CORREÇÃO] Filtra por mês SE não for "all"
+     const monthMatch = (month === "all") || (invDate.getMonth() === month);
+     return yearMatch && monthMatch;
   });
 
   // 3. Recalcula todos os totais e gráficos

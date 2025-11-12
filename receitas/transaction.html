@@ -87,12 +87,7 @@
           <span class="hidden group-hover:block">Planejamento</span>
         </li>
       </a>
-      <a href="/aposentadoria/retirement.html">
-        <li class="flex items-center gap-4 p-4 hover:bg-zinc-700/50 w-full text-zinc-400 text-sm">
-          <i class="fas fa-umbrella-beach text-lg"></i>
-          <span class="hidden group-hover:block">Aposentadoria</span>
-        </li>
-      </a>
+      <!-- Aposentadoria removida do menu -->
       <a href="/metas/index.html">
         <li class="flex items-center gap-4 p-4 hover:bg-zinc-700/50 w-full text-zinc-400 text-sm">
           <i class="fas fa-flag text-lg"></i>
@@ -253,6 +248,9 @@
 
         <!-- Controles -->
         <div class="flex items-center space-x-4">
+          <button id="todayButton" class="text-white hover:text-green-400 transition-colors px-4 py-1 text-lg">
+            <i class="fas fa-calendar-day"></i> Mês Atual
+          </button>
           <!-- Filtro -->
           <div class="relative inline-block">
             <button id="filterBtn"
@@ -408,7 +406,7 @@
 
           </thead>
           <tbody id="tableBody"></tbody>
-          <tfoot id="tableFooter" class="bg-zinc-800 font-semibold sticky bottom-0">
+          <tfoot id="tableFooter" class="bg-zinc-800 font-semibold">
             <tr>
               <td class="py-3 px-6 text-left text-sm text-white">
                 Total

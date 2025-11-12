@@ -3,7 +3,7 @@
 // Esta função será executada assim que o HTML da página for carregado
 document.addEventListener('DOMContentLoaded', function() {
 
-    // Pega o caminho da URL da página atual (ex: "/aposentadoria/retirement.html")
+    // Pega o caminho da URL da página atual (ex: "/dashboard/index.html")
     const currentPath = window.location.pathname;
 
     // Seleciona todos os links dentro do sidebar
